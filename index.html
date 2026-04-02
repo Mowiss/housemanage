@@ -17,7 +17,7 @@
         }
         .overdue-glow { animation: softGlow 2s infinite ease-in-out; border-width: 2px !important; z-index: 10; position: relative; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .chart-bar-anim { transition: height 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        .chart-bar-anim { transition: height 1s ease-out; }
         body { background-color: #0f172a; color: #f1f5f9; overflow-x: hidden; }
         .color-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
         
@@ -27,17 +27,16 @@
 </head>
 <body class="bg-slate-900 min-h-screen text-slate-200 font-sans selection:bg-blue-500/30 relative pb-24">
 
-    <!-- ÉCRAN DE CONNEXION À L'INSTANCE (FOYER) -->
     <div id="instance-gate" class="fixed inset-0 bg-slate-950 z-[1000] flex items-center justify-center px-4">
         <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center slide-up">
             <div class="w-20 h-20 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
                 <i class="fa-solid fa-house-lock text-3xl text-blue-500"></i>
             </div>
             <h2 class="text-2xl font-black text-white mb-2">Accès au Foyer</h2>
-            <p class="text-slate-400 text-sm mb-8 italic">Entrez le code secret de votre instance partagée.</p>
+            <p class="text-slate-400 text-sm mb-8 italic">Entrez le code secret de votre foyer.</p>
             
             <div class="space-y-4">
-                <input type="text" id="instance-code-input" placeholder="Ex: MAISON-DE-LOU" class="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-center font-black tracking-widest text-blue-400 uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                <input type="text" id="instance-code-input" placeholder="Ex: MAISON" class="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-center font-black tracking-widest text-blue-400 uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                 <p id="login-error" class="text-red-500 text-xs font-bold hidden mb-2"></p>
                 <button onclick="connectToInstance()" class="w-full bg-white hover:bg-slate-200 text-slate-900 py-4 rounded-2xl font-black shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">
                     <svg class="w-6 h-6" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
@@ -48,7 +47,6 @@
         </div>
     </div>
 
-    <!-- CONTENU PRINCIPAL (MASQUÉ AU DÉBUT) -->
     <div id="main-app" class="hidden">
         <nav class="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 z-50 px-4 py-3 flex justify-around items-center shadow-2xl">
             <button onclick="switchTab('tasks')" id="tab-tasks-btn" class="flex flex-col items-center gap-1 text-blue-400">
@@ -164,7 +162,6 @@
         </div>
     </div>
 
-    <!-- MODAL TÂCHE -->
     <div id="task-modal" class="fixed inset-0 bg-slate-950/60 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto flex flex-col border border-slate-700">
             <div class="p-5 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
@@ -203,7 +200,6 @@
         </div>
     </div>
 
-    <!-- MODAL DÉPENSE -->
     <div id="expense-modal" class="fixed inset-0 bg-slate-950/60 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-sm flex flex-col border border-slate-700">
             <div class="p-5 border-b border-slate-700 flex justify-between items-center">
@@ -226,27 +222,36 @@
                 <button onclick="saveExpense()" class="flex-1 py-3 bg-emerald-600 rounded-xl font-bold text-white">Valider</button>
             </div>
         </div>
-    <!-- Firebase SDKs -->
+    </div>
+
+    <div id="profile-modal" class="fixed inset-0 bg-slate-950/95 hidden items-center justify-center z-[600] px-4 backdrop-blur-xl">
+        <div class="bg-slate-800 rounded-2xl p-8 w-full max-w-sm border border-slate-700 shadow-2xl">
+            <h2 class="text-2xl font-black text-center mb-6 text-slate-100">Profil Foyer</h2>
+            <div class="space-y-4">
+                <input type="text" id="profile-name" placeholder="Votre Prénom" class="w-full rounded-xl bg-slate-700 p-3 font-bold text-center text-white">
+                <input type="number" id="profile-income" placeholder="Revenu mensuel €" class="w-full rounded-xl bg-slate-700 p-3 font-black text-center text-blue-400">
+                <div id="avatar-picker" class="flex flex-wrap gap-2 justify-center"></div>
+            </div>
+            <button onclick="saveProfile()" class="w-full mt-8 bg-blue-600 py-4 rounded-xl font-black shadow-xl hover:bg-blue-500 text-white">C'est parti !</button>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // TUTORIEL : Remplacez cet objet par votre VRAIE configuration Firebase
+        // VOS CLÉS FIREBASE DÉFINITIVES
         const firebaseConfig = {
-            // apiKey: "VOTRE_API_KEY",
-            // authDomain: "votre-projet.firebaseapp.com",
-            // projectId: "votre-projet",
-            // storageBucket: "votre-projet.firebasestorage.app",
-            // messagingSenderId: "VOTRE_ID",
-            // appId: "VOTRE_APP_ID"
+            apiKey: "AIzaSyDX3q07Zm4CLQP0dyn_Z4lwW_9i9f0Fzsc",
+            authDomain: "housemanager-c5e7c.firebaseapp.com",
+            projectId: "housemanager-c5e7c",
+            storageBucket: "housemanager-c5e7c.firebasestorage.app",
+            messagingSenderId: "277271617729",
+            appId: "1:277271617729:web:794ae3da7edd57fa1fb440"
         };
-        
-        // Mode développement local sécurisé si pas de config
-        const isConfigValid = Object.keys(firebaseConfig).length > 0;
-        const finalConfig = isConfigValid ? firebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {});
-        
-        const app = initializeApp(finalConfig);
+
+        const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
         const db = getFirestore(app);
@@ -281,6 +286,7 @@
         let collapsedTasks = new Set();
         let selectedAvatar = '🦊';
 
+        // Palette vibrante pour corriger les couleurs invisibles
         const taskColors = {
             'white': { bg: 'bg-slate-800', border: 'border-slate-700', accent: 'bg-slate-400', hex: '#94a3b8' },
             'red': { bg: 'bg-red-950/40', border: 'border-red-500/50', accent: 'bg-red-500', hex: '#ef4444' },
@@ -297,16 +303,15 @@
             const errorEl = getEl('login-error');
             
             if(!input || input.length < 4) {
-                errorEl.textContent = "Veuillez entrer un code d'au moins 4 caractères.";
+                errorEl.textContent = "Entrez un code d'au moins 4 caractères.";
                 errorEl.classList.remove('hidden');
                 return;
             }
             
             appId = input;
             errorEl.classList.add('hidden');
-            
+
             try {
-                // Déclenche la popup de connexion Google
                 const result = await signInWithPopup(auth, provider);
                 currentUser = result.user;
                 
@@ -315,17 +320,16 @@
                 getEl('current-instance-id').textContent = appId;
                 
                 await startAppFlow();
-            } catch (error) {
-                console.error("Erreur Auth:", error);
-                errorEl.textContent = "Échec de connexion (pop-up bloquée ou config Firebase absente).";
+            } catch (err) {
+                console.error(err);
+                errorEl.textContent = "Échec : Autorisez les pop-ups ou vérifiez Firebase.";
                 errorEl.classList.remove('hidden');
             }
         };
 
         async function startAppFlow() {
+            if (!currentUser || !appId) return;
             try {
-                if (!currentUser) return;
-
                 const profileRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data');
                 const profileSnap = await getDoc(profileRef);
                 
@@ -336,7 +340,6 @@
                     startListening();
                     checkAutoClose();
                 } else {
-                    // Si nouveau compte, on récupère le prénom Google par défaut
                     if(currentUser.displayName) {
                         getEl('profile-name').value = currentUser.displayName.split(' ')[0];
                     }
@@ -345,13 +348,8 @@
                 }
             } catch (err) {
                 console.error(err);
-                elements.statusText().innerHTML = '<span class="text-red-500">ERREUR</span>';
+                elements.statusText().innerHTML = '<span class="text-red-500">ERREUR BDD</span>';
             }
-        }
-
-        // Ancienne fonction Init nettoyée (on attend juste le clic du bouton Google)
-        async function init() {
-            initDOMElements();
         }
 
         function startListening() {
@@ -416,7 +414,7 @@
             rec.innerHTML = ''; pon.innerHTML = ''; const stats = { users: {}, fixed: 0, ponct: 0 };
             expensesData.forEach(exp => {
                 const li = document.createElement('li'); li.className = "bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex justify-between items-center shadow-sm relative";
-                li.innerHTML = `<div class="flex items-center gap-3 min-w-0"><div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-lg shrink-0">${exp.payer.avatar}</div><div class="min-w-0"><p class="font-bold text-slate-200 truncate text-sm">${escapeHTML(exp.text)}</p><p class="text-[9px] text-slate-500 uppercase font-black">Par ${escapeHTML(exp.payer.name)}</p></div></div><div class="flex items-center gap-3"><span class="font-black text-emerald-400 text-sm">${exp.amount.toFixed(2)}€</span><button onclick="deleteExpense('${exp.id}')" class="text-slate-600 hover:text-red-400"><i class="fa-regular fa-trash-can text-xs"></i></button></div>`;
+                li.innerHTML = `<div class="flex items-center gap-3 min-w-0"><div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-lg shrink-0">${exp.payer.avatar}</div><div class="min-w-0"><p class="font-bold text-slate-200 truncate text-sm">${escapeHTML(exp.text)}</p><p class="text-[9px] text-slate-500 uppercase font-black font-bold">Par ${escapeHTML(exp.payer.name)}</p></div></div><div class="flex items-center gap-3"><span class="font-black text-emerald-400 text-sm">${exp.amount.toFixed(2)}€</span><button onclick="deleteExpense('${exp.id}')" class="text-slate-600 hover:text-red-400"><i class="fa-regular fa-trash-can text-xs"></i></button></div>`;
                 if(exp.isRecurring) { rec.appendChild(li); stats.fixed += exp.amount; } else { pon.appendChild(li); stats.ponct += exp.amount; }
                 const uId = exp.payer.uid; if(!stats.users[uId]) stats.users[uId] = { name: exp.payer.name, spent: 0, income: exp.payer.income || 0 }; stats.users[uId].spent += exp.amount;
             });
@@ -492,7 +490,7 @@
 
         async function settleAccounts() {
             if (!currentUser || !appId || expensesData.length === 0) return;
-            const now = new Date(); const label = `${["Jan", "Fév", "Mar", "Avr", "Mai", "Jui", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"][now.getMonth()]} ${now.getFullYear()}`;
+            const now = new Date(); const label = `${["Jan", "Fév", "Mar", "Avr", "Mai", "Jui", "Jul", "Août", "Sep", "Oct", "Nov", "Déc"][now.getMonth()]} ${now.getFullYear()}`;
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'settlements'), { label, total: expensesData.reduce((acc, e) => acc + e.amount, 0), settledAt: Date.now(), snapshot: expensesData });
             for(const task of tasksData.filter(t => t.completed && !t.archived)) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', task.id), { archived: true });
             for(const exp of expensesData) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', exp.id));
@@ -539,8 +537,17 @@
         window.closeEditor = () => getEl('task-modal').classList.replace('flex', 'hidden');
         window.closeExpenseEditor = () => getEl('expense-modal').classList.replace('flex', 'hidden');
         window.openExpenseEditor = () => getEl('expense-modal').classList.replace('hidden', 'flex');
-        window.renderColorPicker = () => { getEl('color-picker').innerHTML = Object.keys(taskColors).map(c => `<button onclick="selectColor('${c}')" class="w-10 h-10 rounded-full border-2 ${currentSelectedColor === c ? 'border-white scale-110' : 'border-transparent'}" style="background-color: ${taskColors[c].hex}"></button>`).join(''); };
+        
+        // CORRECTION COULEURS: Utilisation explicite du background-color via le style inline avec les hexadécimaux vifs
+        window.renderColorPicker = () => { 
+            getEl('color-picker').innerHTML = Object.keys(taskColors).map(c => `
+            <button onclick="selectColor('${c}')" 
+                class="w-10 h-10 rounded-full border-2 ${currentSelectedColor === c ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'border-transparent opacity-50 hover:opacity-100'}" 
+                style="background-color: ${taskColors[c].hex};">
+            </button>`).join(''); 
+        };
         window.selectColor = (c) => { currentSelectedColor = c; renderColorPicker(); };
+        
         window.renderAvatarPicker = (id) => { getEl(id).innerHTML = availableAvatars.map(a => `<button onclick="selectAvatar('${a}', '${id}')" class="w-10 h-10 text-xl rounded-full border-2 ${selectedAvatar === a ? 'border-blue-500 bg-blue-900/40 scale-110' : 'border-transparent'}">${a}</button>`).join(''); };
         window.selectAvatar = (a, id) => { selectedAvatar = a; renderAvatarPicker(id); };
         window.addTagToEditor = () => { const i = getEl('new-tag-input'); const v = i.value.trim().toLowerCase(); if(v && !currentEditingTags.includes(v)) { currentEditingTags.push(v); i.value = ''; renderEditorTags(); } };

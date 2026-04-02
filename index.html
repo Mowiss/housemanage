@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notre Foyer - Gestion & Comptes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @keyframes softGlow {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); border-color: rgba(239, 68, 68, 0.5); }
+            50% { box-shadow: 0 0 20px 2px rgba(239, 68, 68, 0.7); border-color: rgba(239, 68, 68, 1); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); border-color: rgba(239, 68, 68, 0.5); }
+        }
+        .overdue-glow { animation: softGlow 2s infinite ease-in-out; border-width: 2px !important; z-index: 10; position: relative; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .chart-bar-anim { transition: height 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        body { background-color: #0f172a; color: #f1f5f9; overflow-x: hidden; }
+        .color-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+        
+        .slide-up { animation: slideUp 0.5s ease-out forwards; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body class="bg-slate-900 min-h-screen text-slate-200 font-sans selection:bg-blue-500/30 relative pb-24">
+
+    <!-- ÉCRAN DE CONNEXION À L'INSTANCE (FOYER) -->
+    <div id="instance-gate" class="fixed inset-0 bg-slate-950 z-[1000] flex items-center justify-center px-4">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center slide-up">
+            <div class="w-20 h-20 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fa-solid fa-house-lock text-3xl text-blue-500"></i>
+            </div>
+            <h2 class="text-2xl font-black text-white mb-2">Accès au Foyer</h2>
+            <p class="text-slate-400 text-sm mb-8 italic">Entrez le code secret de votre instance partagée.</p>
+            
+            <div class="space-y-4">
+                <input type="text" id="instance-code-input" placeholder="Ex: MAISON-DE-LOU" class="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-center font-black tracking-widest text-blue-400 uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                <p id="login-error" class="text-red-500 text-xs font-bold hidden mb-2"></p>
+                <button onclick="connectToInstance()" class="w-full bg-white hover:bg-slate-200 text-slate-900 py-4 rounded-2xl font-black shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">
+                    <svg class="w-6 h-6" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                    Continuer avec Google
+                </button>
+            </div>
+            <p class="text-[10px] text-slate-600 mt-6 uppercase font-bold tracking-tighter">Usage domestique uniquement</p>
+        </div>
+    </div>
+
+    <!-- CONTENU PRINCIPAL (MASQUÉ AU DÉBUT) -->
+    <div id="main-app" class="hidden">
+        <nav class="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 z-50 px-4 py-3 flex justify-around items-center shadow-2xl">
+            <button onclick="switchTab('tasks')" id="tab-tasks-btn" class="flex flex-col items-center gap-1 text-blue-400">
+                <i class="fa-solid fa-check-double text-xl"></i>
+                <span class="text-[10px] font-bold uppercase">Tâches</span>
+            </button>
+            <button onclick="switchTab('accounts')" id="tab-accounts-btn" class="flex flex-col items-center gap-1 text-slate-400">
+                <i class="fa-solid fa-wallet text-xl"></i>
+                <span class="text-[10px] font-bold uppercase">Comptes</span>
+            </button>
+            <button onclick="switchTab('profile')" id="tab-profile-btn" class="flex flex-col items-center gap-1 text-slate-400">
+                <i class="fa-solid fa-user-gear text-xl"></i>
+                <span class="text-[10px] font-bold uppercase">Profil</span>
+            </button>
+        </nav>
+
+        <div class="max-w-md mx-auto pt-8 px-4 sm:pt-12">
+            <div class="bg-slate-800 rounded-2xl shadow-sm p-6 mb-6 text-center border border-slate-700 relative">
+                <h1 id="main-title" class="text-2xl font-bold text-slate-100 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-clipboard-list text-blue-500"></i> Nos Tâches
+                </h1>
+                <p class="text-slate-500 text-[10px] mt-1 font-bold uppercase tracking-widest" id="connection-status">Connexion...</p>
+            </div>
+
+            <section id="section-tasks" class="block space-y-6">
+                <div class="flex gap-2">
+                    <button onclick="openEditor()" id="new-task-btn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-xl px-5 py-4 font-bold shadow-lg transition-all flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-plus"></i> Nouvelle tâche
+                    </button>
+                    <button onclick="toggleTaskArchive()" class="bg-slate-800 border border-slate-700 text-slate-400 px-4 rounded-xl hover:bg-slate-700 transition-colors">
+                        <i class="fa-solid fa-box-archive"></i>
+                    </button>
+                </div>
+                <div id="tasks-container">
+                    <div id="active-tasks-view">
+                        <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 ml-2">À faire</h2>
+                        <ul id="todo-list" class="space-y-3 mb-8"></ul>
+                        <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 ml-2 text-slate-600">Terminées</h2>
+                        <ul id="completed-list" class="space-y-3 opacity-60"></ul>
+                    </div>
+                    <div id="archived-tasks-view" class="hidden">
+                        <div class="flex justify-between items-center mb-4 ml-2 border-b border-slate-800 pb-2">
+                            <h2 class="text-xs font-bold text-blue-400 uppercase tracking-wider italic">Historique</h2>
+                            <button onclick="toggleTaskArchive()" class="text-[10px] text-slate-500 underline">Fermer</button>
+                        </div>
+                        <ul id="archived-tasks-list" class="space-y-3 opacity-40"></ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-accounts" class="hidden space-y-6">
+                <div class="bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-xl">
+                    <h2 class="text-[10px] font-black uppercase text-slate-500 mb-4 tracking-widest text-center">Évolution sur 6 mois</h2>
+                    <div class="flex items-end justify-between gap-2 h-28 px-2" id="finance-chart"></div>
+                </div>
+                <div id="balance-card" class="bg-gradient-to-br from-indigo-700 to-slate-900 text-white rounded-2xl p-6 shadow-xl relative border border-white/5 overflow-hidden">
+                    <div class="flex justify-between items-center mb-4 relative z-10">
+                        <span class="text-xs font-bold uppercase tracking-widest opacity-70" id="current-month-label">Mois</span>
+                        <button onclick="settleAccountsManual()" class="text-[10px] bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full font-bold border border-white/10">Clôturer</button>
+                    </div>
+                    <div id="balance-summary" class="text-center mb-6 relative z-10"></div>
+                    <div id="visual-stats" class="space-y-3 relative z-10"></div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="openExpenseEditor()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl px-5 py-4 font-bold shadow-lg flex items-center justify-center gap-3 transition-transform active:scale-95">
+                        <i class="fa-solid fa-receipt"></i> Nouvelle dépense
+                    </button>
+                    <button onclick="toggleAccountArchive()" class="bg-slate-800 border border-slate-700 text-slate-400 px-4 rounded-xl hover:bg-slate-700">
+                        <i class="fa-solid fa-history"></i>
+                    </button>
+                </div>
+                <div id="active-accounts-view">
+                    <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 ml-2">Charges Fixes</h2>
+                    <ul id="recurring-expenses-list" class="space-y-2 mb-6"></ul>
+                    <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 ml-2">Ponctuelles</h2>
+                    <ul id="ponctuelle-expenses-list" class="space-y-2"></ul>
+                </div>
+                <div id="archived-accounts-view" class="hidden">
+                    <div class="flex justify-between items-center mb-4 ml-2 border-b border-slate-800 pb-2">
+                        <h2 class="text-xs font-bold text-emerald-400 uppercase tracking-wider italic">Anciennes clôtures</h2>
+                        <button onclick="toggleAccountArchive()" class="text-[10px] text-slate-500 underline">Fermer</button>
+                    </div>
+                    <ul id="archived-accounts-list" class="space-y-3"></ul>
+                </div>
+            </section>
+
+            <section id="section-profile" class="hidden space-y-6">
+                <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl space-y-6">
+                    <div class="bg-blue-900/20 border border-blue-500/30 rounded-2xl p-4 flex justify-between items-center mb-4">
+                        <div class="min-w-0">
+                            <p class="text-[8px] uppercase font-black text-blue-500 mb-1">Code Foyer Actuel</p>
+                            <p class="font-black text-white tracking-widest truncate" id="current-instance-id">...</p>
+                        </div>
+                        <button onclick="window.location.reload()" class="bg-slate-700 p-2 rounded-lg text-slate-400">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
+                    <div class="flex flex-col items-center gap-4 py-4">
+                        <div id="current-profile-avatar" class="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center text-4xl shadow-xl border-4 border-blue-500/20"></div>
+                        <div class="text-center">
+                            <h2 class="text-xl font-bold text-slate-100" id="current-profile-name-display">...</h2>
+                            <p class="text-xs text-slate-500 uppercase font-bold tracking-widest mt-1" id="current-profile-income-display">Revenu : 0€</p>
+                        </div>
+                    </div>
+                    <div class="space-y-4 border-t border-slate-700 pt-6">
+                        <input type="text" id="settings-name" placeholder="Prénom" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 font-bold text-slate-100 outline-none">
+                        <input type="number" id="settings-income" placeholder="Revenu mensuel" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 font-black text-blue-400 outline-none">
+                        <div class="flex flex-wrap gap-2 justify-center" id="settings-avatar-picker"></div>
+                        <button onclick="updateProfileFromSettings()" class="w-full bg-blue-600 py-4 rounded-xl font-black shadow-lg">Enregistrer</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- MODAL TÂCHE -->
+    <div id="task-modal" class="fixed inset-0 bg-slate-950/60 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto flex flex-col border border-slate-700">
+            <div class="p-5 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
+                <h2 id="modal-title" class="text-lg font-bold">Détail Tâche</h2>
+                <button onclick="closeEditor()" class="text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-5 flex-1">
+                <input type="text" id="edit-title" placeholder="Nom de la tâche" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 text-slate-100 outline-none focus:ring-2 focus:ring-blue-500 font-bold">
+                <textarea id="edit-desc" rows="3" placeholder="Description" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 text-slate-100 outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Étiquettes</label>
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" id="new-tag-input" class="flex-1 rounded-lg border-slate-600 bg-slate-700 p-2 text-sm outline-none text-white" onkeypress="if(event.key === 'Enter') addTagToEditor()">
+                        <button onclick="addTagToEditor()" class="bg-slate-700 px-4 rounded-lg text-white"><i class="fa-solid fa-tag"></i></button>
+                    </div>
+                    <div id="edit-tags-list" class="flex flex-wrap gap-2"></div>
+                </div>
+                <input type="date" id="edit-due-date" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 text-slate-100">
+                <div id="color-picker" class="flex flex-wrap gap-3 justify-center"></div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Sous-tâches</label>
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" id="new-subtask-input" class="flex-1 rounded-lg border-slate-600 bg-slate-700 p-2 text-sm outline-none text-white" onkeypress="if(event.key === 'Enter') addSubtaskToEditor()">
+                        <button onclick="addSubtaskToEditor()" class="bg-slate-700 px-4 rounded-lg text-white"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                    <ul id="edit-subtasks-list" class="space-y-2"></ul>
+                </div>
+            </div>
+            <div class="p-5 border-t border-slate-700 bg-slate-800/50 flex justify-between">
+                <button id="modal-delete-btn" onclick="deleteTaskFromEditor()" class="text-red-400 font-bold px-4 hidden"><i class="fa-solid fa-trash"></i></button>
+                <div class="flex gap-3 ml-auto">
+                    <button onclick="closeEditor()" class="px-5 py-2 rounded-xl text-slate-400">Annuler</button>
+                    <button onclick="saveTask()" class="px-5 py-2 rounded-xl bg-blue-600 text-white font-bold">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DÉPENSE -->
+    <div id="expense-modal" class="fixed inset-0 bg-slate-950/60 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-sm flex flex-col border border-slate-700">
+            <div class="p-5 border-b border-slate-700 flex justify-between items-center">
+                <h2 class="text-lg font-bold">Ajouter un frais</h2>
+                <button onclick="closeExpenseEditor()" class="text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="text" id="expense-text" placeholder="Libellé" class="w-full rounded-xl bg-slate-700 p-3 outline-none text-white">
+                <div class="flex gap-3">
+                    <input type="number" id="expense-amount" placeholder="0.00 €" class="flex-1 rounded-xl bg-slate-700 p-3 font-bold text-xl outline-none text-white">
+                    <label class="flex flex-col items-center justify-center bg-slate-700 px-3 rounded-xl cursor-pointer">
+                        <input type="checkbox" id="expense-recurring" class="sr-only peer">
+                        <div class="w-8 h-4 bg-slate-600 rounded-full peer peer-checked:bg-emerald-500 relative after:absolute after:top-0 after:left-0 after:h-4 after:w-4 after:bg-white after:rounded-full after:transition-all peer-checked:after:translate-x-4"></div>
+                        <span class="text-[8px] uppercase font-bold mt-1 text-slate-500">Fixe</span>
+                    </label>
+                </div>
+            </div>
+            <div class="p-5 flex gap-3">
+                <button onclick="closeExpenseEditor()" class="flex-1 py-3 text-slate-400">Annuler</button>
+                <button onclick="saveExpense()" class="flex-1 py-3 bg-emerald-600 rounded-xl font-bold text-white">Valider</button>
+            </div>
+        </div>
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // TUTORIEL : Remplacez cet objet par votre VRAIE configuration Firebase
+        const firebaseConfig = {
+            // apiKey: "VOTRE_API_KEY",
+            // authDomain: "votre-projet.firebaseapp.com",
+            // projectId: "votre-projet",
+            // storageBucket: "votre-projet.firebasestorage.app",
+            // messagingSenderId: "VOTRE_ID",
+            // appId: "VOTRE_APP_ID"
+        };
+        
+        // Mode développement local sécurisé si pas de config
+        const isConfigValid = Object.keys(firebaseConfig).length > 0;
+        const finalConfig = isConfigValid ? firebaseConfig : (typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {});
+        
+        const app = initializeApp(finalConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+        const db = getFirestore(app);
+        let appId = null;
+
+        const getEl = (id) => document.getElementById(id);
+        const elements = {
+            todoList: () => getEl('todo-list'),
+            completedList: () => getEl('completed-list'),
+            archivedTasksList: () => getEl('archived-tasks-list'),
+            recurringList: () => getEl('recurring-expenses-list'),
+            ponctuelleList: () => getEl('ponctuelle-expenses-list'),
+            archivedAccountsList: () => getEl('archived-accounts-list'),
+            statusText: () => getEl('connection-status'),
+            newTaskBtn: () => getEl('new-task-btn'),
+            financeChart: () => getEl('finance-chart'),
+            balanceSummary: () => getEl('balance-summary'),
+            visualStats: () => getEl('visual-stats'),
+            mainApp: () => getEl('main-app'),
+            instanceGate: () => getEl('instance-gate')
+        };
+
+        let tasksData = [];
+        let expensesData = [];
+        let settlementsData = [];
+        let currentUser = null;
+        let localProfile = null;
+        let currentEditingId = null;
+        let currentEditingSubtasks = [];
+        let currentEditingTags = [];
+        let currentSelectedColor = 'white';
+        let collapsedTasks = new Set();
+        let selectedAvatar = '🦊';
+
+        const taskColors = {
+            'white': { bg: 'bg-slate-800', border: 'border-slate-700', accent: 'bg-slate-400', hex: '#94a3b8' },
+            'red': { bg: 'bg-red-950/40', border: 'border-red-500/50', accent: 'bg-red-500', hex: '#ef4444' },
+            'blue': { bg: 'bg-blue-950/40', border: 'border-blue-500/50', accent: 'bg-blue-500', hex: '#3b82f6' },
+            'green': { bg: 'bg-emerald-950/40', border: 'border-emerald-500/50', accent: 'bg-emerald-500', hex: '#10b981' },
+            'yellow': { bg: 'bg-amber-950/40', border: 'border-amber-500/50', accent: 'bg-amber-500', hex: '#f59e0b' },
+            'purple': { bg: 'bg-purple-950/40', border: 'border-purple-500/50', accent: 'bg-purple-500', hex: '#a855f7' }
+        };
+
+        const availableAvatars = ['🦊', '🐱', '🐼', '🐨', '🐯', '🦉', '🦋', '🐥', '🦕'];
+
+        window.connectToInstance = async () => {
+            const input = getEl('instance-code-input').value.trim().toUpperCase();
+            const errorEl = getEl('login-error');
+            
+            if(!input || input.length < 4) {
+                errorEl.textContent = "Veuillez entrer un code d'au moins 4 caractères.";
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            appId = input;
+            errorEl.classList.add('hidden');
+            
+            try {
+                // Déclenche la popup de connexion Google
+                const result = await signInWithPopup(auth, provider);
+                currentUser = result.user;
+                
+                elements.instanceGate().classList.add('hidden');
+                elements.mainApp().classList.remove('hidden');
+                getEl('current-instance-id').textContent = appId;
+                
+                await startAppFlow();
+            } catch (error) {
+                console.error("Erreur Auth:", error);
+                errorEl.textContent = "Échec de connexion (pop-up bloquée ou config Firebase absente).";
+                errorEl.classList.remove('hidden');
+            }
+        };
+
+        async function startAppFlow() {
+            try {
+                if (!currentUser) return;
+
+                const profileRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data');
+                const profileSnap = await getDoc(profileRef);
+                
+                if (profileSnap.exists()) {
+                    localProfile = profileSnap.data();
+                    elements.statusText().textContent = `INST : ${appId}`;
+                    syncProfileUI();
+                    startListening();
+                    checkAutoClose();
+                } else {
+                    // Si nouveau compte, on récupère le prénom Google par défaut
+                    if(currentUser.displayName) {
+                        getEl('profile-name').value = currentUser.displayName.split(' ')[0];
+                    }
+                    renderAvatarPicker('avatar-picker');
+                    getEl('profile-modal').classList.replace('hidden', 'flex');
+                }
+            } catch (err) {
+                console.error(err);
+                elements.statusText().innerHTML = '<span class="text-red-500">ERREUR</span>';
+            }
+        }
+
+        // Ancienne fonction Init nettoyée (on attend juste le clic du bouton Google)
+        async function init() {
+            initDOMElements();
+        }
+
+        function startListening() {
+            if (!currentUser || !appId) return;
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), 
+                snap => { tasksData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderTasks(); },
+                err => console.error("Tasks sync error", err)
+            );
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), 
+                snap => { expensesData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderExpenses(); },
+                err => console.error("Expenses sync error", err)
+            );
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'settlements'), 
+                snap => { settlementsData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderFinanceArchives(); renderFinanceChart(); },
+                err => console.error("Settlements sync error", err)
+            );
+        }
+
+        async function checkAutoClose() {
+            if (!currentUser || !appId) return;
+            const metaRef = doc(db, 'artifacts', appId, 'public', 'data', 'metadata');
+            const metaSnap = await getDoc(metaRef);
+            const currentM = `${new Date().getMonth()}-${new Date().getFullYear()}`;
+            if (!metaSnap.exists() || metaSnap.data().lastClose !== currentM) {
+                if (expensesData.length > 0) await settleAccounts();
+                await setDoc(metaRef, { lastClose: currentM });
+            }
+        }
+
+        window.switchTab = (tab) => {
+            ['tasks', 'accounts', 'profile'].forEach(s => {
+                const sec = getEl(`section-${s}`);
+                const btn = getEl(`tab-${s}-btn`);
+                if(sec) sec.style.display = tab === s ? 'block' : 'none';
+                if(btn) {
+                    btn.classList.toggle('text-blue-400', tab === s && s !== 'accounts');
+                    btn.classList.toggle('text-emerald-500', tab === s && s === 'accounts');
+                    btn.classList.toggle('text-slate-400', tab !== s);
+                }
+            });
+            getEl('main-title').textContent = tab === 'tasks' ? 'Nos Tâches' : (tab === 'accounts' ? 'Comptes' : 'Mon Profil');
+        };
+
+        function renderTasks() {
+            const todo = elements.todoList(); const done = elements.completedList(); const arch = elements.archivedTasksList();
+            if(!todo) return;
+            todo.innerHTML = ''; done.innerHTML = ''; arch.innerHTML = '';
+            tasksData.sort((a,b) => b.createdAt - a.createdAt).forEach(task => {
+                const color = taskColors[task.color] || taskColors['white'];
+                const isOverdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().setHours(0,0,0,0)) && !task.completed;
+                const li = document.createElement('li');
+                li.className = `${color.bg} p-4 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all`;
+                const tags = (task.tags || []).map(t => `<span class="bg-white/10 text-[8px] font-black uppercase px-2 py-0.5 rounded-full text-white">${t}</span>`).join(' ');
+                li.innerHTML = `<div class="color-accent ${color.accent}"></div><div class="flex items-start justify-between"><div class="flex items-start gap-3 flex-1 cursor-pointer" onclick="toggleTask('${task.id}', ${!task.completed})"><div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${task.completed ? 'bg-green-500 border-green-500' : 'border-slate-500'}">${task.completed ? '<i class="fa-solid fa-check text-[10px] text-white"></i>' : ''}</div><div class="min-w-0"><span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-all leading-tight text-sm">${escapeHTML(task.text)}</span><div class="flex flex-wrap gap-1 mt-1">${tags}</div>${task.dueDate ? `<p class="text-[8px] font-black mt-1 ${isOverdue ? 'text-red-400' : 'text-slate-500'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}</div></div><button onclick="openEditor('${task.id}')" class="p-1 text-slate-500 hover:text-blue-400"><i class="fa-solid fa-pen text-[10px]"></i></button></div>`;
+                if (task.archived) arch.appendChild(li); else (task.completed ? done : todo).appendChild(li);
+            });
+            if(todo.innerHTML === '') todo.innerHTML = '<li class="text-slate-600 text-center py-4 text-xs italic">C\'est calme ici...</li>';
+        }
+
+        function renderExpenses() {
+            const rec = elements.recurringList(); const pon = elements.ponctuelleList(); if(!rec) return;
+            rec.innerHTML = ''; pon.innerHTML = ''; const stats = { users: {}, fixed: 0, ponct: 0 };
+            expensesData.forEach(exp => {
+                const li = document.createElement('li'); li.className = "bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex justify-between items-center shadow-sm relative";
+                li.innerHTML = `<div class="flex items-center gap-3 min-w-0"><div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-lg shrink-0">${exp.payer.avatar}</div><div class="min-w-0"><p class="font-bold text-slate-200 truncate text-sm">${escapeHTML(exp.text)}</p><p class="text-[9px] text-slate-500 uppercase font-black">Par ${escapeHTML(exp.payer.name)}</p></div></div><div class="flex items-center gap-3"><span class="font-black text-emerald-400 text-sm">${exp.amount.toFixed(2)}€</span><button onclick="deleteExpense('${exp.id}')" class="text-slate-600 hover:text-red-400"><i class="fa-regular fa-trash-can text-xs"></i></button></div>`;
+                if(exp.isRecurring) { rec.appendChild(li); stats.fixed += exp.amount; } else { pon.appendChild(li); stats.ponct += exp.amount; }
+                const uId = exp.payer.uid; if(!stats.users[uId]) stats.users[uId] = { name: exp.payer.name, spent: 0, income: exp.payer.income || 0 }; stats.users[uId].spent += exp.amount;
+            });
+            const userList = Object.values(stats.users); const totalS = stats.fixed + stats.ponct; let summHTML = '', chartHTML = '';
+            if(userList.length >= 2) {
+                const u1 = userList[0], u2 = userList[1];
+                const ratio1 = (u1.income + u2.income) > 0 ? u1.income / (u1.income + u2.income) : 0.5;
+                const bal = u1.spent - (totalS * ratio1);
+                if(Math.abs(bal) < 0.1) summHTML = `<p class="text-lg font-bold">Équilibre parfait ! ✨</p>`;
+                else { const debtor = bal > 0 ? u2.name : u1.name; const creditor = bal > 0 ? u1.name : u2.name; summHTML = `<p class="text-lg font-black">${debtor} doit <span class="text-emerald-400">${Math.abs(bal).toFixed(2)}€</span> à ${creditor}</p>`; }
+                const fP = totalS > 0 ? (stats.fixed / totalS) * 100 : 0;
+                chartHTML = `<div class="w-full h-2 bg-black/20 rounded-full flex overflow-hidden border border-white/5"><div class="bg-blue-500 h-full" style="width:${fP}%"></div><div class="bg-emerald-500 h-full" style="width:${100-fP}%"></div></div>`;
+            } else summHTML = `<p class="text-xs opacity-50 italic text-center">Besoin de deux profils</p>`;
+            elements.balanceSummary().innerHTML = summHTML; elements.visualStats().innerHTML = chartHTML;
+            getEl('current-month-label').textContent = `${["Janv", "Févr", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"][new Date().getMonth()]} ${new Date().getFullYear()}`;
+        }
+
+        function renderFinanceArchives() {
+            const list = elements.archivedAccountsList(); if(!list) return;
+            list.innerHTML = settlementsData.sort((a,b) => b.settledAt - a.settledAt).map(arc => `
+                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex justify-between items-center">
+                    <div><span class="font-black text-blue-400 uppercase text-xs">${arc.label}</span></div>
+                    <span class="font-bold text-slate-200">${arc.total.toFixed(2)}€</span>
+                </div>`).join('');
+        }
+
+        function renderFinanceChart() {
+            const chart = elements.financeChart(); if(!chart) return;
+            if(settlementsData.length === 0) { chart.innerHTML = '<p class="text-[10px] text-slate-600 w-full text-center py-10 italic">Aucune donnée historique</p>'; return; }
+            const last6 = settlementsData.sort((a,b) => b.settledAt - a.settledAt).slice(0, 6).reverse();
+            const maxVal = Math.max(...last6.map(s => s.total), 500);
+            chart.innerHTML = last6.map(s => {
+                const height = (s.total / maxVal) * 100;
+                return `<div class="flex-1 flex flex-col items-center gap-1 h-full justify-end"><span class="text-[8px] font-bold text-emerald-400">${Math.round(s.total)}€</span><div class="w-full bg-slate-700 rounded-t-sm chart-bar-anim relative overflow-hidden" style="height: ${height}%"><div class="absolute inset-0 bg-gradient-to-t from-emerald-600/50 to-emerald-400/50"></div></div><span class="text-[7px] text-slate-500 font-black uppercase truncate w-full text-center">${s.label.split(' ')[0]}</span></div>`;
+            }).join('');
+        }
+
+        window.saveTask = async () => {
+            if (!currentUser || !appId) return;
+            const title = getEl('edit-title').value.trim(); if(!title) return;
+            const data = { text: title, description: getEl('edit-desc').value.trim(), dueDate: getEl('edit-due-date').value, tags: currentEditingTags, color: currentSelectedColor, subtasks: currentEditingSubtasks };
+            if(currentEditingId) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', currentEditingId), data);
+            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), { ...data, author: localProfile, completed: false, archived: false, createdAt: Date.now() });
+            closeEditor();
+        };
+
+        window.toggleTask = async (id, status) => {
+            if (!currentUser || !appId) return;
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', id), { completed: status, completedBy: status ? localProfile : null });
+        };
+
+        window.deleteTaskFromEditor = async () => {
+            if (!currentUser || !appId || !currentEditingId) return;
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', currentEditingId)); closeEditor();
+        };
+
+        window.saveExpense = async () => {
+            if (!currentUser || !appId) return;
+            const text = getEl('expense-text').value.trim(); const amount = parseFloat(getEl('expense-amount').value); const isRec = getEl('expense-recurring').checked;
+            if(!text || isNaN(amount) || amount <= 0) return;
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), { text, amount, isRecurring: isRec, payer: localProfile, createdAt: Date.now() });
+            closeExpenseEditor();
+        };
+
+        window.deleteExpense = async (id) => {
+            if (!currentUser || !appId) return;
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id));
+        };
+
+        window.settleAccountsManual = async () => {
+            if(confirm("Clôturer le mois ?")) await settleAccounts();
+        };
+
+        async function settleAccounts() {
+            if (!currentUser || !appId || expensesData.length === 0) return;
+            const now = new Date(); const label = `${["Jan", "Fév", "Mar", "Avr", "Mai", "Jui", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"][now.getMonth()]} ${now.getFullYear()}`;
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'settlements'), { label, total: expensesData.reduce((acc, e) => acc + e.amount, 0), settledAt: Date.now(), snapshot: expensesData });
+            for(const task of tasksData.filter(t => t.completed && !t.archived)) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', task.id), { archived: true });
+            for(const exp of expensesData) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', exp.id));
+        }
+
+        window.saveProfile = async () => {
+            if (!currentUser || !appId) return;
+            const n = getEl('profile-name').value.trim(); const inc = parseFloat(getEl('profile-income').value) || 0; if(!n) return;
+            localProfile = { uid: currentUser.uid, name: n, income: inc, avatar: selectedAvatar };
+            await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data'), localProfile);
+            getEl('profile-modal').classList.replace('flex', 'hidden');
+            syncProfileUI(); startListening();
+        };
+
+        window.updateProfileFromSettings = async () => {
+            if (!currentUser || !appId) return;
+            const n = getEl('settings-name').value.trim(); const inc = parseFloat(getEl('settings-income').value) || 0; if(!n) return;
+            localProfile = { ...localProfile, name: n, income: inc, avatar: selectedAvatar };
+            await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data'), localProfile);
+            syncProfileUI(); alert("Profil mis à jour !");
+        };
+
+        function syncProfileUI() {
+            if(!localProfile) return;
+            getEl('current-profile-avatar').textContent = localProfile.avatar;
+            getEl('current-profile-name-display').textContent = localProfile.name;
+            getEl('current-profile-income-display').textContent = `Revenu : ${localProfile.income}€`;
+            getEl('settings-name').value = localProfile.name;
+            getEl('settings-income').value = localProfile.income;
+            selectedAvatar = localProfile.avatar; renderAvatarPicker('settings-avatar-picker');
+        }
+
+        window.toggleTaskArchive = () => { getEl('active-tasks-view').classList.toggle('hidden'); getEl('archived-tasks-view').classList.toggle('hidden'); };
+        window.toggleAccountArchive = () => { getEl('active-accounts-view').classList.toggle('hidden'); getEl('archived-accounts-view').classList.toggle('hidden'); };
+        window.openEditor = (id = null) => {
+            currentEditingId = id; currentEditingSubtasks = []; currentEditingTags = [];
+            const t = id ? tasksData.find(x => x.id === id) : null;
+            getEl('modal-title').textContent = id ? "Modifier" : "Nouvelle Tâche";
+            getEl('edit-title').value = t ? t.text : ''; getEl('edit-desc').value = t ? t.description : ''; getEl('edit-due-date').value = t ? t.dueDate : '';
+            if(t) { currentEditingSubtasks = [...(t.subtasks || [])]; currentEditingTags = [...(t.tags || [])]; currentSelectedColor = t.color || 'white'; }
+            getEl('modal-delete-btn').classList.toggle('hidden', !id);
+            renderColorPicker(); renderEditorSubtasks(); renderEditorTags(); getEl('task-modal').classList.replace('hidden', 'flex');
+        };
+        window.closeEditor = () => getEl('task-modal').classList.replace('flex', 'hidden');
+        window.closeExpenseEditor = () => getEl('expense-modal').classList.replace('flex', 'hidden');
+        window.openExpenseEditor = () => getEl('expense-modal').classList.replace('hidden', 'flex');
+        window.renderColorPicker = () => { getEl('color-picker').innerHTML = Object.keys(taskColors).map(c => `<button onclick="selectColor('${c}')" class="w-10 h-10 rounded-full border-2 ${currentSelectedColor === c ? 'border-white scale-110' : 'border-transparent'}" style="background-color: ${taskColors[c].hex}"></button>`).join(''); };
+        window.selectColor = (c) => { currentSelectedColor = c; renderColorPicker(); };
+        window.renderAvatarPicker = (id) => { getEl(id).innerHTML = availableAvatars.map(a => `<button onclick="selectAvatar('${a}', '${id}')" class="w-10 h-10 text-xl rounded-full border-2 ${selectedAvatar === a ? 'border-blue-500 bg-blue-900/40 scale-110' : 'border-transparent'}">${a}</button>`).join(''); };
+        window.selectAvatar = (a, id) => { selectedAvatar = a; renderAvatarPicker(id); };
+        window.addTagToEditor = () => { const i = getEl('new-tag-input'); const v = i.value.trim().toLowerCase(); if(v && !currentEditingTags.includes(v)) { currentEditingTags.push(v); i.value = ''; renderEditorTags(); } };
+        window.removeTagFromEditor = (t) => { currentEditingTags = currentEditingTags.filter(x => x !== t); renderEditorTags(); };
+        function renderEditorTags() { getEl('edit-tags-list').innerHTML = currentEditingTags.map(t => `<span class="bg-blue-900/60 text-blue-200 px-2.5 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1 border border-blue-500/50">${t}<button onclick="removeTagFromEditor('${t}')"><i class="fa-solid fa-xmark"></i></button></span>`).join(''); }
+        window.addSubtaskToEditor = () => { const i = getEl('new-subtask-input'); if(i.value.trim()) { currentEditingSubtasks.push({ id: Date.now().toString(), text: i.value.trim(), completed: false }); i.value = ''; renderEditorSubtasks(); } };
+        window.removeSubtaskFromEditor = (id) => { currentEditingSubtasks = currentEditingSubtasks.filter(x => x.id !== id); renderEditorSubtasks(); };
+        function renderEditorSubtasks() { getEl('edit-subtasks-list').innerHTML = currentEditingSubtasks.map(s => `<li class="flex justify-between bg-slate-700/50 p-2.5 rounded-lg text-xs text-slate-200 border border-white/5"><span>${s.text}</span><button onclick="removeSubtaskFromEditor('${s.id}')" class="text-red-400"><i class="fa-solid fa-trash-can"></i></button></li>`).join(''); }
+        function escapeHTML(s) { return s.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t])); }
+
+    </script>
+</body>
+</html>

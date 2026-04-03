@@ -103,7 +103,7 @@
                     <div id="tasks-container">
                         <div id="active-tasks-view">
                             <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2 border-b border-slate-800 pb-2">À faire</h2>
-                            <!-- DISPOSITION EN VRAIE MAÇONNERIE JS -->
+                            <!-- BLINDAGE DE GRILLE : min-w-0 pour empêcher l'éclatement -->
                             <div id="todo-list" class="w-full mb-8"></div>
                         </div>
                         <div id="archived-tasks-view" class="hidden">
@@ -653,7 +653,7 @@
             const icons = { 'tasks':'fa-clipboard-list text-blue-500', 'agenda':'fa-calendar-days text-violet-500', 'accounts':'fa-wallet text-emerald-500', 'profile':'fa-user-gear text-slate-400' };
             getEl('main-title').innerHTML = `<i class="fa-solid ${icons[tab]}"></i> ${titles[tab]}`;
             
-            if(tab === 'agenda') renderAgenda(); // Re-render in case size changed
+            if(tab === 'agenda') renderAgenda(); 
         };
 
         window.toggleFinanceChartVisibility = () => {
@@ -663,7 +663,7 @@
 
         // --- AGENDA RENDERER (VUE MOIS PAR MOIS) ---
         window.changeMonth = (delta) => {
-            currentCalendarDate.setDate(1); // FIX: Empêche le bug du 31e jour qui saute des mois
+            currentCalendarDate.setDate(1);
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
             renderAgenda();
         };
@@ -678,12 +678,13 @@
             const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
             getEl('calendar-month-label').textContent = `${monthNames[month]} ${year}`;
 
+            // Calculer toujours EXACTEMENT 42 cases (6 semaines)
             const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
             let startingDayOfWeek = firstDay.getDay();
             if(startingDayOfWeek === 0) startingDayOfWeek = 7;
 
-            const daysInMonth = lastDay.getDate();
+            const prevMonthLastDay = new Date(year, month, 0).getDate();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
             const monthStart = new Date(year, month, 1);
             const monthEnd = new Date(year, month + 1, 0, 23, 59, 59);
 
@@ -725,9 +726,7 @@
 
             let html = '';
             
-            const prevMonthLastDay = new Date(year, month, 0).getDate();
-            
-            // Cases de la fin du mois précédent
+            // 1. Remplir le début (Mois précédent)
             for(let i = 1; i < startingDayOfWeek; i++) {
                 const prevDay = prevMonthLastDay - (startingDayOfWeek - 1 - i);
                 html += `<div class="bg-slate-800/30 rounded-xl p-1 md:p-2 border border-transparent flex flex-col min-w-0 overflow-hidden aspect-square opacity-50"><span class="text-[10px] md:text-xs font-black text-slate-600 mb-1 md:mb-2 text-right px-1 shrink-0">${prevDay}</span></div>`;
@@ -735,7 +734,7 @@
 
             const today = new Date();
 
-            // Cases des jours du mois en cours
+            // 2. Remplir le mois en cours
             for(let day = 1; day <= daysInMonth; day++) {
                 const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
                 const itemsForDay = agendaItems.filter(item => item.date === day);
@@ -744,13 +743,13 @@
                     const isTask = item.type === 'task';
                     const onClick = isTask ? `openEditor('${item.id}')` : `openEventEditor('${item.id}')`;
                     return `
-                    <div onclick="${onClick}" class="text-[8px] md:text-[10px] leading-tight font-bold text-white px-1 py-0.5 rounded mb-1 truncate cursor-pointer shadow-sm hover:brightness-125 transition-all w-full" style="background-color: ${item.color}; border-left: 2px solid rgba(255,255,255,0.4)">
+                    <div onclick="${onClick}" class="text-[8px] md:text-[10px] leading-tight font-bold text-white px-1 py-0.5 rounded mb-1 truncate cursor-pointer shadow-sm hover:brightness-125 transition-all w-full min-w-0" style="background-color: ${item.color}; border-left: 2px solid rgba(255,255,255,0.4)">
                         ${escapeHTML(item.title)}
                     </div>`;
                 }).join('');
 
                 html += `
-                <div class="bg-slate-800 rounded-xl p-1 md:p-2 border ${isToday ? 'border-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.2)]' : 'border-slate-700'} flex flex-col hover:border-slate-500 transition-colors min-w-0 overflow-hidden aspect-square">
+                <div class="bg-slate-800 rounded-xl p-1 md:p-2 border ${isToday ? 'border-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.2)] z-10' : 'border-slate-700'} flex flex-col hover:border-slate-500 transition-colors min-w-0 overflow-hidden aspect-square">
                     <span class="text-[10px] md:text-xs font-black ${isToday ? 'text-violet-400' : 'text-slate-400'} mb-1 md:mb-2 text-right px-1 shrink-0">${day}</span>
                     <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col min-w-0">
                         ${itemsHtml}
@@ -758,9 +757,9 @@
                 </div>`;
             }
 
-            // Cases du début du mois suivant
-            const totalCells = (startingDayOfWeek - 1) + daysInMonth;
-            const remainingCells = (Math.ceil(totalCells / 7) * 7) - totalCells;
+            // 3. Remplir la fin pour atteindre STRICTEMENT 42 cases (6 semaines)
+            const currentCells = (startingDayOfWeek - 1) + daysInMonth;
+            const remainingCells = 42 - currentCells;
             for(let i = 0; i < remainingCells; i++) {
                 const nextDay = i + 1;
                 html += `<div class="bg-slate-800/30 rounded-xl p-1 md:p-2 border border-transparent flex flex-col min-w-0 overflow-hidden aspect-square opacity-50"><span class="text-[10px] md:text-xs font-black text-slate-600 mb-1 md:mb-2 text-right px-1 shrink-0">${nextDay}</span></div>`;
@@ -849,13 +848,13 @@
             const todo = elements.todoList(); const arch = elements.archivedTasksList();
             if(!todo) return; todo.innerHTML = ''; arch.innerHTML = '';
             
-            // On prépare les colonnes pour la vue maçonnée (Masonry)
-            const col1 = document.createElement('div'); col1.className = 'flex flex-col gap-4 lg:gap-6 w-full';
-            const col2 = document.createElement('div'); col2.className = 'flex flex-col gap-4 lg:gap-6 w-full';
+            // On prépare DEUX colonnes physiques (Vraie Maçonnerie CSS) pour garantir l'indépendance des largeurs
+            const col1 = document.createElement('div'); col1.className = 'flex flex-col gap-4 lg:gap-6 w-full min-w-0';
+            const col2 = document.createElement('div'); col2.className = 'flex flex-col gap-4 lg:gap-6 w-full min-w-0';
             let todoCount = 0;
 
-            const archCol1 = document.createElement('div'); archCol1.className = 'flex flex-col gap-4 lg:gap-6 w-full';
-            const archCol2 = document.createElement('div'); archCol2.className = 'flex flex-col gap-4 lg:gap-6 w-full';
+            const archCol1 = document.createElement('div'); archCol1.className = 'flex flex-col gap-4 lg:gap-6 w-full min-w-0';
+            const archCol2 = document.createElement('div'); archCol2.className = 'flex flex-col gap-4 lg:gap-6 w-full min-w-0';
             let archCount = 0;
 
             tasksData.sort((a,b) => b.createdAt - a.createdAt).forEach(task => {
@@ -866,27 +865,28 @@
                 
                 let detailsHTML = '';
                 if (hasDetails && isExpanded) {
-                    const desc = task.description ? `<p class="text-sm text-slate-300 mt-4 italic whitespace-pre-wrap px-1">${escapeHTML(task.description)}</p>` : '';
-                    const subs = (task.subtasks || []).map(s => `<li onclick="toggleSubtask(event, '${task.id}', '${s.id}')" class="text-sm flex items-center gap-3 text-slate-200 cursor-pointer hover:text-white transition-colors py-2"><i class="fa-solid ${s.completed ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-500'} text-lg"></i> <span class="${s.completed ? 'line-through opacity-50' : ''}">${escapeHTML(s.text)}</span></li>`).join('');
-                    detailsHTML = `<div class="mt-4 border-t border-white/10 pt-3" onclick="event.stopPropagation()">${desc}${subs ? `<ul class="mt-4 space-y-1">${subs}</ul>`:''}</div>`;
+                    const desc = task.description ? `<p class="text-sm text-slate-300 mt-4 italic whitespace-pre-wrap px-1 break-words min-w-0">${escapeHTML(task.description)}</p>` : '';
+                    const subs = (task.subtasks || []).map(s => `<li onclick="toggleSubtask(event, '${task.id}', '${s.id}')" class="text-sm flex items-start gap-3 text-slate-200 cursor-pointer hover:text-white transition-colors py-2 min-w-0"><i class="fa-solid ${s.completed ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-500'} text-lg shrink-0 mt-0.5"></i> <span class="${s.completed ? 'line-through opacity-50' : ''} break-words min-w-0 flex-1">${escapeHTML(s.text)}</span></li>`).join('');
+                    detailsHTML = `<div class="mt-4 border-t border-white/10 pt-3 min-w-0" onclick="event.stopPropagation()">${desc}${subs ? `<ul class="mt-4 space-y-1 min-w-0">${subs}</ul>`:''}</div>`;
                 }
 
                 const li = document.createElement('div');
-                li.className = `${color.bg} p-4 md:p-5 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all hover:border-slate-500 w-full`;
+                li.className = `${color.bg} p-4 md:p-5 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all hover:border-slate-500 w-full min-w-0`;
                 const tags = (task.tags || []).map(t => `<span class="bg-white/10 text-[10px] font-black uppercase px-3 py-1 rounded-full text-white">${t}</span>`).join(' ');
                 
+                // min-w-0 et flex-1 ajoutés partout pour FORCER le retour à la ligne et empêcher l'éclatement de grille
                 li.innerHTML = `
                     <div class="color-accent ${color.accent}"></div>
-                    <div class="flex items-start justify-between gap-3 md:gap-5">
+                    <div class="flex items-start justify-between gap-3 md:gap-5 min-w-0">
                         <div class="py-1 pr-2 cursor-pointer shrink-0" onclick="event.stopPropagation(); toggleTask('${task.id}', ${!task.completed})">
                             <div class="w-7 h-7 rounded-full border-2 flex items-center justify-center transition-colors ${task.completed ? 'bg-green-500 border-green-500' : 'border-slate-400 hover:border-slate-200'}">
                                 ${task.completed ? '<i class="fa-solid fa-check text-sm text-white"></i>' : ''}
                             </div>
                         </div>
                         <div class="min-w-0 flex-1 cursor-pointer py-1" onclick="toggleCollapse(event, '${task.id}')">
-                            <div class="flex items-center justify-between gap-2">
-                                <span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-words leading-tight text-base md:text-lg">${escapeHTML(task.text)}</span>
-                                ${hasDetails ? `<i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-slate-400 text-base px-2"></i>` : ''}
+                            <div class="flex items-start justify-between gap-2 min-w-0">
+                                <span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-words leading-tight text-base md:text-lg min-w-0 flex-1">${escapeHTML(task.text)}</span>
+                                ${hasDetails ? `<i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-slate-400 text-base px-2 shrink-0 mt-0.5"></i>` : ''}
                             </div>
                             <div class="flex flex-wrap gap-2 mt-2">${tags}</div>
                             ${task.dueDate ? `<p class="text-xs font-black mt-3 ${isOverdue ? 'text-red-400' : 'text-slate-400'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}
@@ -908,21 +908,21 @@
                 }
             });
 
-            // Injection dans le DOM
+            // Injection des 2 colonnes dans le DOM
             if(todoCount === 0) {
-                todo.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm md:text-base italic bg-slate-800/30 rounded-xl border border-slate-700 border-dashed w-full">La liste est vide...</div>';
-                todo.className = "w-full";
+                todo.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm md:text-base italic bg-slate-800/30 rounded-xl border border-slate-700 border-dashed w-full min-w-0">La liste est vide...</div>';
+                todo.className = "w-full min-w-0";
             } else {
-                todo.className = "grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 w-full items-start";
+                todo.className = "grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 w-full items-start min-w-0";
                 todo.appendChild(col1);
                 todo.appendChild(col2);
             }
 
             if(archCount === 0) {
-                arch.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm md:text-base italic w-full">Aucune archive.</div>';
-                arch.className = "w-full";
+                arch.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm md:text-base italic w-full min-w-0">Aucune archive.</div>';
+                arch.className = "w-full min-w-0";
             } else {
-                arch.className = "grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 opacity-60 hover:opacity-100 transition-opacity w-full items-start";
+                arch.className = "grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 opacity-60 hover:opacity-100 transition-opacity w-full items-start min-w-0";
                 arch.appendChild(archCol1);
                 arch.appendChild(archCol2);
             }
@@ -1170,7 +1170,7 @@
         function renderEditorTags() { getEl('edit-tags-list').innerHTML = currentEditingTags.map(t => `<span class="bg-blue-900/60 text-blue-200 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-2 border border-blue-500/50">${t}<button type="button" onclick="removeTagFromEditor('${t}')" class="hover:text-white"><i class="fa-solid fa-xmark"></i></button></span>`).join(''); }
         window.addSubtaskToEditor = () => { const i = getEl('new-subtask-input'); if(i.value.trim()) { currentEditingSubtasks.push({ id: Date.now().toString(), text: i.value.trim(), completed: false }); i.value = ''; renderEditorSubtasks(); } };
         window.removeSubtaskFromEditor = (id) => { currentEditingSubtasks = currentEditingSubtasks.filter(x => x.id !== id); renderEditorSubtasks(); };
-        function renderEditorSubtasks() { getEl('edit-subtasks-list').innerHTML = currentEditingSubtasks.map(s => `<li class="flex justify-between items-center bg-slate-700/50 p-3 rounded-lg text-sm md:text-base text-slate-200 border border-white/5"><span>${s.text}</span><button type="button" onclick="removeSubtaskFromEditor('${s.id}')" class="text-red-400 hover:text-red-300"><i class="fa-solid fa-trash-can"></i></button></li>`).join(''); }
+        function renderEditorSubtasks() { getEl('edit-subtasks-list').innerHTML = currentEditingSubtasks.map(s => `<li class="flex justify-between items-center bg-slate-700/50 p-3 rounded-lg text-sm md:text-base text-slate-200 border border-white/5 min-w-0"><span class="break-words min-w-0 flex-1">${s.text}</span><button type="button" onclick="removeSubtaskFromEditor('${s.id}')" class="text-red-400 hover:text-red-300 shrink-0 ml-2"><i class="fa-solid fa-trash-can"></i></button></li>`).join(''); }
         function escapeHTML(s) { return s.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t])); }
 
     </script>

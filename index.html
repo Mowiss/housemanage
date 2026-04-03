@@ -177,6 +177,11 @@
                         <input type="number" id="settings-income" placeholder="Revenu mensuel" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 font-black text-blue-400 outline-none">
                         
                         <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2 text-center mt-4">Votre Avatar</label>
+                            <div id="settings-avatar-picker" class="flex justify-center gap-2 flex-wrap mb-4"></div>
+                        </div>
+
+                        <div>
                             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2 text-center">Votre couleur d'agenda</label>
                             <div id="settings-user-color-picker" class="flex justify-center gap-2 flex-wrap"></div>
                         </div>
@@ -333,6 +338,11 @@
                 <input type="number" id="profile-income" placeholder="Revenu mensuel €" class="w-full rounded-xl bg-slate-700 border border-slate-600 p-3 font-black text-center text-blue-400">
                 
                 <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2 text-center mt-4">Votre Avatar</label>
+                    <div id="initial-avatar-picker" class="flex justify-center gap-2 flex-wrap mb-4"></div>
+                </div>
+
+                <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2 text-center mt-4">Choisissez votre couleur</label>
                     <div id="initial-user-color-picker" class="flex justify-center gap-2 flex-wrap"></div>
                 </div>
@@ -430,6 +440,11 @@
         async function startAppFlow() {
             if (!currentUser || !appId) return;
             try {
+                // On s'assure que l'avatar Google est dans la liste s'il existe
+                if(currentUser.photoURL && !availableAvatars.includes(currentUser.photoURL)) {
+                    availableAvatars.unshift(currentUser.photoURL);
+                }
+
                 const profileRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data');
                 const profileSnap = await getDoc(profileRef);
                 
@@ -440,7 +455,14 @@
                     syncProfileUI(); startListening(); checkAutoClose();
                 } else {
                     if(currentUser.displayName) getEl('profile-name').value = currentUser.displayName.split(' ')[0];
-                    if(currentUser.photoURL) getEl('initial-profile-avatar').innerHTML = `<img src="${currentUser.photoURL}" class="w-full h-full object-cover" referrerpolicy="no-referrer">`;
+                    if(currentUser.photoURL) {
+                        selectedAvatar = currentUser.photoURL;
+                        getEl('initial-profile-avatar').innerHTML = `<img src="${currentUser.photoURL}" class="w-full h-full object-cover" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">`;
+                    } else {
+                        selectedAvatar = '👤';
+                        getEl('initial-profile-avatar').textContent = '👤';
+                    }
+                    renderAvatarPicker('initial-avatar-picker');
                     renderUserColorPicker('initial-user-color-picker');
                     getEl('profile-modal').classList.replace('hidden', 'flex');
                 }
@@ -562,13 +584,14 @@
                 } else {
                     const timeStr = item.data.timeStart ? `${item.data.timeStart}${item.data.timeEnd ? ' - '+item.data.timeEnd : ''}` : 'Journée entière';
                     const locStr = item.data.location ? `<span class="ml-2 text-slate-400"><i class="fa-solid fa-location-dot"></i> ${escapeHTML(item.data.location)}</span>` : '';
+                    const avatarContent = item.data.author?.avatar ? (item.data.author.avatar.startsWith('http') ? `<img src="${item.data.author.avatar}" class="w-5 h-5 rounded-full border border-slate-600 ml-2 shrink-0 object-cover" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : `<div class="w-5 h-5 rounded-full border border-slate-600 ml-2 shrink-0 flex items-center justify-center text-[10px] bg-slate-700">${item.data.author.avatar}</div>`) : '';
                     html += `
                     <div onclick="openEventEditor('${item.id}')" class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex gap-3 items-center mb-2 cursor-pointer shadow-md">
                         <div class="w-1.5 h-full rounded-full self-stretch" style="background-color: ${item.color}"></div>
                         <div class="flex-1 min-w-0">
                             <div class="flex justify-between items-start">
                                 <p class="text-sm font-bold text-slate-100 truncate">${escapeHTML(item.title)}</p>
-                                ${item.data.author?.avatar ? `<img src="${item.data.author.avatar}" class="w-5 h-5 rounded-full border border-slate-600 ml-2 shrink-0">` : ''}
+                                ${avatarContent}
                             </div>
                             <p class="text-[9px] font-bold text-violet-400 mt-1 uppercase tracking-wider">
                                 <i class="fa-regular fa-clock"></i> ${timeStr} ${locStr}
@@ -682,23 +705,46 @@
                 const color = taskColors[task.color] || taskColors['white'];
                 const isOverdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().setHours(0,0,0,0)) && !task.completed;
                 const isExpanded = !collapsedTasks.has(task.id);
-                const hasDetails = task.description || (task.subtasks && task.subtasks.length > 0);
                 
                 let detailsHTML = '';
-                if (hasDetails && isExpanded) {
+                if (isExpanded) {
                     const desc = task.description ? `<p class="text-xs text-slate-400 mt-2 italic whitespace-pre-wrap">${escapeHTML(task.description)}</p>` : '';
                     const subs = (task.subtasks || []).map(s => `<li onclick="toggleSubtask(event, '${task.id}', '${s.id}')" class="text-[10px] flex items-center gap-2 text-slate-300 cursor-pointer hover:text-white transition-colors py-1"><i class="fa-solid ${s.completed ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-600'}"></i> <span class="${s.completed ? 'line-through opacity-50' : ''}">${escapeHTML(s.text)}</span></li>`).join('');
-                    detailsHTML = `<div class="mt-2 border-t border-white/5 pt-2" onclick="event.stopPropagation()">${desc}${subs ? `<ul class="mt-2 space-y-0.5">${subs}</ul>`:''}</div>`;
+                    
+                    const editBtn = `<div class="mt-3 flex justify-end"><button onclick="event.stopPropagation(); openEditor('${task.id}')" class="text-[10px] bg-slate-700/50 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg flex items-center gap-2 transition-colors"><i class="fa-solid fa-pen"></i> Modifier</button></div>`;
+                    
+                    detailsHTML = `<div class="mt-2 border-t border-white/5 pt-2" onclick="event.stopPropagation()">${desc}${subs ? `<ul class="mt-2 space-y-0.5">${subs}</ul>`:''}${editBtn}</div>`;
                 }
-                const expandBtn = hasDetails ? `<button onclick="toggleCollapse(event, '${task.id}')" class="text-slate-500 hover:text-slate-300 px-2 py-1"><i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-[10px]"></i></button>` : '';
+                const expandBtn = `<div class="text-slate-500 shrink-0 ml-2 pt-0.5"><i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-[10px]"></i></div>`;
 
                 const li = document.createElement('li');
-                li.className = `${color.bg} p-4 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all`;
+                li.className = `${color.bg} p-4 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all mb-2`;
                 const tags = (task.tags || []).map(t => `<span class="bg-white/10 text-[8px] font-black uppercase px-2 py-0.5 rounded-full text-white">${t}</span>`).join(' ');
-                li.innerHTML = `<div class="color-accent ${color.accent}"></div><div class="flex items-start justify-between"><div class="flex items-start gap-3 flex-1 cursor-pointer" onclick="toggleTask('${task.id}', ${!task.completed})"><div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${task.completed ? 'bg-green-500 border-green-500' : 'border-slate-500'}">${task.completed ? '<i class="fa-solid fa-check text-[10px] text-white"></i>' : ''}</div><div class="min-w-0 flex-1"><div class="flex items-center gap-2"><span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-all leading-tight text-sm">${escapeHTML(task.text)}</span>${expandBtn}</div><div class="flex flex-wrap gap-1 mt-1">${tags}</div>${task.dueDate ? `<p class="text-[8px] font-black mt-1 ${isOverdue ? 'text-red-400' : 'text-slate-500'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}${detailsHTML}</div></div><button onclick="openEditor('${task.id}')" class="p-1 text-slate-500 hover:text-blue-400 ml-2"><i class="fa-solid fa-pen text-[10px]"></i></button></div>`;
+                
+                li.innerHTML = `
+                    <div class="color-accent ${color.accent}"></div>
+                    <div class="flex items-start gap-3">
+                        <div class="shrink-0 mt-0.5 cursor-pointer py-1 pr-1" onclick="event.stopPropagation(); toggleTask('${task.id}', ${!task.completed})">
+                            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${task.completed ? 'bg-green-500 border-green-500' : 'border-slate-500 hover:border-slate-400'}">
+                                ${task.completed ? '<i class="fa-solid fa-check text-[10px] text-white"></i>' : ''}
+                            </div>
+                        </div>
+                        <div class="min-w-0 flex-1 cursor-pointer py-1" onclick="toggleCollapse(event, '${task.id}')">
+                            <div class="flex items-start justify-between">
+                                <div class="min-w-0 flex-1">
+                                    <span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-words leading-tight text-sm">${escapeHTML(task.text)}</span>
+                                    <div class="flex flex-wrap gap-1 mt-1">${tags}</div>
+                                    ${task.dueDate ? `<p class="text-[8px] font-black mt-1 ${isOverdue ? 'text-red-400' : 'text-slate-500'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}
+                                </div>
+                                ${expandBtn}
+                            </div>
+                            ${detailsHTML}
+                        </div>
+                    </div>`;
+                    
                 if (task.archived || task.completed) arch.appendChild(li); else todo.appendChild(li);
             });
-            if(todo.innerHTML === '') todo.innerHTML = '<li class="text-slate-500 text-center py-6 text-sm italic">C\'est calme ici...</li>';
+            if(todo.innerHTML === '') todo.innerHTML = '<li class="text-slate-600 text-center py-4 text-xs italic">C\'est calme ici...</li>';
         }
 
         // --- EXPENSES RENDERER ---
@@ -770,8 +816,7 @@
         window.saveProfile = async () => {
             if (!currentUser || !appId) return;
             const n = getEl('profile-name').value.trim(); const inc = parseFloat(getEl('profile-income').value) || 0; if(!n) return;
-            const photo = currentUser.photoURL || '👤';
-            localProfile = { uid: currentUser.uid, name: n, income: inc, avatar: photo, color: selectedUserColor };
+            localProfile = { uid: currentUser.uid, name: n, income: inc, avatar: selectedAvatar, color: selectedUserColor };
             await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data'), localProfile);
             getEl('profile-modal').classList.replace('flex', 'hidden');
             syncProfileUI(); startListening();
@@ -779,15 +824,14 @@
         window.updateProfileFromSettings = async () => {
             if (!currentUser || !appId) return;
             const n = getEl('settings-name').value.trim(); const inc = parseFloat(getEl('settings-income').value) || 0; if(!n) return;
-            const photo = currentUser.photoURL || '👤';
-            localProfile = { ...localProfile, name: n, income: inc, avatar: photo, color: selectedUserColor };
+            localProfile = { ...localProfile, name: n, income: inc, avatar: selectedAvatar, color: selectedUserColor };
             await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data'), localProfile);
             syncProfileUI(); alert("Profil mis à jour !"); renderAgenda(); // Rafraîchit l'agenda avec la nv couleur
         };
 
         function syncProfileUI() {
             if(!localProfile) return;
-            const avatarContent = localProfile.avatar && localProfile.avatar.startsWith('http') ? `<img src="${localProfile.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer">` : (localProfile.avatar || '👤');
+            const avatarContent = localProfile.avatar && localProfile.avatar.startsWith('http') ? `<img src="${localProfile.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">` : (localProfile.avatar || '👤');
             const avatarEl = getEl('current-profile-avatar');
             avatarEl.innerHTML = avatarContent;
             avatarEl.style.borderColor = localProfile.color || '#3b82f6';
@@ -798,7 +842,9 @@
             getEl('settings-name').value = localProfile.name;
             getEl('settings-income').value = localProfile.income;
             
+            selectedAvatar = localProfile.avatar || '👤';
             selectedUserColor = localProfile.color || '#3b82f6';
+            renderAvatarPicker('settings-avatar-picker');
             renderUserColorPicker('settings-user-color-picker');
         }
 
@@ -820,6 +866,27 @@
         
         window.renderColorPicker = () => { getEl('color-picker').innerHTML = Object.keys(taskColors).map(c => `<button onclick="selectColor('${c}')" class="w-10 h-10 rounded-full border-2 ${currentSelectedColor === c ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'border-transparent opacity-50 hover:opacity-100'}" style="background-color: ${taskColors[c].hex};"></button>`).join(''); };
         window.selectColor = (c) => { currentSelectedColor = c; renderColorPicker(); };
+
+        window.renderAvatarPicker = (id) => { 
+            getEl(id).innerHTML = availableAvatars.map(a => {
+                const isImg = a.startsWith('http');
+                const content = isImg ? `<img src="${a}" class="w-full h-full object-cover rounded-full" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">` : a;
+                return `<button onclick="selectAvatar('${a}', '${id}')" class="w-10 h-10 flex items-center justify-center text-xl rounded-full border-2 ${selectedAvatar === a ? 'border-blue-500 bg-blue-900/40 scale-110' : 'border-transparent'}">${content}</button>`;
+            }).join(''); 
+        };
+        window.selectAvatar = (a, id) => { 
+            selectedAvatar = a; 
+            renderAvatarPicker('settings-avatar-picker'); 
+            const initialPicker = getEl('initial-avatar-picker');
+            if(initialPicker) renderAvatarPicker('initial-avatar-picker');
+            
+            // Met à jour la prévisualisation de l'avatar initial si on est sur la modale de bienvenue
+            const initAvatarPreview = getEl('initial-profile-avatar');
+            if(initAvatarPreview) {
+                const isImg = a.startsWith('http');
+                initAvatarPreview.innerHTML = isImg ? `<img src="${a}" class="w-full h-full object-cover rounded-full" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">` : a;
+            }
+        };
 
         window.renderUserColorPicker = (id) => { getEl(id).innerHTML = userColorsList.map(c => `<button onclick="selectUserColor('${c}', '${id}')" class="w-8 h-8 rounded-full border-2 ${selectedUserColor === c ? 'border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'border-transparent opacity-50 hover:opacity-100'}" style="background-color: ${c};"></button>`).join(''); };
         window.selectUserColor = (c, id) => { selectedUserColor = c; renderUserColorPicker(id); };

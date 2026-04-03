@@ -82,7 +82,7 @@
 
         <!-- ESPACE DE CONTENU ADAPTATIF -->
         <div class="md:ml-24 lg:ml-64 pb-24 md:pb-12">
-            <div class="max-w-md md:max-w-3xl lg:max-w-5xl mx-auto pt-8 px-4 sm:pt-12">
+            <div class="max-w-md md:max-w-3xl lg:max-w-6xl mx-auto pt-8 px-4 sm:pt-12">
                 
                 <div class="bg-slate-800 rounded-2xl shadow-sm p-6 mb-6 md:mb-10 text-center border border-slate-700 relative overflow-hidden">
                     <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
@@ -94,7 +94,7 @@
 
                 <!-- SECTION TÂCHES -->
                 <section id="section-tasks" class="block space-y-6">
-                    <div class="flex gap-3">
+                    <div class="flex gap-3 mb-6">
                         <button onclick="openEditor()" id="new-task-btn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-xl px-5 py-4 md:py-5 font-bold shadow-lg transition-all flex items-center justify-center gap-3 text-sm md:text-base">
                             <i class="fa-solid fa-plus"></i> Nouvelle tâche
                         </button>
@@ -105,27 +105,48 @@
                     
                     <div id="tasks-container">
                         <div id="active-tasks-view">
-                            <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2">À faire</h2>
-                            <ul id="todo-list" class="space-y-3 mb-8"></ul>
+                            <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2 border-b border-slate-800 pb-2">À faire</h2>
+                            <!-- GRILLE DES TÂCHES (Adaptatif PC) -->
+                            <ul id="todo-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 mb-8 items-start"></ul>
                         </div>
                         <div id="archived-tasks-view" class="hidden">
                             <div class="flex justify-between items-center mb-4 ml-2 border-b border-slate-800 pb-2">
                                 <h2 class="text-xs font-bold text-blue-400 uppercase tracking-wider italic">Historique</h2>
                                 <button onclick="toggleTaskArchive()" class="text-[10px] text-slate-500 underline hover:text-white">Fermer</button>
                             </div>
-                            <ul id="archived-tasks-list" class="space-y-3 opacity-50 hover:opacity-100 transition-opacity"></ul>
+                            <ul id="archived-tasks-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 opacity-60 hover:opacity-100 transition-opacity items-start"></ul>
                         </div>
                     </div>
                 </section>
 
-                <!-- SECTION AGENDA -->
+                <!-- SECTION AGENDA (VUE MOIS PAR MOIS) -->
                 <section id="section-agenda" class="hidden space-y-6">
-                    <button onclick="openEventEditor()" class="w-full bg-violet-600 hover:bg-violet-500 text-white rounded-xl px-5 py-4 md:py-5 font-bold shadow-lg transition-all flex items-center justify-center gap-3 text-sm md:text-base">
-                        <i class="fa-solid fa-calendar-plus"></i> Ajouter au calendrier
-                    </button>
-                    <div id="agenda-container" class="space-y-4 md:space-y-6">
-                        <!-- Généré dynamiquement -->
+                    
+                    <!-- Bouton Ajout & Navigation Mois -->
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <button onclick="openEventEditor()" class="md:w-1/3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl px-5 py-4 font-bold shadow-lg transition-all flex items-center justify-center gap-3 text-sm md:text-base">
+                            <i class="fa-solid fa-calendar-plus"></i> Ajouter
+                        </button>
+                        
+                        <div class="flex-1 flex justify-between items-center bg-slate-800 p-4 rounded-xl border border-slate-700">
+                            <button onclick="changeMonth(-1)" class="text-slate-400 hover:text-white px-4 py-2 bg-slate-700/50 rounded-lg transition-colors"><i class="fa-solid fa-chevron-left"></i></button>
+                            <h2 id="calendar-month-label" class="text-base md:text-lg font-black text-slate-100 uppercase tracking-wider">Mois Année</h2>
+                            <button onclick="changeMonth(1)" class="text-slate-400 hover:text-white px-4 py-2 bg-slate-700/50 rounded-lg transition-colors"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
                     </div>
+
+                    <!-- Grille Calendrier -->
+                    <div class="bg-slate-800/50 p-2 md:p-4 rounded-2xl border border-slate-700 shadow-xl">
+                        <!-- En-têtes des jours -->
+                        <div class="grid grid-cols-7 gap-1 md:gap-2 text-center text-[9px] md:text-xs font-black text-slate-500 uppercase mb-2">
+                            <div class="py-1">Lun</div><div class="py-1">Mar</div><div class="py-1">Mer</div><div class="py-1">Jeu</div><div class="py-1">Ven</div><div class="py-1 text-violet-400/50">Sam</div><div class="py-1 text-violet-400/50">Dim</div>
+                        </div>
+                        <!-- Jours -->
+                        <div id="calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2">
+                            <!-- Généré dynamiquement -->
+                        </div>
+                    </div>
+
                 </section>
 
                 <!-- SECTION COMPTES -->
@@ -489,6 +510,8 @@
 
         let currentEventEditingId = null;
         let currentEventType = 'ponctuel';
+        
+        let currentCalendarDate = new Date();
 
         // Palettes
         const taskColors = {
@@ -642,6 +665,8 @@
             const titles = { 'tasks':'Nos Tâches', 'agenda':'Calendrier', 'accounts':'Comptes', 'profile':'Mon Profil' };
             const icons = { 'tasks':'fa-clipboard-list text-blue-500', 'agenda':'fa-calendar-days text-violet-500', 'accounts':'fa-wallet text-emerald-500', 'profile':'fa-user-gear text-slate-400' };
             getEl('main-title').innerHTML = `<i class="fa-solid ${icons[tab]}"></i> ${titles[tab]}`;
+            
+            if(tab === 'agenda') renderAgenda(); // Re-render in case size changed
         };
 
         window.toggleFinanceChartVisibility = () => {
@@ -649,101 +674,108 @@
             if (container) container.classList.toggle('hidden');
         };
 
-        // --- AGENDA RENDERER ---
+        // --- AGENDA RENDERER (VUE MOIS PAR MOIS) ---
+        window.changeMonth = (delta) => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+            renderAgenda();
+        };
+
         function renderAgenda() {
-            const container = elements.agendaContainer();
-            if(!container) return;
+            const grid = getEl('calendar-grid');
+            if(!grid) return;
+
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+
+            const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+            getEl('calendar-month-label').textContent = `${monthNames[month]} ${year}`;
+
+            // Calcul du 1er jour du mois et nombre de jours
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            let startingDayOfWeek = firstDay.getDay();
+            if(startingDayOfWeek === 0) startingDayOfWeek = 7; // Ajustement (Lundi=1 ... Dimanche=7)
+
+            const daysInMonth = lastDay.getDate();
+            const monthStart = new Date(year, month, 1);
+            const monthEnd = new Date(year, month + 1, 0, 23, 59, 59);
 
             let agendaItems = [];
-            const now = new Date();
-            now.setHours(0,0,0,0);
-            const horizon = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
 
+            // 1. Tâches avec date d'échéance
             tasksData.forEach(t => {
                 if(t.dueDate && !t.completed && !t.archived) {
                     const taskDate = new Date(t.dueDate);
-                    if(taskDate >= new Date(now.getTime() - 86400000)) { 
+                    if(taskDate >= monthStart && taskDate <= monthEnd) { 
                         agendaItems.push({
-                            type: 'task', id: t.id, dateObj: taskDate,
-                            title: t.text, color: taskColors[t.color]?.hex || '#94a3b8', 
-                            badge: 'Tâche', data: t
+                            date: taskDate.getDate(), type: 'task', id: t.id,
+                            title: t.text, color: taskColors[t.color]?.hex || '#94a3b8'
                         });
                     }
                 }
             });
 
+            // 2. Événements (avec gestion des récurrences sur le mois)
             eventsData.forEach(e => {
                 let current = new Date(e.dateStart + 'T00:00:00');
                 if (e.recurrence === 'none') {
-                    if (current >= new Date(now.getTime() - 86400000)) {
-                        agendaItems.push(formatEventItem(e, current));
+                    if (current >= monthStart && current <= monthEnd) {
+                        agendaItems.push({ date: current.getDate(), type: 'event', id: e.id, title: e.title, color: e.author?.color || '#8b5cf6' });
                     }
                 } else {
-                    let i = 0;
-                    while(current < new Date(now.getTime() - 86400000) && i < 500) {
-                        current = getNextOccurrence(current, e.recurrence); i++;
+                    let maxIter = 1000; // Sécurité anti-boucle infinie
+                    while(current < monthStart && maxIter > 0) {
+                        current = getNextOccurrence(current, e.recurrence);
+                        maxIter--;
                     }
-                    i = 0;
-                    while (current <= horizon && i < 50) { 
-                        agendaItems.push(formatEventItem(e, new Date(current)));
-                        current = getNextOccurrence(current, e.recurrence); i++;
+                    while (current <= monthEnd && maxIter > 0) { 
+                        agendaItems.push({ date: current.getDate(), type: 'event', id: e.id, title: e.title, color: e.author?.color || '#8b5cf6' });
+                        current = getNextOccurrence(current, e.recurrence);
+                        maxIter--;
                     }
                 }
             });
-
-            agendaItems.sort((a, b) => a.dateObj - b.dateObj);
-            
-            if(agendaItems.length === 0) {
-                container.innerHTML = '<div class="text-center py-10 text-slate-500 italic text-sm">Rien de prévu pour les 3 prochains mois.</div>';
-                return;
-            }
 
             let html = '';
-            let currentGroupDate = '';
+            
+            // Cases vides avant le 1er du mois
+            for(let i = 1; i < startingDayOfWeek; i++) {
+                html += `<div class="bg-slate-800/20 rounded-xl min-h-[60px] md:min-h-[100px] border border-transparent"></div>`;
+            }
 
-            agendaItems.forEach(item => {
-                const dateStr = item.dateObj.toISOString().split('T')[0];
-                if (dateStr !== currentGroupDate) {
-                    currentGroupDate = dateStr;
-                    html += `<h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mt-8 mb-4 sticky top-0 md:top-4 bg-slate-900/95 py-2 backdrop-blur-sm z-10 border-b border-slate-800 rounded-lg px-2">${formatDateHeader(item.dateObj)}</h3>`;
-                }
+            const today = new Date();
 
-                if (item.type === 'task') {
-                    html += `
-                    <div onclick="openEditor('${item.id}')" class="bg-slate-800/80 p-4 md:p-5 rounded-xl border border-slate-700 flex gap-4 items-center mb-3 cursor-pointer shadow-sm hover:border-slate-500 transition-colors">
-                        <div class="w-2 h-full min-h-[40px] rounded-full self-stretch shrink-0" style="background-color: ${item.color}"></div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-base font-bold text-slate-200 truncate">${escapeHTML(item.title)}</p>
-                            <p class="text-[10px] uppercase font-black text-slate-500 mt-1"><i class="fa-solid fa-check-double"></i> À FAIRE</p>
-                        </div>
+            // Cases des jours du mois
+            for(let day = 1; day <= daysInMonth; day++) {
+                const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
+                const itemsForDay = agendaItems.filter(item => item.date === day);
+
+                let itemsHtml = itemsForDay.map(item => {
+                    const isTask = item.type === 'task';
+                    const onClick = isTask ? `openEditor('${item.id}')` : `openEventEditor('${item.id}')`;
+                    return `
+                    <div onclick="${onClick}" class="text-[8px] md:text-[10px] leading-tight font-bold text-white px-1 py-0.5 rounded mb-1 truncate cursor-pointer shadow-sm hover:brightness-125 transition-all" style="background-color: ${item.color}; border-left: 2px solid rgba(255,255,255,0.4)">
+                        ${escapeHTML(item.title)}
                     </div>`;
-                } else {
-                    const timeStr = item.data.timeStart ? `${item.data.timeStart}${item.data.timeEnd ? ' - '+item.data.timeEnd : ''}` : 'Journée entière';
-                    const locStr = item.data.location ? `<span class="ml-3 text-slate-400 border-l border-slate-700 pl-3"><i class="fa-solid fa-location-dot"></i> ${escapeHTML(item.data.location)}</span>` : '';
-                    const avatarContent = item.data.author?.avatar ? (item.data.author.avatar.startsWith('http') ? `<img src="${item.data.author.avatar}" class="w-8 h-8 rounded-full border-2 border-slate-600 shrink-0 object-cover" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : `<div class="w-8 h-8 rounded-full border-2 border-slate-600 shrink-0 flex items-center justify-center text-sm bg-slate-700">${item.data.author.avatar}</div>`) : '';
-                    
-                    html += `
-                    <div onclick="openEventEditor('${item.id}')" class="bg-slate-800 p-4 md:p-5 rounded-xl border border-slate-700 flex gap-4 items-center mb-3 cursor-pointer shadow-md hover:border-violet-500/50 transition-colors">
-                        <div class="w-2 h-full min-h-[40px] rounded-full self-stretch shrink-0 shadow-[0_0_10px_rgba(139,92,246,0.3)]" style="background-color: ${item.color}"></div>
-                        <div class="flex-1 min-w-0 pr-2">
-                            <div class="flex justify-between items-center mb-1">
-                                <p class="text-base md:text-lg font-bold text-slate-100 truncate">${escapeHTML(item.title)}</p>
-                                ${avatarContent}
-                            </div>
-                            <p class="text-xs font-bold text-violet-400 mt-1 uppercase tracking-wider flex items-center">
-                                <span><i class="fa-regular fa-clock mr-1"></i> ${timeStr}</span> ${locStr}
-                            </p>
-                            ${item.data.recurrence !== 'none' ? `<p class="text-[10px] text-slate-500 mt-2 font-semibold"><i class="fa-solid fa-repeat"></i> Répétition activée</p>` : ''}
-                        </div>
-                    </div>`;
-                }
-            });
+                }).join('');
 
-            container.innerHTML = html;
-        }
+                html += `
+                <div class="bg-slate-800 rounded-xl p-1 md:p-2 min-h-[60px] md:min-h-[100px] border ${isToday ? 'border-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.2)]' : 'border-slate-700'} flex flex-col hover:border-slate-500 transition-colors">
+                    <span class="text-[10px] md:text-xs font-black ${isToday ? 'text-violet-400' : 'text-slate-400'} mb-1 md:mb-2 text-right px-1">${day}</span>
+                    <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col">
+                        ${itemsHtml}
+                    </div>
+                </div>`;
+            }
 
-        function formatEventItem(e, dateObj) {
-            return { type: 'event', id: e.id, dateObj: dateObj, title: e.title, color: e.author?.color || '#8b5cf6', data: e };
+            // Compléter la dernière ligne pour garder un design carré
+            const totalCells = (startingDayOfWeek - 1) + daysInMonth;
+            const remainingCells = (Math.ceil(totalCells / 7) * 7) - totalCells;
+            for(let i = 0; i < remainingCells; i++) {
+                html += `<div class="bg-slate-800/20 rounded-xl min-h-[60px] md:min-h-[100px] border border-transparent"></div>`;
+            }
+
+            grid.innerHTML = html;
         }
 
         function getNextOccurrence(date, rule) {
@@ -753,16 +785,6 @@
             else if (rule === 'biweekly') next.setDate(next.getDate() + 14);
             else if (rule === 'monthly') next.setMonth(next.getMonth() + 1);
             return next;
-        }
-
-        function formatDateHeader(d) {
-            const today = new Date(); today.setHours(0,0,0,0);
-            const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-            if (d.getTime() === today.getTime()) return "Aujourd'hui";
-            if (d.getTime() === tomorrow.getTime()) return "Demain";
-            const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-            const months = ['Janv','Févr','Mars','Avril','Mai','Juin','Juil','Août','Sept','Oct','Nov','Déc'];
-            return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
         }
 
         // --- EVENT EDITOR ---
@@ -849,7 +871,8 @@
                 }
 
                 const li = document.createElement('li');
-                li.className = `${color.bg} p-4 md:p-5 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all mb-3 md:mb-4 hover:border-slate-500`;
+                // h-fit ajouté pour que les cartes n'aient pas une hauteur bizarre dans la grille
+                li.className = `${color.bg} p-4 md:p-5 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all hover:border-slate-500 h-fit`;
                 const tags = (task.tags || []).map(t => `<span class="bg-white/10 text-[10px] font-black uppercase px-3 py-1 rounded-full text-white">${t}</span>`).join(' ');
                 
                 li.innerHTML = `
@@ -876,7 +899,7 @@
                     
                 if (task.archived || task.completed) arch.appendChild(li); else todo.appendChild(li);
             });
-            if(todo.innerHTML === '') todo.innerHTML = '<li class="text-slate-500 text-center py-8 text-sm md:text-base italic bg-slate-800/30 rounded-xl border border-slate-700 border-dashed">La liste est vide...</li>';
+            if(todo.innerHTML === '') todo.innerHTML = '<li class="text-slate-500 text-center py-8 text-sm md:text-base italic bg-slate-800/30 rounded-xl border border-slate-700 border-dashed col-span-full">La liste est vide...</li>';
         }
 
         // --- EXPENSES RENDERER ---

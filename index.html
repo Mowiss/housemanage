@@ -53,14 +53,12 @@
         
         <!-- NAVIGATION RESPONSIVE -->
         <nav class="fixed bottom-0 left-0 right-0 md:top-0 md:w-24 lg:w-64 md:h-screen bg-slate-800 border-t md:border-t-0 md:border-r border-slate-700 z-50 px-2 py-4 md:py-8 flex justify-around md:flex-col md:justify-start md:gap-4 items-center shadow-2xl shrink-0 transition-all">
-            
             <div class="hidden md:flex flex-col items-center justify-center gap-3 mb-8 lg:mb-12 w-full">
                 <div class="w-12 h-12 lg:w-16 lg:h-16 bg-blue-600/20 rounded-full flex items-center justify-center">
                     <i class="fa-solid fa-house-user text-2xl lg:text-3xl text-blue-500"></i>
                 </div>
                 <h2 class="hidden lg:block text-slate-100 font-black tracking-widest uppercase text-sm">Notre Foyer</h2>
             </div>
-
             <button onclick="switchTab('tasks')" id="tab-tasks-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-blue-400 w-1/4 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
                 <i class="fa-solid fa-check-double text-2xl lg:text-xl w-8 text-center"></i>
                 <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Tâches</span>
@@ -105,15 +103,15 @@
                     <div id="tasks-container">
                         <div id="active-tasks-view">
                             <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2 border-b border-slate-800 pb-2">À faire</h2>
-                            <!-- DISPOSITION EN MAÇONNERIE (Colonnes) POUR ÉVITER LES TROUS -->
-                            <ul id="todo-list" class="columns-1 md:columns-2 gap-4 lg:gap-6 mb-8 w-full"></ul>
+                            <!-- DISPOSITION EN VRAIE MAÇONNERIE JS -->
+                            <div id="todo-list" class="w-full mb-8"></div>
                         </div>
                         <div id="archived-tasks-view" class="hidden">
                             <div class="flex justify-between items-center mb-4 ml-2 border-b border-slate-800 pb-2">
                                 <h2 class="text-xs font-bold text-blue-400 uppercase tracking-wider italic">Historique</h2>
                                 <button onclick="toggleTaskArchive()" class="text-[10px] text-slate-500 underline hover:text-white">Fermer</button>
                             </div>
-                            <ul id="archived-tasks-list" class="columns-1 md:columns-2 gap-4 lg:gap-6 opacity-60 hover:opacity-100 transition-opacity w-full"></ul>
+                            <div id="archived-tasks-list" class="w-full"></div>
                         </div>
                     </div>
                 </section>
@@ -665,8 +663,7 @@
 
         // --- AGENDA RENDERER (VUE MOIS PAR MOIS) ---
         window.changeMonth = (delta) => {
-            // FIX : On force le placement au 1er du mois pour éviter le bug des mois à 30/31 jours
-            currentCalendarDate.setDate(1); 
+            currentCalendarDate.setDate(1); // FIX: Empêche le bug du 31e jour qui saute des mois
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
             renderAgenda();
         };
@@ -681,11 +678,10 @@
             const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
             getEl('calendar-month-label').textContent = `${monthNames[month]} ${year}`;
 
-            // Calcul du 1er jour du mois et nombre de jours
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
             let startingDayOfWeek = firstDay.getDay();
-            if(startingDayOfWeek === 0) startingDayOfWeek = 7; // Ajustement (Lundi=1 ... Dimanche=7)
+            if(startingDayOfWeek === 0) startingDayOfWeek = 7;
 
             const daysInMonth = lastDay.getDate();
             const monthStart = new Date(year, month, 1);
@@ -693,7 +689,7 @@
 
             let agendaItems = [];
 
-            // 1. Tâches avec date d'échéance
+            // Tasks
             tasksData.forEach(t => {
                 if(t.dueDate && !t.completed && !t.archived) {
                     const taskDate = new Date(t.dueDate);
@@ -706,7 +702,7 @@
                 }
             });
 
-            // 2. Événements (avec gestion des récurrences sur le mois)
+            // Events
             eventsData.forEach(e => {
                 let current = new Date(e.dateStart + 'T00:00:00');
                 if (e.recurrence === 'none') {
@@ -714,7 +710,7 @@
                         agendaItems.push({ date: current.getDate(), type: 'event', id: e.id, title: e.title, color: e.author?.color || '#8b5cf6' });
                     }
                 } else {
-                    let maxIter = 1000; // Sécurité anti-boucle infinie
+                    let maxIter = 1000;
                     while(current < monthStart && maxIter > 0) {
                         current = getNextOccurrence(current, e.recurrence);
                         maxIter--;
@@ -729,14 +725,17 @@
 
             let html = '';
             
-            // Cases vides avant le 1er du mois (ajout de min-w-0 crucial pour l'uniformité)
+            const prevMonthLastDay = new Date(year, month, 0).getDate();
+            
+            // Cases de la fin du mois précédent
             for(let i = 1; i < startingDayOfWeek; i++) {
-                html += `<div class="bg-slate-800/20 rounded-xl min-h-[60px] md:min-h-[100px] border border-transparent min-w-0"></div>`;
+                const prevDay = prevMonthLastDay - (startingDayOfWeek - 1 - i);
+                html += `<div class="bg-slate-800/30 rounded-xl p-1 md:p-2 border border-transparent flex flex-col min-w-0 overflow-hidden aspect-square opacity-50"><span class="text-[10px] md:text-xs font-black text-slate-600 mb-1 md:mb-2 text-right px-1 shrink-0">${prevDay}</span></div>`;
             }
 
             const today = new Date();
 
-            // Cases des jours du mois
+            // Cases des jours du mois en cours
             for(let day = 1; day <= daysInMonth; day++) {
                 const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
                 const itemsForDay = agendaItems.filter(item => item.date === day);
@@ -750,9 +749,8 @@
                     </div>`;
                 }).join('');
 
-                // min-w-0 et overflow-hidden forcés sur toutes les cases pour empêcher la déformation horizontale
                 html += `
-                <div class="bg-slate-800 rounded-xl p-1 md:p-2 min-h-[60px] md:min-h-[100px] border ${isToday ? 'border-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.2)]' : 'border-slate-700'} flex flex-col hover:border-slate-500 transition-colors min-w-0 overflow-hidden">
+                <div class="bg-slate-800 rounded-xl p-1 md:p-2 border ${isToday ? 'border-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.2)]' : 'border-slate-700'} flex flex-col hover:border-slate-500 transition-colors min-w-0 overflow-hidden aspect-square">
                     <span class="text-[10px] md:text-xs font-black ${isToday ? 'text-violet-400' : 'text-slate-400'} mb-1 md:mb-2 text-right px-1 shrink-0">${day}</span>
                     <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col min-w-0">
                         ${itemsHtml}
@@ -760,11 +758,12 @@
                 </div>`;
             }
 
-            // Compléter la dernière ligne pour garder un design carré
+            // Cases du début du mois suivant
             const totalCells = (startingDayOfWeek - 1) + daysInMonth;
             const remainingCells = (Math.ceil(totalCells / 7) * 7) - totalCells;
             for(let i = 0; i < remainingCells; i++) {
-                html += `<div class="bg-slate-800/20 rounded-xl min-h-[60px] md:min-h-[100px] border border-transparent min-w-0"></div>`;
+                const nextDay = i + 1;
+                html += `<div class="bg-slate-800/30 rounded-xl p-1 md:p-2 border border-transparent flex flex-col min-w-0 overflow-hidden aspect-square opacity-50"><span class="text-[10px] md:text-xs font-black text-slate-600 mb-1 md:mb-2 text-right px-1 shrink-0">${nextDay}</span></div>`;
             }
 
             grid.innerHTML = html;
@@ -849,6 +848,16 @@
         function renderTasks() {
             const todo = elements.todoList(); const arch = elements.archivedTasksList();
             if(!todo) return; todo.innerHTML = ''; arch.innerHTML = '';
+            
+            // On prépare les colonnes pour la vue maçonnée (Masonry)
+            const col1 = document.createElement('div'); col1.className = 'flex flex-col gap-4 lg:gap-6 w-full';
+            const col2 = document.createElement('div'); col2.className = 'flex flex-col gap-4 lg:gap-6 w-full';
+            let todoCount = 0;
+
+            const archCol1 = document.createElement('div'); archCol1.className = 'flex flex-col gap-4 lg:gap-6 w-full';
+            const archCol2 = document.createElement('div'); archCol2.className = 'flex flex-col gap-4 lg:gap-6 w-full';
+            let archCount = 0;
+
             tasksData.sort((a,b) => b.createdAt - a.createdAt).forEach(task => {
                 const color = taskColors[task.color] || taskColors['white'];
                 const isOverdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().setHours(0,0,0,0)) && !task.completed;
@@ -862,9 +871,8 @@
                     detailsHTML = `<div class="mt-4 border-t border-white/10 pt-3" onclick="event.stopPropagation()">${desc}${subs ? `<ul class="mt-4 space-y-1">${subs}</ul>`:''}</div>`;
                 }
 
-                const li = document.createElement('li');
-                // Disposition MAÇONNERIE (w-full inline-block break-inside-avoid)
-                li.className = `${color.bg} p-4 md:p-5 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all hover:border-slate-500 break-inside-avoid inline-block w-full mb-4 lg:mb-6`;
+                const li = document.createElement('div');
+                li.className = `${color.bg} p-4 md:p-5 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all hover:border-slate-500 w-full`;
                 const tags = (task.tags || []).map(t => `<span class="bg-white/10 text-[10px] font-black uppercase px-3 py-1 rounded-full text-white">${t}</span>`).join(' ');
                 
                 li.innerHTML = `
@@ -889,9 +897,35 @@
                         </button>
                     </div>`;
                     
-                if (task.archived || task.completed) arch.appendChild(li); else todo.appendChild(li);
+                if (task.archived || task.completed) {
+                    if (archCount % 2 === 0) archCol1.appendChild(li);
+                    else archCol2.appendChild(li);
+                    archCount++;
+                } else {
+                    if (todoCount % 2 === 0) col1.appendChild(li);
+                    else col2.appendChild(li);
+                    todoCount++;
+                }
             });
-            if(todo.innerHTML === '') todo.innerHTML = '<li class="text-slate-500 text-center py-8 text-sm md:text-base italic bg-slate-800/30 rounded-xl border border-slate-700 border-dashed inline-block w-full">La liste est vide...</li>';
+
+            // Injection dans le DOM
+            if(todoCount === 0) {
+                todo.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm md:text-base italic bg-slate-800/30 rounded-xl border border-slate-700 border-dashed w-full">La liste est vide...</div>';
+                todo.className = "w-full";
+            } else {
+                todo.className = "grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 w-full items-start";
+                todo.appendChild(col1);
+                todo.appendChild(col2);
+            }
+
+            if(archCount === 0) {
+                arch.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm md:text-base italic w-full">Aucune archive.</div>';
+                arch.className = "w-full";
+            } else {
+                arch.className = "grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 opacity-60 hover:opacity-100 transition-opacity w-full items-start";
+                arch.appendChild(archCol1);
+                arch.appendChild(archCol2);
+            }
         }
 
         // --- EXPENSES RENDERER ---

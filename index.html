@@ -86,8 +86,6 @@
                     <div id="active-tasks-view">
                         <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 ml-2">À faire</h2>
                         <ul id="todo-list" class="space-y-3 mb-8"></ul>
-                        <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 ml-2 text-slate-600">Terminées</h2>
-                        <ul id="completed-list" class="space-y-3 opacity-60"></ul>
                     </div>
                     <div id="archived-tasks-view" class="hidden">
                         <div class="flex justify-between items-center mb-4 ml-2 border-b border-slate-800 pb-2">
@@ -147,7 +145,7 @@
                         </button>
                     </div>
                     <div class="flex flex-col items-center gap-4 py-4">
-                        <div id="current-profile-avatar" class="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center text-4xl shadow-xl border-4 border-blue-500/20"></div>
+                        <div id="current-profile-avatar" class="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center text-4xl shadow-xl border-4 border-blue-500/20 overflow-hidden"></div>
                         <div class="text-center">
                             <h2 class="text-xl font-bold text-slate-100" id="current-profile-name-display">...</h2>
                             <p class="text-xs text-slate-500 uppercase font-bold tracking-widest mt-1" id="current-profile-income-display">Revenu : 0€</p>
@@ -156,7 +154,6 @@
                     <div class="space-y-4 border-t border-slate-700 pt-6">
                         <input type="text" id="settings-name" placeholder="Prénom" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 font-bold text-slate-100 outline-none">
                         <input type="number" id="settings-income" placeholder="Revenu mensuel" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 font-black text-blue-400 outline-none">
-                        <div class="flex flex-wrap gap-2 justify-center" id="settings-avatar-picker"></div>
                         <button onclick="updateProfileFromSettings()" class="w-full bg-blue-600 py-4 rounded-xl font-black shadow-lg">Enregistrer</button>
                     </div>
                 </div>
@@ -233,9 +230,9 @@
         <div class="bg-slate-800 rounded-2xl p-8 w-full max-w-sm border border-slate-700 shadow-2xl">
             <h2 class="text-2xl font-black text-center mb-6 text-slate-100">Profil Foyer</h2>
             <div class="space-y-4">
+                <div id="initial-profile-avatar" class="w-24 h-24 mx-auto rounded-full bg-slate-700 flex items-center justify-center text-4xl shadow-xl border-4 border-blue-500/20 overflow-hidden mb-4"></div>
                 <input type="text" id="profile-name" placeholder="Votre Prénom" class="w-full rounded-xl bg-slate-700 p-3 font-bold text-center text-white">
                 <input type="number" id="profile-income" placeholder="Revenu mensuel €" class="w-full rounded-xl bg-slate-700 p-3 font-black text-center text-blue-400">
-                <div id="avatar-picker" class="flex flex-wrap gap-2 justify-center"></div>
             </div>
             <button onclick="saveProfile()" class="w-full mt-8 bg-blue-600 py-4 rounded-xl font-black shadow-xl hover:bg-blue-500 text-white">C'est parti !</button>
         </div>
@@ -265,7 +262,6 @@
         const getEl = (id) => document.getElementById(id);
         const elements = {
             todoList: () => getEl('todo-list'),
-            completedList: () => getEl('completed-list'),
             archivedTasksList: () => getEl('archived-tasks-list'),
             recurringList: () => getEl('recurring-expenses-list'),
             ponctuelleList: () => getEl('ponctuelle-expenses-list'),
@@ -289,7 +285,6 @@
         let currentEditingTags = [];
         let currentSelectedColor = 'white';
         let collapsedTasks = new Set();
-        let selectedAvatar = '🦊';
 
         // Palette vibrante
         const taskColors = {
@@ -300,8 +295,6 @@
             'yellow': { bg: 'bg-amber-950/40', border: 'border-amber-500/50', accent: 'bg-amber-500', hex: '#f59e0b' },
             'purple': { bg: 'bg-purple-950/40', border: 'border-purple-500/50', accent: 'bg-purple-500', hex: '#a855f7' }
         };
-
-        const availableAvatars = ['🦊', '🐱', '🐼', '🐨', '🐯', '🦉', '🦋', '🐥', '🦕'];
 
         window.connectToInstance = async () => {
             const input = getEl('instance-code-input').value.trim().toUpperCase();
@@ -348,7 +341,11 @@
                     if(currentUser.displayName) {
                         getEl('profile-name').value = currentUser.displayName.split(' ')[0];
                     }
-                    renderAvatarPicker('avatar-picker');
+                    if(currentUser.photoURL) {
+                        getEl('initial-profile-avatar').innerHTML = `<img src="${currentUser.photoURL}" class="w-full h-full object-cover" referrerpolicy="no-referrer">`;
+                    } else {
+                        getEl('initial-profile-avatar').textContent = '👤';
+                    }
                     getEl('profile-modal').classList.replace('hidden', 'flex');
                 }
             } catch (err) {
@@ -375,7 +372,6 @@
 
         async function checkAutoClose() {
             if (!currentUser || !appId) return;
-            // CORRECTION: Ajout du segment 'settings' pour rendre le chemin pair et valide (6 segments)
             const metaRef = doc(db, 'artifacts', appId, 'public', 'data', 'metadata', 'settings');
             const metaSnap = await getDoc(metaRef);
             const currentM = `${new Date().getMonth()}-${new Date().getFullYear()}`;
@@ -399,18 +395,58 @@
             getEl('main-title').textContent = tab === 'tasks' ? 'Nos Tâches' : (tab === 'accounts' ? 'Comptes' : 'Mon Profil');
         };
 
+        window.toggleCollapse = (e, id) => {
+            e.stopPropagation();
+            if (collapsedTasks.has(id)) collapsedTasks.delete(id);
+            else collapsedTasks.add(id);
+            renderTasks();
+        };
+
         function renderTasks() {
-            const todo = elements.todoList(); const done = elements.completedList(); const arch = elements.archivedTasksList();
+            const todo = elements.todoList(); const arch = elements.archivedTasksList();
             if(!todo) return;
-            todo.innerHTML = ''; done.innerHTML = ''; arch.innerHTML = '';
+            todo.innerHTML = ''; arch.innerHTML = '';
             tasksData.sort((a,b) => b.createdAt - a.createdAt).forEach(task => {
                 const color = taskColors[task.color] || taskColors['white'];
                 const isOverdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().setHours(0,0,0,0)) && !task.completed;
+                const isExpanded = !collapsedTasks.has(task.id);
+                const hasDetails = task.description || (task.subtasks && task.subtasks.length > 0);
+                
+                let detailsHTML = '';
+                if (hasDetails && isExpanded) {
+                    const desc = task.description ? `<p class="text-xs text-slate-400 mt-2 italic whitespace-pre-wrap">${escapeHTML(task.description)}</p>` : '';
+                    const subs = (task.subtasks || []).map(s => `<li class="text-[10px] flex items-center gap-2 text-slate-300"><i class="fa-solid ${s.completed ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-600'}"></i> ${escapeHTML(s.text)}</li>`).join('');
+                    const subsList = subs ? `<ul class="mt-2 space-y-1">${subs}</ul>` : '';
+                    detailsHTML = `<div class="mt-2 border-t border-white/5 pt-2" onclick="event.stopPropagation()">${desc}${subsList}</div>`;
+                }
+                const expandBtn = hasDetails ? `<button onclick="toggleCollapse(event, '${task.id}')" class="text-slate-500 hover:text-slate-300 px-2 py-1"><i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-[10px]"></i></button>` : '';
+
                 const li = document.createElement('li');
                 li.className = `${color.bg} p-4 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all`;
                 const tags = (task.tags || []).map(t => `<span class="bg-white/10 text-[8px] font-black uppercase px-2 py-0.5 rounded-full text-white">${t}</span>`).join(' ');
-                li.innerHTML = `<div class="color-accent ${color.accent}"></div><div class="flex items-start justify-between"><div class="flex items-start gap-3 flex-1 cursor-pointer" onclick="toggleTask('${task.id}', ${!task.completed})"><div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${task.completed ? 'bg-green-500 border-green-500' : 'border-slate-500'}">${task.completed ? '<i class="fa-solid fa-check text-[10px] text-white"></i>' : ''}</div><div class="min-w-0"><span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-all leading-tight text-sm">${escapeHTML(task.text)}</span><div class="flex flex-wrap gap-1 mt-1">${tags}</div>${task.dueDate ? `<p class="text-[8px] font-black mt-1 ${isOverdue ? 'text-red-400' : 'text-slate-500'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}</div></div><button onclick="openEditor('${task.id}')" class="p-1 text-slate-500 hover:text-blue-400"><i class="fa-solid fa-pen text-[10px]"></i></button></div>`;
-                if (task.archived) arch.appendChild(li); else (task.completed ? done : todo).appendChild(li);
+                
+                li.innerHTML = `
+                    <div class="color-accent ${color.accent}"></div>
+                    <div class="flex items-start justify-between">
+                        <div class="flex items-start gap-3 flex-1 cursor-pointer" onclick="toggleTask('${task.id}', ${!task.completed})">
+                            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${task.completed ? 'bg-green-500 border-green-500' : 'border-slate-500'}">
+                                ${task.completed ? '<i class="fa-solid fa-check text-[10px] text-white"></i>' : ''}
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-all leading-tight text-sm">${escapeHTML(task.text)}</span>
+                                    ${expandBtn}
+                                </div>
+                                <div class="flex flex-wrap gap-1 mt-1">${tags}</div>
+                                ${task.dueDate ? `<p class="text-[8px] font-black mt-1 ${isOverdue ? 'text-red-400' : 'text-slate-500'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}
+                                ${detailsHTML}
+                            </div>
+                        </div>
+                        <button onclick="openEditor('${task.id}')" class="p-1 text-slate-500 hover:text-blue-400 ml-2"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                    </div>`;
+                    
+                if (task.archived || task.completed) arch.appendChild(li); 
+                else todo.appendChild(li);
             });
             if(todo.innerHTML === '') todo.innerHTML = '<li class="text-slate-600 text-center py-4 text-xs italic">C\'est calme ici...</li>';
         }
@@ -419,22 +455,67 @@
             const rec = elements.recurringList(); const pon = elements.ponctuelleList(); if(!rec) return;
             rec.innerHTML = ''; pon.innerHTML = ''; const stats = { users: {}, fixed: 0, ponct: 0 };
             expensesData.forEach(exp => {
+                const avatarContent = exp.payer.avatar && exp.payer.avatar.startsWith('http') 
+                    ? `<img src="${exp.payer.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer">` 
+                    : (exp.payer.avatar || '👤');
+
                 const li = document.createElement('li'); li.className = "bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex justify-between items-center shadow-sm relative";
-                li.innerHTML = `<div class="flex items-center gap-3 min-w-0"><div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-lg shrink-0">${exp.payer.avatar}</div><div class="min-w-0"><p class="font-bold text-slate-200 truncate text-sm">${escapeHTML(exp.text)}</p><p class="text-[9px] text-slate-500 uppercase font-black font-bold">Par ${escapeHTML(exp.payer.name)}</p></div></div><div class="flex items-center gap-3"><span class="font-black text-emerald-400 text-sm">${exp.amount.toFixed(2)}€</span><button onclick="deleteExpense('${exp.id}')" class="text-slate-600 hover:text-red-400"><i class="fa-regular fa-trash-can text-xs"></i></button></div>`;
+                li.innerHTML = `<div class="flex items-center gap-3 min-w-0"><div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-lg shrink-0 overflow-hidden">${avatarContent}</div><div class="min-w-0"><p class="font-bold text-slate-200 truncate text-sm">${escapeHTML(exp.text)}</p><p class="text-[9px] text-slate-500 uppercase font-black font-bold">Par ${escapeHTML(exp.payer.name)}</p></div></div><div class="flex items-center gap-3"><span class="font-black text-emerald-400 text-sm">${exp.amount.toFixed(2)}€</span><button onclick="deleteExpense('${exp.id}')" class="text-slate-600 hover:text-red-400"><i class="fa-regular fa-trash-can text-xs"></i></button></div>`;
+                
                 if(exp.isRecurring) { rec.appendChild(li); stats.fixed += exp.amount; } else { pon.appendChild(li); stats.ponct += exp.amount; }
                 const uId = exp.payer.uid; if(!stats.users[uId]) stats.users[uId] = { name: exp.payer.name, spent: 0, income: exp.payer.income || 0 }; stats.users[uId].spent += exp.amount;
             });
-            const userList = Object.values(stats.users); const totalS = stats.fixed + stats.ponct; let summHTML = '', chartHTML = '';
+            
+            // On s'assure que l'utilisateur local est toujours dans la liste, même avec 0 dépense
+            if(localProfile && !stats.users[localProfile.uid]) {
+                stats.users[localProfile.uid] = { name: localProfile.name, spent: 0, income: localProfile.income || 0 };
+            }
+            
+            const userList = Object.values(stats.users); 
+            const totalS = stats.fixed + stats.ponct; 
+            let summHTML = '', chartHTML = '';
+
+            // 1. Calcul de la balance commune (uniquement s'il y a 2 personnes)
             if(userList.length >= 2) {
                 const u1 = userList[0], u2 = userList[1];
-                const ratio1 = (u1.income + u2.income) > 0 ? u1.income / (u1.income + u2.income) : 0.5;
+                const totalIncome = u1.income + u2.income;
+                const ratio1 = totalIncome > 0 ? u1.income / totalIncome : 0.5;
                 const bal = u1.spent - (totalS * ratio1);
-                if(Math.abs(bal) < 0.1) summHTML = `<p class="text-lg font-bold">Équilibre parfait ! ✨</p>`;
-                else { const debtor = bal > 0 ? u2.name : u1.name; const creditor = bal > 0 ? u1.name : u2.name; summHTML = `<p class="text-lg font-black">${debtor} doit <span class="text-emerald-400">${Math.abs(bal).toFixed(2)}€</span> à ${creditor}</p>`; }
-                const fP = totalS > 0 ? (stats.fixed / totalS) * 100 : 0;
-                chartHTML = `<div class="w-full h-2 bg-black/20 rounded-full flex overflow-hidden border border-white/5"><div class="bg-blue-500 h-full" style="width:${fP}%"></div><div class="bg-emerald-500 h-full" style="width:${100-fP}%"></div></div>`;
-            } else summHTML = `<p class="text-xs opacity-50 italic text-center">Besoin de deux profils</p>`;
-            elements.balanceSummary().innerHTML = summHTML; elements.visualStats().innerHTML = chartHTML;
+                
+                if(Math.abs(bal) < 0.1) summHTML = `<p class="text-sm font-bold mb-4 pb-4 border-b border-white/10">Comptes équilibrés ✨</p>`;
+                else { 
+                    const debtor = bal > 0 ? u2.name : u1.name; 
+                    const creditor = bal > 0 ? u1.name : u2.name; 
+                    summHTML = `<p class="text-sm font-black mb-4 pb-4 border-b border-white/10">${debtor} doit <span class="text-emerald-400">${Math.abs(bal).toFixed(2)}€</span> à ${creditor}</p>`; 
+                }
+            } else {
+                summHTML = `<p class="text-sm font-bold mb-4 pb-4 border-b border-white/10 text-slate-300">Total dépensé : <span class="text-white">${totalS.toFixed(2)}€</span></p>`;
+            }
+
+            // 2. Barres de progression individuelles (Paye - Dépenses = Reste à vivre)
+            chartHTML = userList.map(u => {
+                const pct = u.income > 0 ? Math.min((u.spent / u.income) * 100, 100) : (u.spent > 0 ? 100 : 0);
+                const remaining = u.income - u.spent;
+                const overspent = remaining < 0;
+                const barColor = overspent ? 'bg-red-500' : (pct > 85 ? 'bg-amber-500' : 'bg-blue-500');
+                
+                return `
+                <div class="mb-3 text-left">
+                    <div class="flex justify-between text-[10px] mb-1">
+                        <span class="font-bold text-slate-300">${escapeHTML(u.name)}</span>
+                        <span class="font-black ${overspent ? 'text-red-400' : 'text-emerald-400'}">Reste: ${remaining.toFixed(2)}€</span>
+                    </div>
+                    <div class="w-full h-4 bg-black/40 rounded-full overflow-hidden border border-white/10 relative">
+                        <div class="${barColor} h-full transition-all duration-700 ease-out" style="width:${pct}%"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white mix-blend-overlay drop-shadow-md">
+                            ${u.spent.toFixed(2)}€ / ${u.income > 0 ? u.income + '€' : 'N/A'}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            elements.balanceSummary().innerHTML = summHTML; 
+            elements.visualStats().innerHTML = chartHTML;
             getEl('current-month-label').textContent = `${["Janv", "Févr", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"][new Date().getMonth()]} ${new Date().getFullYear()}`;
         }
 
@@ -505,7 +586,8 @@
         window.saveProfile = async () => {
             if (!currentUser || !appId) return;
             const n = getEl('profile-name').value.trim(); const inc = parseFloat(getEl('profile-income').value) || 0; if(!n) return;
-            localProfile = { uid: currentUser.uid, name: n, income: inc, avatar: selectedAvatar };
+            const photo = currentUser.photoURL || '👤';
+            localProfile = { uid: currentUser.uid, name: n, income: inc, avatar: photo };
             await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data'), localProfile);
             getEl('profile-modal').classList.replace('flex', 'hidden');
             syncProfileUI(); startListening();
@@ -514,19 +596,24 @@
         window.updateProfileFromSettings = async () => {
             if (!currentUser || !appId) return;
             const n = getEl('settings-name').value.trim(); const inc = parseFloat(getEl('settings-income').value) || 0; if(!n) return;
-            localProfile = { ...localProfile, name: n, income: inc, avatar: selectedAvatar };
+            const photo = currentUser.photoURL || '👤';
+            localProfile = { ...localProfile, name: n, income: inc, avatar: photo };
             await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data'), localProfile);
             syncProfileUI(); alert("Profil mis à jour !");
         };
 
         function syncProfileUI() {
             if(!localProfile) return;
-            getEl('current-profile-avatar').textContent = localProfile.avatar;
+            
+            const avatarContent = localProfile.avatar && localProfile.avatar.startsWith('http') 
+                ? `<img src="${localProfile.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer">` 
+                : (localProfile.avatar || '👤');
+            getEl('current-profile-avatar').innerHTML = avatarContent;
+            
             getEl('current-profile-name-display').textContent = localProfile.name;
             getEl('current-profile-income-display').textContent = `Revenu : ${localProfile.income}€`;
             getEl('settings-name').value = localProfile.name;
             getEl('settings-income').value = localProfile.income;
-            selectedAvatar = localProfile.avatar; renderAvatarPicker('settings-avatar-picker');
         }
 
         window.toggleTaskArchive = () => { getEl('active-tasks-view').classList.toggle('hidden'); getEl('archived-tasks-view').classList.toggle('hidden'); };
@@ -553,8 +640,6 @@
         };
         window.selectColor = (c) => { currentSelectedColor = c; renderColorPicker(); };
         
-        window.renderAvatarPicker = (id) => { getEl(id).innerHTML = availableAvatars.map(a => `<button onclick="selectAvatar('${a}', '${id}')" class="w-10 h-10 text-xl rounded-full border-2 ${selectedAvatar === a ? 'border-blue-500 bg-blue-900/40 scale-110' : 'border-transparent'}">${a}</button>`).join(''); };
-        window.selectAvatar = (a, id) => { selectedAvatar = a; renderAvatarPicker(id); };
         window.addTagToEditor = () => { const i = getEl('new-tag-input'); const v = i.value.trim().toLowerCase(); if(v && !currentEditingTags.includes(v)) { currentEditingTags.push(v); i.value = ''; renderEditorTags(); } };
         window.removeTagFromEditor = (t) => { currentEditingTags = currentEditingTags.filter(x => x !== t); renderEditorTags(); };
         function renderEditorTags() { getEl('edit-tags-list').innerHTML = currentEditingTags.map(t => `<span class="bg-blue-900/60 text-blue-200 px-2.5 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1 border border-blue-500/50">${t}<button onclick="removeTagFromEditor('${t}')"><i class="fa-solid fa-xmark"></i></button></span>`).join(''); }

@@ -25,7 +25,7 @@
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
-<body class="bg-slate-900 min-h-screen text-slate-200 font-sans selection:bg-blue-500/30 relative pb-24">
+<body class="bg-slate-900 min-h-screen text-slate-200 font-sans selection:bg-blue-500/30 relative">
 
     <!-- ÉCRAN DE CONNEXION À L'INSTANCE -->
     <div id="instance-gate" class="fixed inset-0 bg-slate-950 z-[1000] flex items-center justify-center px-4">
@@ -50,158 +50,205 @@
 
     <!-- CONTENU PRINCIPAL -->
     <div id="main-app" class="hidden">
-        <nav class="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 z-50 px-2 py-4 flex justify-around items-center shadow-2xl">
-            <button onclick="switchTab('tasks')" id="tab-tasks-btn" class="flex flex-col items-center gap-1 text-blue-400 w-1/4">
-                <i class="fa-solid fa-check-double text-2xl"></i>
-                <span class="text-xs font-bold uppercase truncate w-full text-center mt-1">Tâches</span>
+        
+        <!-- NAVIGATION RESPONSIVE (Bas sur Mobile, Gauche sur PC) -->
+        <nav class="fixed bottom-0 left-0 right-0 md:top-0 md:w-24 lg:w-64 md:h-screen bg-slate-800 border-t md:border-t-0 md:border-r border-slate-700 z-50 px-2 py-4 md:py-8 flex justify-around md:flex-col md:justify-start md:gap-4 items-center shadow-2xl shrink-0 transition-all">
+            
+            <!-- Logo Desktop (Masqué sur mobile) -->
+            <div class="hidden md:flex flex-col items-center justify-center gap-3 mb-8 lg:mb-12 w-full">
+                <div class="w-12 h-12 lg:w-16 lg:h-16 bg-blue-600/20 rounded-full flex items-center justify-center">
+                    <i class="fa-solid fa-house-user text-2xl lg:text-3xl text-blue-500"></i>
+                </div>
+                <h2 class="hidden lg:block text-slate-100 font-black tracking-widest uppercase text-sm">Notre Foyer</h2>
+            </div>
+
+            <button onclick="switchTab('tasks')" id="tab-tasks-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-blue-400 w-1/4 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
+                <i class="fa-solid fa-check-double text-2xl lg:text-xl w-8 text-center"></i>
+                <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Tâches</span>
             </button>
-            <button onclick="switchTab('agenda')" id="tab-agenda-btn" class="flex flex-col items-center gap-1 text-slate-400 w-1/4">
-                <i class="fa-solid fa-calendar-days text-2xl"></i>
-                <span class="text-xs font-bold uppercase truncate w-full text-center mt-1">Agenda</span>
+            <button onclick="switchTab('agenda')" id="tab-agenda-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 w-1/4 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
+                <i class="fa-solid fa-calendar-days text-2xl lg:text-xl w-8 text-center"></i>
+                <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Agenda</span>
             </button>
-            <button onclick="switchTab('accounts')" id="tab-accounts-btn" class="flex flex-col items-center gap-1 text-slate-400 w-1/4">
-                <i class="fa-solid fa-wallet text-2xl"></i>
-                <span class="text-xs font-bold uppercase truncate w-full text-center mt-1">Comptes</span>
+            <button onclick="switchTab('accounts')" id="tab-accounts-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 w-1/4 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
+                <i class="fa-solid fa-wallet text-2xl lg:text-xl w-8 text-center"></i>
+                <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Comptes</span>
             </button>
-            <button onclick="switchTab('profile')" id="tab-profile-btn" class="flex flex-col items-center gap-1 text-slate-400 w-1/4">
-                <i class="fa-solid fa-user-gear text-2xl"></i>
-                <span class="text-xs font-bold uppercase truncate w-full text-center mt-1">Profil</span>
+            <button onclick="switchTab('profile')" id="tab-profile-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 w-1/4 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
+                <i class="fa-solid fa-user-gear text-2xl lg:text-xl w-8 text-center"></i>
+                <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Profil</span>
             </button>
         </nav>
 
-        <div class="max-w-md mx-auto pt-8 px-4 sm:pt-12">
-            <div class="bg-slate-800 rounded-2xl shadow-sm p-6 mb-6 text-center border border-slate-700 relative overflow-hidden">
-                <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
-                <h1 id="main-title" class="text-2xl font-bold text-slate-100 flex items-center justify-center gap-2 relative z-10">
-                    <i class="fa-solid fa-clipboard-list text-blue-500"></i> Nos Tâches
-                </h1>
-                <p class="text-slate-500 text-[10px] mt-1 font-bold uppercase tracking-widest relative z-10" id="connection-status">Connexion...</p>
-            </div>
-
-            <!-- SECTION TÂCHES -->
-            <section id="section-tasks" class="block space-y-6">
-                <div class="flex gap-2">
-                    <button onclick="openEditor()" id="new-task-btn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-xl px-5 py-4 font-bold shadow-lg transition-all flex items-center justify-center gap-3">
-                        <i class="fa-solid fa-plus"></i> Nouvelle tâche
-                    </button>
-                    <button onclick="toggleTaskArchive()" class="bg-slate-800 border border-slate-700 text-slate-400 px-4 rounded-xl hover:bg-slate-700 transition-colors" title="Archives">
-                        <i class="fa-solid fa-box-archive"></i>
-                    </button>
+        <!-- ESPACE DE CONTENU ADAPTATIF -->
+        <div class="md:ml-24 lg:ml-64 pb-24 md:pb-12">
+            <div class="max-w-md md:max-w-3xl lg:max-w-5xl mx-auto pt-8 px-4 sm:pt-12">
+                
+                <div class="bg-slate-800 rounded-2xl shadow-sm p-6 mb-6 md:mb-10 text-center border border-slate-700 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
+                    <h1 id="main-title" class="text-2xl font-bold text-slate-100 flex items-center justify-center gap-3 relative z-10">
+                        <i class="fa-solid fa-clipboard-list text-blue-500"></i> Nos Tâches
+                    </h1>
+                    <p class="text-slate-500 text-[10px] mt-2 font-bold uppercase tracking-widest relative z-10" id="connection-status">Connexion...</p>
                 </div>
-                <div id="tasks-container">
-                    <div id="active-tasks-view">
-                        <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 ml-2">À faire</h2>
-                        <ul id="todo-list" class="space-y-3 mb-8"></ul>
-                    </div>
-                    <div id="archived-tasks-view" class="hidden">
-                        <div class="flex justify-between items-center mb-4 ml-2 border-b border-slate-800 pb-2">
-                            <h2 class="text-xs font-bold text-blue-400 uppercase tracking-wider italic">Historique</h2>
-                            <button onclick="toggleTaskArchive()" class="text-[10px] text-slate-500 underline">Fermer</button>
-                        </div>
-                        <ul id="archived-tasks-list" class="space-y-3 opacity-40"></ul>
-                    </div>
-                </div>
-            </section>
 
-            <!-- SECTION AGENDA -->
-            <section id="section-agenda" class="hidden space-y-6">
-                <button onclick="openEventEditor()" class="w-full bg-violet-600 hover:bg-violet-500 text-white rounded-xl px-5 py-4 font-bold shadow-lg transition-all flex items-center justify-center gap-3">
-                    <i class="fa-solid fa-calendar-plus"></i> Ajouter au calendrier
-                </button>
-                <div id="agenda-container" class="space-y-6">
-                    <!-- Généré dynamiquement -->
-                </div>
-            </section>
-
-            <!-- SECTION COMPTES -->
-            <section id="section-accounts" class="hidden space-y-6">
-                <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
-                    <div class="p-5 flex justify-between items-center border-b border-slate-700">
-                        <h2 class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Récapitulatif financier</h2>
-                        <button onclick="toggleFinanceChartVisibility()" class="text-[10px] font-bold bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2">
-                            <i class="fa-solid fa-chart-area"></i> Statistiques
+                <!-- SECTION TÂCHES -->
+                <section id="section-tasks" class="block space-y-6">
+                    <div class="flex gap-3">
+                        <button onclick="openEditor()" id="new-task-btn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-xl px-5 py-4 md:py-5 font-bold shadow-lg transition-all flex items-center justify-center gap-3 text-sm md:text-base">
+                            <i class="fa-solid fa-plus"></i> Nouvelle tâche
+                        </button>
+                        <button onclick="toggleTaskArchive()" class="bg-slate-800 border border-slate-700 text-slate-400 px-5 md:px-8 rounded-xl hover:bg-slate-700 transition-colors" title="Archives">
+                            <i class="fa-solid fa-box-archive"></i>
                         </button>
                     </div>
-                    <div id="finance-chart-container" class="hidden p-5 bg-slate-900/50">
-                        <h2 class="text-[10px] font-black uppercase text-slate-600 mb-6 tracking-widest text-center">Évolution (6 mois)</h2>
-                        <div class="w-full h-40" id="finance-chart"></div>
+                    
+                    <div id="tasks-container">
+                        <div id="active-tasks-view">
+                            <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2">À faire</h2>
+                            <ul id="todo-list" class="space-y-3 mb-8"></ul>
+                        </div>
+                        <div id="archived-tasks-view" class="hidden">
+                            <div class="flex justify-between items-center mb-4 ml-2 border-b border-slate-800 pb-2">
+                                <h2 class="text-xs font-bold text-blue-400 uppercase tracking-wider italic">Historique</h2>
+                                <button onclick="toggleTaskArchive()" class="text-[10px] text-slate-500 underline hover:text-white">Fermer</button>
+                            </div>
+                            <ul id="archived-tasks-list" class="space-y-3 opacity-50 hover:opacity-100 transition-opacity"></ul>
+                        </div>
                     </div>
-                </div>
+                </section>
 
-                <div id="balance-card" class="bg-gradient-to-br from-indigo-700 to-slate-900 text-white rounded-2xl p-6 shadow-xl relative border border-white/5 overflow-hidden">
-                    <div class="flex justify-between items-center mb-4 relative z-10">
-                        <span class="text-xs font-bold uppercase tracking-widest opacity-70" id="current-month-label">Mois</span>
-                        <button onclick="settleAccountsManual()" class="text-xs bg-white/10 hover:bg-white/20 px-4 py-1.5 rounded-full font-bold border border-white/10">Clôturer</button>
-                    </div>
-                    <div id="balance-summary" class="text-center relative z-10"></div>
-                    <div id="visual-stats" class="space-y-3 relative z-10 mt-4"></div>
-                </div>
-
-                <div class="flex gap-2">
-                    <button onclick="openExpenseEditor()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl px-5 py-4 font-bold shadow-lg flex items-center justify-center gap-3 transition-transform active:scale-95">
-                        <i class="fa-solid fa-receipt"></i> Nouvelle dépense
+                <!-- SECTION AGENDA -->
+                <section id="section-agenda" class="hidden space-y-6">
+                    <button onclick="openEventEditor()" class="w-full bg-violet-600 hover:bg-violet-500 text-white rounded-xl px-5 py-4 md:py-5 font-bold shadow-lg transition-all flex items-center justify-center gap-3 text-sm md:text-base">
+                        <i class="fa-solid fa-calendar-plus"></i> Ajouter au calendrier
                     </button>
-                    <button onclick="toggleAccountArchive()" class="bg-slate-800 border border-slate-700 text-slate-400 px-4 rounded-xl hover:bg-slate-700">
-                        <i class="fa-solid fa-history"></i>
-                    </button>
-                </div>
-
-                <div id="active-accounts-view">
-                    <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 ml-2">Charges Fixes</h2>
-                    <ul id="recurring-expenses-list" class="space-y-2 mb-6"></ul>
-                    <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 ml-2">Ponctuelles</h2>
-                    <ul id="ponctuelle-expenses-list" class="space-y-2"></ul>
-                </div>
-
-                <div id="archived-accounts-view" class="hidden">
-                    <div class="flex justify-between items-center mb-4 ml-2 border-b border-slate-800 pb-2">
-                        <h2 class="text-xs font-bold text-emerald-400 uppercase tracking-wider italic">Anciennes clôtures</h2>
-                        <button onclick="toggleAccountArchive()" class="text-[10px] text-slate-500 underline">Fermer</button>
+                    <div id="agenda-container" class="space-y-4 md:space-y-6">
+                        <!-- Généré dynamiquement -->
                     </div>
-                    <ul id="archived-accounts-list" class="space-y-3"></ul>
-                </div>
-            </section>
+                </section>
 
-            <!-- SECTION PROFIL -->
-            <section id="section-profile" class="hidden space-y-6">
-                <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl space-y-6">
-                    <div class="bg-blue-900/20 border border-blue-500/30 rounded-2xl p-4 flex justify-between items-center mb-4">
-                        <div class="min-w-0">
-                            <p class="text-[8px] uppercase font-black text-blue-500 mb-1">Code Foyer Actuel</p>
-                            <p class="font-black text-white tracking-widest truncate" id="current-instance-id">...</p>
-                        </div>
-                        <button onclick="window.location.reload()" class="bg-slate-700 p-2 rounded-lg text-slate-400">
-                            <i class="fa-solid fa-right-from-bracket"></i>
-                        </button>
-                    </div>
-                    <div class="flex flex-col items-center gap-4 py-4">
-                        <div class="relative">
-                            <div id="current-profile-avatar" class="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center text-4xl shadow-xl border-4 overflow-hidden" style="border-color: var(--user-color, #3b82f6)"></div>
-                            <div class="absolute -bottom-2 -right-2 w-6 h-6 rounded-full border-2 border-slate-800" id="current-profile-color-badge" style="background-color: var(--user-color, #3b82f6)"></div>
-                        </div>
-                        <div class="text-center">
-                            <h2 class="text-xl font-bold text-slate-100" id="current-profile-name-display">...</h2>
-                            <p class="text-xs text-slate-500 uppercase font-bold tracking-widest mt-1" id="current-profile-income-display">Revenu : 0€</p>
-                        </div>
-                    </div>
-                    <div class="space-y-4 border-t border-slate-700 pt-6">
-                        <input type="text" id="settings-name" placeholder="Prénom" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 font-bold text-slate-100 outline-none">
-                        <input type="number" id="settings-income" placeholder="Revenu mensuel" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 font-black text-blue-400 outline-none">
+                <!-- SECTION COMPTES -->
+                <section id="section-accounts" class="hidden space-y-6">
+                    
+                    <!-- Ligne 1 Desktop : Graphique & Balance -->
+                    <div class="grid md:grid-cols-2 gap-6 mb-8">
                         
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2 text-center mt-4">Votre Avatar</label>
-                            <div id="settings-avatar-picker" class="flex justify-center gap-2 flex-wrap mb-4"></div>
+                        <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden flex flex-col h-full">
+                            <div class="p-5 flex justify-between items-center border-b border-slate-700 shrink-0">
+                                <h2 class="text-[10px] md:text-xs font-black uppercase text-slate-500 tracking-widest">Évolution Financière</h2>
+                                <button onclick="toggleFinanceChartVisibility()" class="text-[10px] font-bold bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2">
+                                    <i class="fa-solid fa-chart-area"></i> <span class="hidden md:inline">Afficher / Masquer</span>
+                                </button>
+                            </div>
+                            <div id="finance-chart-container" class="hidden p-5 bg-slate-900/50 flex-1 flex-col justify-end">
+                                <h2 class="text-[10px] font-black uppercase text-slate-600 mb-4 tracking-widest text-center">Historique (6 mois)</h2>
+                                <div class="w-full h-32 md:h-40" id="finance-chart"></div>
+                            </div>
                         </div>
 
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2 text-center">Votre couleur d'agenda</label>
-                            <div id="settings-user-color-picker" class="flex justify-center gap-2 flex-wrap"></div>
+                        <div id="balance-card" class="bg-gradient-to-br from-indigo-700 to-slate-900 text-white rounded-2xl p-6 shadow-xl relative border border-white/5 overflow-hidden h-full flex flex-col justify-between">
+                            <div class="flex justify-between items-center mb-6 relative z-10">
+                                <span class="text-xs md:text-sm font-bold uppercase tracking-widest opacity-70" id="current-month-label">Mois</span>
+                                <button onclick="settleAccountsManual()" class="text-xs bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full font-bold border border-white/10 transition-colors shadow-lg">Clôturer</button>
+                            </div>
+                            <div id="balance-summary" class="text-center relative z-10"></div>
+                            <div id="visual-stats" class="space-y-4 relative z-10 mt-4"></div>
                         </div>
 
-                        <button onclick="updateProfileFromSettings()" class="w-full bg-blue-600 py-4 rounded-xl font-black shadow-lg">Enregistrer</button>
                     </div>
-                </div>
-            </section>
+
+                    <!-- Actions Comptes -->
+                    <div class="flex gap-3 mb-8">
+                        <button onclick="openExpenseEditor()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl px-5 py-4 md:py-5 font-bold shadow-lg flex items-center justify-center gap-3 transition-transform active:scale-95 text-sm md:text-base">
+                            <i class="fa-solid fa-receipt"></i> Nouvelle dépense
+                        </button>
+                        <button onclick="toggleAccountArchive()" class="bg-slate-800 border border-slate-700 text-slate-400 px-5 md:px-8 rounded-xl hover:bg-slate-700 transition-colors">
+                            <i class="fa-solid fa-history"></i>
+                        </button>
+                    </div>
+
+                    <!-- Ligne 2 Desktop : Listes des charges -->
+                    <div id="active-accounts-view" class="grid md:grid-cols-2 gap-6 md:gap-8">
+                        <div>
+                            <h2 class="text-xs md:text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2 border-b border-slate-800 pb-2">Charges Fixes</h2>
+                            <ul id="recurring-expenses-list" class="space-y-3"></ul>
+                        </div>
+                        <div>
+                            <h2 class="text-xs md:text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2 border-b border-slate-800 pb-2 mt-6 md:mt-0">Ponctuelles</h2>
+                            <ul id="ponctuelle-expenses-list" class="space-y-3"></ul>
+                        </div>
+                    </div>
+
+                    <div id="archived-accounts-view" class="hidden">
+                        <div class="flex justify-between items-center mb-6 ml-2 border-b border-slate-800 pb-2">
+                            <h2 class="text-xs font-bold text-emerald-400 uppercase tracking-wider italic">Anciennes clôtures</h2>
+                            <button onclick="toggleAccountArchive()" class="text-[10px] text-slate-500 underline hover:text-white">Fermer</button>
+                        </div>
+                        <ul id="archived-accounts-list" class="space-y-3 opacity-80 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0"></ul>
+                    </div>
+                </section>
+
+                <!-- SECTION PROFIL -->
+                <section id="section-profile" class="hidden space-y-6">
+                    <div class="bg-slate-800 rounded-2xl p-6 md:p-10 border border-slate-700 shadow-xl">
+                        
+                        <div class="bg-blue-900/20 border border-blue-500/30 rounded-2xl p-4 flex justify-between items-center mb-8">
+                            <div class="min-w-0">
+                                <p class="text-[8px] md:text-[10px] uppercase font-black text-blue-500 mb-1">Code Foyer Actuel</p>
+                                <p class="font-black text-white tracking-widest truncate text-sm md:text-lg" id="current-instance-id">...</p>
+                            </div>
+                            <button onclick="window.location.reload()" class="bg-slate-700 p-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-600 transition-colors">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                            </button>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            
+                            <div class="flex flex-col items-center gap-4 border-b md:border-b-0 md:border-r border-slate-700 pb-8 md:pb-0">
+                                <div class="relative">
+                                    <div id="current-profile-avatar" class="w-24 h-24 md:w-32 md:h-32 rounded-full bg-slate-700 flex items-center justify-center text-5xl md:text-6xl shadow-xl border-4 overflow-hidden" style="border-color: var(--user-color, #3b82f6)"></div>
+                                    <div class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full border-4 border-slate-800" id="current-profile-color-badge" style="background-color: var(--user-color, #3b82f6)"></div>
+                                </div>
+                                <div class="text-center mt-2">
+                                    <h2 class="text-2xl font-bold text-slate-100" id="current-profile-name-display">...</h2>
+                                    <p class="text-sm text-slate-500 uppercase font-bold tracking-widest mt-1" id="current-profile-income-display">Revenu : 0€</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Prénom</label>
+                                    <input type="text" id="settings-name" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-4 font-bold text-slate-100 outline-none focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Revenu Mensuel</label>
+                                    <input type="number" id="settings-income" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-4 font-black text-blue-400 outline-none focus:border-blue-500">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-3">Votre Avatar</label>
+                                    <div id="settings-avatar-picker" class="flex gap-2 flex-wrap"></div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-3">Couleur d'Agenda</label>
+                                    <div id="settings-user-color-picker" class="flex gap-2 flex-wrap"></div>
+                                </div>
+                            </div>
+
+                        </div>
+                        
+                        <div class="mt-8 pt-6 border-t border-slate-700">
+                            <button onclick="updateProfileFromSettings()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 md:py-5 rounded-xl font-black shadow-lg text-white transition-all text-sm md:text-base">
+                                Enregistrer les modifications
+                            </button>
+                        </div>
+
+                    </div>
+                </section>
+
+            </div>
         </div>
     </div>
 
@@ -210,7 +257,7 @@
         <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto flex flex-col border border-slate-700">
             <div class="p-5 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
                 <h2 id="event-modal-title" class="text-lg font-bold text-violet-400">Nouvel Événement</h2>
-                <button onclick="closeEventEditor()" class="text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <button onclick="closeEventEditor()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div class="p-6 space-y-5 flex-1">
                 <div class="flex bg-slate-900 rounded-xl p-1 border border-slate-700">
@@ -218,39 +265,39 @@
                     <button id="btn-type-rdv" onclick="setEventType('rdv')" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 hover:text-white transition-all">Rendez-vous</button>
                 </div>
 
-                <input type="text" id="event-title" placeholder="Titre de l'événement" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-slate-100 outline-none focus:border-violet-500 font-bold">
+                <input type="text" id="event-title" placeholder="Titre de l'événement" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-4 text-slate-100 outline-none focus:border-violet-500 font-bold">
                 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Date (Début)</label>
-                        <input type="date" id="event-date-start" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-2 text-sm text-slate-100 outline-none">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Date (Début)</label>
+                        <input type="date" id="event-date-start" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-sm text-slate-100 outline-none focus:border-violet-500">
                     </div>
                     <div>
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Heure</label>
-                        <input type="time" id="event-time-start" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-2 text-sm text-slate-100 outline-none">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Heure</label>
+                        <input type="time" id="event-time-start" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-sm text-slate-100 outline-none focus:border-violet-500">
                     </div>
                 </div>
 
                 <div id="event-rdv-fields" class="hidden space-y-5 border-t border-slate-700 pt-5">
-                    <div class="grid grid-cols-2 gap-3">
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Date (Fin)</label>
-                            <input type="date" id="event-date-end" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-2 text-sm text-slate-100 outline-none">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Date (Fin)</label>
+                            <input type="date" id="event-date-end" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-sm text-slate-100 outline-none focus:border-violet-500">
                         </div>
                         <div>
-                            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Heure fin</label>
-                            <input type="time" id="event-time-end" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-2 text-sm text-slate-100 outline-none">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Heure fin</label>
+                            <input type="time" id="event-time-end" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-sm text-slate-100 outline-none focus:border-violet-500">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1"><i class="fa-solid fa-location-dot"></i> Lieu</label>
-                        <input type="text" id="event-location" placeholder="Adresse ou lieu" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-sm text-slate-100 outline-none">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2"><i class="fa-solid fa-location-dot"></i> Lieu</label>
+                        <input type="text" id="event-location" placeholder="Adresse ou lieu" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-4 text-sm text-slate-100 outline-none focus:border-violet-500">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1"><i class="fa-solid fa-repeat"></i> Récurrence</label>
-                    <select id="event-recurrence" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-sm text-slate-100 outline-none appearance-none">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2"><i class="fa-solid fa-repeat"></i> Récurrence</label>
+                    <select id="event-recurrence" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-4 text-sm text-slate-100 outline-none appearance-none focus:border-violet-500 cursor-pointer">
                         <option value="none">Une seule fois</option>
                         <option value="daily">Tous les jours</option>
                         <option value="weekly">Toutes les semaines</option>
@@ -259,13 +306,13 @@
                     </select>
                 </div>
 
-                <textarea id="event-desc" rows="2" placeholder="Description / Notes" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-slate-100 outline-none text-sm resize-none"></textarea>
+                <textarea id="event-desc" rows="3" placeholder="Description / Notes" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-4 text-slate-100 outline-none text-sm resize-none focus:border-violet-500"></textarea>
             </div>
-            <div class="p-5 border-t border-slate-700 bg-slate-800/50 flex justify-between">
-                <button id="event-delete-btn" onclick="deleteEventFromEditor()" class="text-red-400 font-bold px-4 hidden"><i class="fa-solid fa-trash"></i></button>
+            <div class="p-5 border-t border-slate-700 bg-slate-800/50 flex justify-between items-center">
+                <button id="event-delete-btn" onclick="deleteEventFromEditor()" class="text-red-400 font-bold px-4 hidden hover:text-red-300"><i class="fa-solid fa-trash text-lg"></i></button>
                 <div class="flex gap-3 ml-auto">
-                    <button onclick="closeEventEditor()" class="px-5 py-2 rounded-xl text-slate-400">Annuler</button>
-                    <button onclick="saveEvent()" class="px-5 py-2 rounded-xl bg-violet-600 text-white font-bold">Ajouter</button>
+                    <button onclick="closeEventEditor()" class="px-6 py-3 rounded-xl text-slate-400 font-bold hover:bg-slate-700 transition-colors">Annuler</button>
+                    <button onclick="saveEvent()" class="px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold transition-colors">Ajouter</button>
                 </div>
             </div>
         </div>
@@ -276,38 +323,46 @@
         <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto flex flex-col border border-slate-700">
             <div class="p-5 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
                 <h2 id="modal-title" class="text-lg font-bold text-blue-400">Détail Tâche</h2>
-                <button onclick="closeEditor()" class="text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <button onclick="closeEditor()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div class="p-6 space-y-5 flex-1">
-                <input type="text" id="edit-title" placeholder="Nom de la tâche" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-slate-100 outline-none focus:ring-2 focus:ring-blue-500 font-bold">
-                <textarea id="edit-desc" rows="2" placeholder="Description" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-slate-100 outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
-                <div>
-                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Étiquettes</label>
-                    <div class="flex gap-2 mb-2">
-                        <input type="text" id="new-tag-input" class="flex-1 rounded-lg border border-slate-600 bg-slate-700 p-2 text-sm outline-none text-white" onkeypress="if(event.key === 'Enter') addTagToEditor()">
-                        <button onclick="addTagToEditor()" class="bg-slate-700 px-4 rounded-lg text-white"><i class="fa-solid fa-tag"></i></button>
+                <input type="text" id="edit-title" placeholder="Nom de la tâche" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-4 text-slate-100 outline-none focus:border-blue-500 font-bold">
+                <textarea id="edit-desc" rows="3" placeholder="Description" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-4 text-slate-100 outline-none focus:border-blue-500 resize-none"></textarea>
+                
+                <div class="grid md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Date d'échéance</label>
+                        <input type="date" id="edit-due-date" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-slate-100 outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Priorité (Couleur)</label>
+                        <div id="color-picker" class="flex flex-wrap gap-2 pt-1"></div>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-700 pt-5">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Étiquettes</label>
+                    <div class="flex gap-2 mb-3">
+                        <input type="text" id="new-tag-input" class="flex-1 rounded-xl border border-slate-600 bg-slate-700 p-3 text-sm outline-none text-white focus:border-blue-500" onkeypress="if(event.key === 'Enter') addTagToEditor()" placeholder="Ajouter un tag...">
+                        <button onclick="addTagToEditor()" class="bg-slate-700 hover:bg-slate-600 px-5 rounded-xl text-white transition-colors"><i class="fa-solid fa-plus"></i></button>
                     </div>
                     <div id="edit-tags-list" class="flex flex-wrap gap-2"></div>
                 </div>
-                <div>
-                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Date d'échéance (Ajoute à l'agenda)</label>
-                    <input type="date" id="edit-due-date" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-slate-100">
-                </div>
-                <div id="color-picker" class="flex flex-wrap gap-3 justify-center"></div>
-                <div>
-                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Sous-tâches</label>
-                    <div class="flex gap-2 mb-2">
-                        <input type="text" id="new-subtask-input" class="flex-1 rounded-lg border border-slate-600 bg-slate-700 p-2 text-sm outline-none text-white" onkeypress="if(event.key === 'Enter') addSubtaskToEditor()">
-                        <button onclick="addSubtaskToEditor()" class="bg-slate-700 px-4 rounded-lg text-white"><i class="fa-solid fa-plus"></i></button>
+
+                <div class="border-t border-slate-700 pt-5">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Sous-tâches</label>
+                    <div class="flex gap-2 mb-3">
+                        <input type="text" id="new-subtask-input" class="flex-1 rounded-xl border border-slate-600 bg-slate-700 p-3 text-sm outline-none text-white focus:border-blue-500" onkeypress="if(event.key === 'Enter') addSubtaskToEditor()" placeholder="Ajouter une étape...">
+                        <button onclick="addSubtaskToEditor()" class="bg-slate-700 hover:bg-slate-600 px-5 rounded-xl text-white transition-colors"><i class="fa-solid fa-plus"></i></button>
                     </div>
                     <ul id="edit-subtasks-list" class="space-y-2"></ul>
                 </div>
             </div>
-            <div class="p-5 border-t border-slate-700 bg-slate-800/50 flex justify-between">
-                <button id="modal-delete-btn" onclick="deleteTaskFromEditor()" class="text-red-400 font-bold px-4 hidden"><i class="fa-solid fa-trash"></i></button>
+            <div class="p-5 border-t border-slate-700 bg-slate-800/50 flex justify-between items-center">
+                <button id="modal-delete-btn" onclick="deleteTaskFromEditor()" class="text-red-400 font-bold px-4 hidden hover:text-red-300"><i class="fa-solid fa-trash text-lg"></i></button>
                 <div class="flex gap-3 ml-auto">
-                    <button onclick="closeEditor()" class="px-5 py-2 rounded-xl text-slate-400">Annuler</button>
-                    <button onclick="saveTask()" class="px-5 py-2 rounded-xl bg-blue-600 text-white font-bold">Enregistrer</button>
+                    <button onclick="closeEditor()" class="px-6 py-3 rounded-xl text-slate-400 font-bold hover:bg-slate-700 transition-colors">Annuler</button>
+                    <button onclick="saveTask()" class="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg transition-colors">Enregistrer</button>
                 </div>
             </div>
         </div>
@@ -318,55 +373,67 @@
         <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-sm flex flex-col border border-slate-700">
             <div class="p-5 border-b border-slate-700 flex justify-between items-center">
                 <h2 class="text-lg font-bold text-emerald-400">Ajouter un frais</h2>
-                <button onclick="closeExpenseEditor()" class="text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+                <button onclick="closeExpenseEditor()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
-            <div class="p-6 space-y-4">
-                <input type="text" id="expense-text" placeholder="Libellé (ex: Courses)" class="w-full rounded-xl bg-slate-700 border border-slate-600 p-3 outline-none text-white">
+            <div class="p-6 space-y-5">
+                <input type="text" id="expense-text" placeholder="Libellé (ex: Courses)" class="w-full rounded-xl bg-slate-700 border border-slate-600 p-4 outline-none text-white focus:border-emerald-500 font-bold">
                 
                 <div class="flex gap-3">
-                    <input type="number" id="expense-amount" placeholder="0.00 €" class="w-1/2 rounded-xl border border-slate-600 bg-slate-700 p-3 font-bold text-xl outline-none text-white">
-                    <input type="date" id="expense-date" class="w-1/2 rounded-xl border border-slate-600 bg-slate-700 p-3 text-sm text-slate-100 outline-none">
+                    <div class="w-1/2">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Montant</label>
+                        <input type="number" id="expense-amount" placeholder="0.00 €" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-4 font-black text-xl outline-none text-emerald-400 focus:border-emerald-500 text-center">
+                    </div>
+                    <div class="w-1/2">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Date</label>
+                        <input type="date" id="expense-date" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-4 text-sm text-slate-100 outline-none focus:border-emerald-500 h-[60px]">
+                    </div>
                 </div>
 
-                <div class="flex items-center justify-end pt-2">
+                <div class="flex items-center justify-between pt-4 border-t border-slate-700">
+                    <div class="text-left">
+                        <p class="text-xs font-bold text-slate-300">Charge Fixe</p>
+                        <p class="text-[9px] text-slate-500">Se répète chaque mois</p>
+                    </div>
                     <label class="flex items-center gap-3 cursor-pointer">
-                        <span class="text-[10px] uppercase font-bold text-slate-400">Charge Fixe (mensuelle)</span>
                         <div class="relative">
                             <input type="checkbox" id="expense-recurring" class="sr-only peer" onchange="document.getElementById('expense-date').disabled = this.checked; if(this.checked) document.getElementById('expense-date').value = '';">
-                            <div class="w-10 h-5 bg-slate-600 rounded-full peer peer-checked:bg-emerald-500 transition-all"></div>
-                            <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-5"></div>
+                            <div class="w-12 h-6 bg-slate-600 rounded-full peer peer-checked:bg-emerald-500 transition-all"></div>
+                            <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-6"></div>
                         </div>
                     </label>
                 </div>
             </div>
             <div class="p-5 flex gap-3 border-t border-slate-700 bg-slate-800/50">
-                <button onclick="closeExpenseEditor()" class="flex-1 py-3 text-slate-400 font-bold rounded-xl hover:bg-slate-700">Annuler</button>
-                <button onclick="saveExpense()" class="flex-1 py-3 bg-emerald-600 rounded-xl font-bold text-white shadow-lg">Valider</button>
+                <button onclick="closeExpenseEditor()" class="flex-1 py-3 text-slate-400 font-bold rounded-xl hover:bg-slate-700 transition-colors">Annuler</button>
+                <button onclick="saveExpense()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-white shadow-lg transition-colors">Valider</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL PROFIL INITIAL -->
     <div id="profile-modal" class="fixed inset-0 bg-slate-950/95 hidden items-center justify-center z-[600] px-4 backdrop-blur-xl">
-        <div class="bg-slate-800 rounded-2xl p-8 w-full max-w-sm border border-slate-700 shadow-2xl">
-            <h2 class="text-2xl font-black text-center mb-6 text-slate-100">Profil Foyer</h2>
-            <div class="space-y-4">
-                <div id="initial-profile-avatar" class="w-24 h-24 mx-auto rounded-full bg-slate-700 flex items-center justify-center text-4xl shadow-xl border-4 border-blue-500/20 overflow-hidden mb-4"></div>
-                <input type="text" id="profile-name" placeholder="Votre Prénom" class="w-full rounded-xl bg-slate-700 border border-slate-600 p-3 font-bold text-center text-white">
-                <input type="number" id="profile-income" placeholder="Revenu mensuel €" class="w-full rounded-xl bg-slate-700 border border-slate-600 p-3 font-black text-center text-blue-400">
+        <div class="bg-slate-800 rounded-2xl p-8 md:p-10 w-full max-w-md border border-slate-700 shadow-2xl">
+            <h2 class="text-2xl md:text-3xl font-black text-center mb-8 text-slate-100">Création du Profil</h2>
+            <div class="space-y-6">
+                <div id="initial-profile-avatar" class="w-24 h-24 md:w-32 md:h-32 mx-auto rounded-full bg-slate-700 flex items-center justify-center text-4xl shadow-xl border-4 border-blue-500/20 overflow-hidden mb-6"></div>
                 
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2 text-center mt-4">Votre Avatar</label>
-                    <div id="initial-avatar-picker" class="flex justify-center gap-2 flex-wrap mb-4"></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="text" id="profile-name" placeholder="Votre Prénom" class="w-full rounded-xl bg-slate-700 border border-slate-600 p-4 font-bold text-center text-white focus:border-blue-500 outline-none">
+                    <input type="number" id="profile-income" placeholder="Revenu net €" class="w-full rounded-xl bg-slate-700 border border-slate-600 p-4 font-black text-center text-blue-400 focus:border-blue-500 outline-none">
+                </div>
+                
+                <div class="pt-4 border-t border-slate-700">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-3 text-center">Choisissez un Avatar</label>
+                    <div id="initial-avatar-picker" class="flex justify-center gap-3 flex-wrap"></div>
                 </div>
 
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2 text-center mt-4">Choisissez votre couleur</label>
-                    <div id="initial-user-color-picker" class="flex justify-center gap-2 flex-wrap"></div>
+                <div class="pt-2">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-3 text-center">Couleur d'agenda</label>
+                    <div id="initial-user-color-picker" class="flex justify-center gap-3 flex-wrap"></div>
                 </div>
 
             </div>
-            <button onclick="saveProfile()" class="w-full mt-8 bg-blue-600 py-4 rounded-xl font-black shadow-xl hover:bg-blue-500 text-white">C'est parti !</button>
+            <button onclick="saveProfile()" class="w-full mt-10 bg-blue-600 hover:bg-blue-500 py-5 rounded-xl font-black text-lg shadow-xl text-white transition-all">Rejoindre le foyer !</button>
         </div>
     </div>
 
@@ -439,21 +506,20 @@
         const availableAvatars = ['🦊', '🐱', '🐼', '🐨', '🐯', '🦉', '🦋', '🐥', '🦕'];
         let selectedAvatar = '👤';
 
-        // --- ÉCOUTEUR GLOBAL DE CONNEXION (Gère les retours de Google) ---
+        // --- ÉCOUTEUR GLOBAL DE CONNEXION ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
                 appId = sessionStorage.getItem('savedInstanceCode'); 
                 if(appId) {
                     elements.instanceGate().classList.add('hidden');
-                    elements.mainApp().classList.remove('hidden');
+                    elements.mainApp().classList.replace('hidden', 'md:flex');
                     getEl('current-instance-id').textContent = appId;
                     await startAppFlow();
                 }
             }
         });
 
-        // Capture les erreurs potentielles de la redirection Google
         getRedirectResult(auth).catch(err => {
             console.error("Erreur de redirection Firebase:", err);
             const errorEl = getEl('login-error');
@@ -477,11 +543,10 @@
             appId = input;
             sessionStorage.setItem('savedInstanceCode', appId); 
 
-            // Si Google vous a déjà connecté en arrière-plan (Mémoire du navigateur)
             if (auth.currentUser) {
                 currentUser = auth.currentUser;
                 elements.instanceGate().classList.add('hidden');
-                elements.mainApp().classList.remove('hidden');
+                elements.mainApp().classList.replace('hidden', 'md:flex');
                 getEl('current-instance-id').textContent = appId;
                 await startAppFlow();
                 return;
@@ -563,8 +628,14 @@
                 if(sec) sec.style.display = tab === s ? 'block' : 'none';
                 if(btn) {
                     btn.classList.toggle('text-blue-400', tab === s && s !== 'accounts' && s !== 'agenda');
+                    btn.classList.toggle('bg-slate-700/30', tab === s && s !== 'accounts' && s !== 'agenda');
+                    
                     btn.classList.toggle('text-emerald-500', tab === s && s === 'accounts');
+                    btn.classList.toggle('bg-slate-700/30', tab === s && s === 'accounts');
+                    
                     btn.classList.toggle('text-violet-400', tab === s && s === 'agenda');
+                    btn.classList.toggle('bg-slate-700/30', tab === s && s === 'agenda');
+                    
                     btn.classList.toggle('text-slate-400', tab !== s);
                 }
             });
@@ -634,13 +705,13 @@
                 const dateStr = item.dateObj.toISOString().split('T')[0];
                 if (dateStr !== currentGroupDate) {
                     currentGroupDate = dateStr;
-                    html += `<h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mt-8 mb-4 sticky top-0 bg-slate-900/95 py-2 backdrop-blur-sm z-10 border-b border-slate-800">${formatDateHeader(item.dateObj)}</h3>`;
+                    html += `<h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mt-8 mb-4 sticky top-0 md:top-4 bg-slate-900/95 py-2 backdrop-blur-sm z-10 border-b border-slate-800 rounded-lg px-2">${formatDateHeader(item.dateObj)}</h3>`;
                 }
 
                 if (item.type === 'task') {
                     html += `
-                    <div onclick="openEditor('${item.id}')" class="bg-slate-800/80 p-4 rounded-xl border border-slate-700 flex gap-4 items-center mb-3 cursor-pointer shadow-sm">
-                        <div class="w-1.5 h-full rounded-full bg-slate-500 self-stretch" style="background-color: ${item.color}"></div>
+                    <div onclick="openEditor('${item.id}')" class="bg-slate-800/80 p-4 md:p-5 rounded-xl border border-slate-700 flex gap-4 items-center mb-3 cursor-pointer shadow-sm hover:border-slate-500 transition-colors">
+                        <div class="w-2 h-full min-h-[40px] rounded-full self-stretch shrink-0" style="background-color: ${item.color}"></div>
                         <div class="flex-1 min-w-0">
                             <p class="text-base font-bold text-slate-200 truncate">${escapeHTML(item.title)}</p>
                             <p class="text-[10px] uppercase font-black text-slate-500 mt-1"><i class="fa-solid fa-check-double"></i> À FAIRE</p>
@@ -648,21 +719,21 @@
                     </div>`;
                 } else {
                     const timeStr = item.data.timeStart ? `${item.data.timeStart}${item.data.timeEnd ? ' - '+item.data.timeEnd : ''}` : 'Journée entière';
-                    const locStr = item.data.location ? `<span class="ml-2 text-slate-400"><i class="fa-solid fa-location-dot"></i> ${escapeHTML(item.data.location)}</span>` : '';
-                    const avatarContent = item.data.author?.avatar ? (item.data.author.avatar.startsWith('http') ? `<img src="${item.data.author.avatar}" class="w-6 h-6 rounded-full border border-slate-600 ml-3 shrink-0 object-cover" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : `<div class="w-6 h-6 rounded-full border border-slate-600 ml-3 shrink-0 flex items-center justify-center text-xs bg-slate-700">${item.data.author.avatar}</div>`) : '';
+                    const locStr = item.data.location ? `<span class="ml-3 text-slate-400 border-l border-slate-700 pl-3"><i class="fa-solid fa-location-dot"></i> ${escapeHTML(item.data.location)}</span>` : '';
+                    const avatarContent = item.data.author?.avatar ? (item.data.author.avatar.startsWith('http') ? `<img src="${item.data.author.avatar}" class="w-8 h-8 rounded-full border-2 border-slate-600 shrink-0 object-cover" referrerpolicy="no-referrer" onerror="this.style.display='none'">` : `<div class="w-8 h-8 rounded-full border-2 border-slate-600 shrink-0 flex items-center justify-center text-sm bg-slate-700">${item.data.author.avatar}</div>`) : '';
                     
                     html += `
-                    <div onclick="openEventEditor('${item.id}')" class="bg-slate-800 p-4 rounded-xl border border-slate-700 flex gap-4 items-center mb-3 cursor-pointer shadow-md">
-                        <div class="w-1.5 h-full rounded-full self-stretch" style="background-color: ${item.color}"></div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex justify-between items-start">
-                                <p class="text-base font-bold text-slate-100 truncate">${escapeHTML(item.title)}</p>
+                    <div onclick="openEventEditor('${item.id}')" class="bg-slate-800 p-4 md:p-5 rounded-xl border border-slate-700 flex gap-4 items-center mb-3 cursor-pointer shadow-md hover:border-violet-500/50 transition-colors">
+                        <div class="w-2 h-full min-h-[40px] rounded-full self-stretch shrink-0 shadow-[0_0_10px_rgba(139,92,246,0.3)]" style="background-color: ${item.color}"></div>
+                        <div class="flex-1 min-w-0 pr-2">
+                            <div class="flex justify-between items-center mb-1">
+                                <p class="text-base md:text-lg font-bold text-slate-100 truncate">${escapeHTML(item.title)}</p>
                                 ${avatarContent}
                             </div>
-                            <p class="text-xs font-bold text-violet-400 mt-1 uppercase tracking-wider">
-                                <i class="fa-regular fa-clock"></i> ${timeStr} ${locStr}
+                            <p class="text-xs font-bold text-violet-400 mt-1 uppercase tracking-wider flex items-center">
+                                <span><i class="fa-regular fa-clock mr-1"></i> ${timeStr}</span> ${locStr}
                             </p>
-                            ${item.data.recurrence !== 'none' ? `<p class="text-[10px] text-slate-500 mt-1"><i class="fa-solid fa-repeat"></i> Répétition</p>` : ''}
+                            ${item.data.recurrence !== 'none' ? `<p class="text-[10px] text-slate-500 mt-2 font-semibold"><i class="fa-solid fa-repeat"></i> Répétition activée</p>` : ''}
                         </div>
                     </div>`;
                 }
@@ -772,18 +843,18 @@
                 
                 let detailsHTML = '';
                 if (hasDetails && isExpanded) {
-                    const desc = task.description ? `<p class="text-sm text-slate-300 mt-3 italic whitespace-pre-wrap">${escapeHTML(task.description)}</p>` : '';
+                    const desc = task.description ? `<p class="text-sm text-slate-300 mt-4 italic whitespace-pre-wrap px-1">${escapeHTML(task.description)}</p>` : '';
                     const subs = (task.subtasks || []).map(s => `<li onclick="toggleSubtask(event, '${task.id}', '${s.id}')" class="text-sm flex items-center gap-3 text-slate-200 cursor-pointer hover:text-white transition-colors py-2"><i class="fa-solid ${s.completed ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-500'} text-lg"></i> <span class="${s.completed ? 'line-through opacity-50' : ''}">${escapeHTML(s.text)}</span></li>`).join('');
-                    detailsHTML = `<div class="mt-3 border-t border-white/10 pt-3" onclick="event.stopPropagation()">${desc}${subs ? `<ul class="mt-3 space-y-1">${subs}</ul>`:''}</div>`;
+                    detailsHTML = `<div class="mt-4 border-t border-white/10 pt-3" onclick="event.stopPropagation()">${desc}${subs ? `<ul class="mt-4 space-y-1">${subs}</ul>`:''}</div>`;
                 }
 
                 const li = document.createElement('li');
-                li.className = `${color.bg} p-4 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all mb-3`;
+                li.className = `${color.bg} p-4 md:p-5 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all mb-3 md:mb-4 hover:border-slate-500`;
                 const tags = (task.tags || []).map(t => `<span class="bg-white/10 text-[10px] font-black uppercase px-3 py-1 rounded-full text-white">${t}</span>`).join(' ');
                 
                 li.innerHTML = `
                     <div class="color-accent ${color.accent}"></div>
-                    <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-start justify-between gap-3 md:gap-5">
                         <div class="py-1 pr-2 cursor-pointer" onclick="event.stopPropagation(); toggleTask('${task.id}', ${!task.completed})">
                             <div class="w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${task.completed ? 'bg-green-500 border-green-500' : 'border-slate-400 hover:border-slate-200'}">
                                 ${task.completed ? '<i class="fa-solid fa-check text-sm text-white"></i>' : ''}
@@ -791,21 +862,21 @@
                         </div>
                         <div class="min-w-0 flex-1 cursor-pointer py-1" onclick="toggleCollapse(event, '${task.id}')">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-words leading-tight text-base">${escapeHTML(task.text)}</span>
-                                ${hasDetails ? `<i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-slate-400 text-sm"></i>` : ''}
+                                <span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-words leading-tight text-base md:text-lg">${escapeHTML(task.text)}</span>
+                                ${hasDetails ? `<i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-slate-400 text-base px-2"></i>` : ''}
                             </div>
                             <div class="flex flex-wrap gap-2 mt-2">${tags}</div>
-                            ${task.dueDate ? `<p class="text-xs font-black mt-2 ${isOverdue ? 'text-red-400' : 'text-slate-400'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}
+                            ${task.dueDate ? `<p class="text-xs font-black mt-3 ${isOverdue ? 'text-red-400' : 'text-slate-400'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}
                             ${detailsHTML}
                         </div>
-                        <button onclick="event.stopPropagation(); openEditor('${task.id}')" class="p-2 -mr-2 text-slate-400 hover:text-blue-400">
-                            <i class="fa-solid fa-pen text-sm"></i>
+                        <button onclick="event.stopPropagation(); openEditor('${task.id}')" class="p-3 -mr-3 text-slate-400 hover:text-blue-400 transition-colors">
+                            <i class="fa-solid fa-pen text-base"></i>
                         </button>
                     </div>`;
                     
                 if (task.archived || task.completed) arch.appendChild(li); else todo.appendChild(li);
             });
-            if(todo.innerHTML === '') todo.innerHTML = '<li class="text-slate-500 text-center py-6 text-sm italic">C\'est calme ici...</li>';
+            if(todo.innerHTML === '') todo.innerHTML = '<li class="text-slate-500 text-center py-8 text-sm md:text-base italic bg-slate-800/30 rounded-xl border border-slate-700 border-dashed">La liste est vide...</li>';
         }
 
         // --- EXPENSES RENDERER ---
@@ -816,10 +887,24 @@
             expensesData.forEach(exp => {
                 const avatarContent = exp.payer.avatar && exp.payer.avatar.startsWith('http') ? `<img src="${exp.payer.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">` : (exp.payer.avatar || '👤');
                 
-                const dateBadge = (!exp.isRecurring && exp.date) ? `<span class="bg-white/10 text-slate-300 text-[9px] px-2 py-0.5 rounded-full ml-2 font-normal"><i class="fa-regular fa-calendar"></i> ${new Date(exp.date).toLocaleDateString()}</span>` : '';
+                const dateBadge = (!exp.isRecurring && exp.date) ? `<span class="bg-slate-700 text-slate-300 text-[10px] px-3 py-1 rounded-md ml-2 font-bold shadow-inner"><i class="fa-regular fa-calendar"></i> ${new Date(exp.date).toLocaleDateString()}</span>` : '';
                 
-                const li = document.createElement('li'); li.className = "bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex justify-between items-center shadow-sm relative mb-3";
-                li.innerHTML = `<div class="flex items-center gap-4 min-w-0"><div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xl shrink-0 overflow-hidden" style="border: 2px solid ${exp.payer.color||'#3b82f6'}">${avatarContent}</div><div class="min-w-0 flex-1"><div class="flex items-center flex-wrap gap-y-1"><p class="font-bold text-slate-100 truncate text-base">${escapeHTML(exp.text)}</p>${dateBadge}</div><p class="text-[10px] text-slate-400 uppercase font-black mt-1">Par ${escapeHTML(exp.payer.name)}</p></div></div><div class="flex items-center gap-4 pl-2"><span class="font-black text-emerald-400 text-lg">${exp.amount.toFixed(2)}€</span><button onclick="deleteExpense('${exp.id}')" class="text-slate-500 hover:text-red-400 p-2"><i class="fa-regular fa-trash-can text-lg"></i></button></div>`;
+                const li = document.createElement('li'); li.className = "bg-slate-800 p-4 md:p-5 rounded-xl border border-slate-700 flex justify-between items-center shadow-md relative mb-3 hover:border-slate-500 transition-colors";
+                li.innerHTML = `
+                <div class="flex items-center gap-4 min-w-0">
+                    <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-700 flex items-center justify-center text-xl shrink-0 overflow-hidden shadow-lg" style="border: 2px solid ${exp.payer.color||'#3b82f6'}">${avatarContent}</div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center flex-wrap gap-y-2">
+                            <p class="font-bold text-slate-100 truncate text-base md:text-lg">${escapeHTML(exp.text)}</p>
+                            ${dateBadge}
+                        </div>
+                        <p class="text-[10px] text-slate-400 uppercase font-black mt-1">Saisi par ${escapeHTML(exp.payer.name)}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 md:gap-5 pl-2 shrink-0">
+                    <span class="font-black text-emerald-400 text-lg md:text-xl">${exp.amount.toFixed(2)}€</span>
+                    <button onclick="deleteExpense('${exp.id}')" class="text-slate-500 hover:text-red-400 p-2 transition-colors"><i class="fa-regular fa-trash-can text-lg md:text-xl"></i></button>
+                </div>`;
                 
                 if(exp.isRecurring) { rec.appendChild(li); stats.fixed += exp.amount; } else { pon.appendChild(li); stats.ponct += exp.amount; }
                 const uId = exp.payer.uid; if(!stats.users[uId]) stats.users[uId] = { name: exp.payer.name, spent: 0, income: exp.payer.income || 0 }; stats.users[uId].spent += exp.amount;
@@ -828,14 +913,26 @@
             if(localProfile && !stats.users[localProfile.uid]) stats.users[localProfile.uid] = { name: localProfile.name, spent: 0, income: localProfile.income || 0 };
             const userList = Object.values(stats.users); const totalS = stats.fixed + stats.ponct; 
             
-            const summHTML = `<p class="text-sm font-bold mb-5 pb-5 border-b border-white/10 text-slate-300">Total du mois : <span class="text-white text-base">${totalS.toFixed(2)}€</span></p>`;
+            const summHTML = `<p class="text-sm md:text-base font-bold mb-6 pb-5 border-b border-white/10 text-slate-300">Total du mois : <span class="text-white text-base md:text-lg ml-2 px-3 py-1 bg-slate-800 rounded-lg shadow-inner">${totalS.toFixed(2)}€</span></p>`;
             
             const chartHTML = userList.map(u => {
                 const pct = u.income > 0 ? Math.min((u.spent / u.income) * 100, 100) : (u.spent > 0 ? 100 : 0); 
                 const remaining = u.income - u.spent; 
                 const overspent = remaining < 0; 
                 const barColor = overspent ? 'bg-red-500' : (pct > 85 ? 'bg-amber-500' : 'bg-emerald-500');
-                return `<div class="mb-4 text-left"><div class="flex justify-between text-xs mb-2"><span class="font-bold text-slate-300">${escapeHTML(u.name)}</span><span class="font-black ${overspent ? 'text-red-400' : 'text-emerald-400'}">Reste: ${remaining.toFixed(2)}€</span></div><div class="w-full h-5 bg-black/40 rounded-full overflow-hidden border border-white/10 relative"><div class="${barColor} h-full transition-all duration-700 ease-out" style="width:${pct}%"></div><div class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white mix-blend-overlay drop-shadow-md">${u.spent.toFixed(2)}€ / ${u.income > 0 ? u.income + '€' : 'N/A'}</div></div></div>`;
+                return `
+                <div class="mb-5 text-left">
+                    <div class="flex justify-between text-xs md:text-sm mb-2">
+                        <span class="font-bold text-slate-300">${escapeHTML(u.name)}</span>
+                        <span class="font-black ${overspent ? 'text-red-400' : 'text-emerald-400'}">Reste: ${remaining.toFixed(2)}€</span>
+                    </div>
+                    <div class="w-full h-6 bg-black/40 rounded-full overflow-hidden border border-white/10 relative shadow-inner">
+                        <div class="${barColor} h-full transition-all duration-700 ease-out" style="width:${pct}%"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-[10px] md:text-xs font-black text-white mix-blend-overlay drop-shadow-md">
+                            ${u.spent.toFixed(2)}€ / ${u.income > 0 ? u.income + '€' : 'N/A'}
+                        </div>
+                    </div>
+                </div>`;
             }).join('');
             
             elements.balanceSummary().innerHTML = summHTML; 
@@ -845,7 +942,11 @@
 
         function renderFinanceArchives() {
             const list = elements.archivedAccountsList(); if(!list) return;
-            list.innerHTML = settlementsData.sort((a,b) => b.settledAt - a.settledAt).map(arc => `<div class="bg-slate-800/50 p-5 rounded-xl border border-slate-700 flex justify-between items-center mb-3"><div><span class="font-black text-blue-400 uppercase text-sm">${arc.label}</span></div><span class="font-bold text-slate-100 text-lg">${arc.total.toFixed(2)}€</span></div>`).join('');
+            list.innerHTML = settlementsData.sort((a,b) => b.settledAt - a.settledAt).map(arc => `
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex justify-between items-center shadow-sm hover:border-slate-500 transition-colors">
+                <div><span class="font-black text-emerald-500 uppercase text-sm md:text-base">${arc.label}</span></div>
+                <span class="font-bold text-slate-100 text-lg md:text-xl">${arc.total.toFixed(2)}€</span>
+            </div>`).join('');
         }
 
         function renderFinanceChart() {
@@ -866,23 +967,23 @@
                 const x = i * step;
                 const y = 35 - ((s.total / maxVal) * 30); 
                 pts.push(`${x},${y}`);
-                labels += `<text x="${x}" y="40" font-size="3.5" font-weight="bold" fill="#64748b" text-anchor="${i===0?'start':i===last6.length-1?'end':'middle'}">${s.label.split(' ')[0]}</text>`;
-                labels += `<text x="${x}" y="${y-2}" font-size="3" font-weight="bold" fill="#34d399" text-anchor="${i===0?'start':i===last6.length-1?'end':'middle'}">${Math.round(s.total)}</text>`;
+                labels += `<text x="${x}" y="42" font-size="3.5" font-weight="bold" fill="#64748b" text-anchor="${i===0?'start':i===last6.length-1?'end':'middle'}">${s.label.split(' ')[0]}</text>`;
+                labels += `<text x="${x}" y="${y-2}" font-size="3.5" font-weight="bold" fill="#34d399" text-anchor="${i===0?'start':i===last6.length-1?'end':'middle'}">${Math.round(s.total)}</text>`;
             });
 
             const pathArea = `M 0,35 L ${pts.join(' ')} L 100,35 Z`;
             const pathLine = `M ${pts.join(' ')}`;
 
             chart.innerHTML = `
-            <svg viewBox="0 -5 100 50" class="w-full h-full overflow-visible drop-shadow-lg">
+            <svg viewBox="0 -5 100 52" class="w-full h-full overflow-visible drop-shadow-lg">
                 <defs>
                     <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#10b981" stop-opacity="0.4"/>
+                        <stop offset="0%" stop-color="#10b981" stop-opacity="0.5"/>
                         <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
                     </linearGradient>
                 </defs>
                 <path d="${pathArea}" fill="url(#chartGrad)" class="chart-bar-anim" />
-                <path d="${pathLine}" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="chart-bar-anim" />
+                <path d="${pathLine}" fill="none" stroke="#10b981" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="chart-bar-anim drop-shadow-md" />
                 ${labels}
             </svg>
             `;
@@ -989,14 +1090,14 @@
         window.closeEditor = () => getEl('task-modal').classList.replace('flex', 'hidden');
         window.closeExpenseEditor = () => getEl('expense-modal').classList.replace('flex', 'hidden');
         
-        window.renderColorPicker = () => { getEl('color-picker').innerHTML = Object.keys(taskColors).map(c => `<button onclick="selectColor('${c}')" class="w-10 h-10 rounded-full border-2 ${currentSelectedColor === c ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'border-transparent opacity-50 hover:opacity-100'}" style="background-color: ${taskColors[c].hex};"></button>`).join(''); };
+        window.renderColorPicker = () => { getEl('color-picker').innerHTML = Object.keys(taskColors).map(c => `<button type="button" onclick="selectColor('${c}')" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 ${currentSelectedColor === c ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.4)]' : 'border-transparent opacity-50 hover:opacity-100'} transition-all" style="background-color: ${taskColors[c].hex};"></button>`).join(''); };
         window.selectColor = (c) => { currentSelectedColor = c; renderColorPicker(); };
 
         window.renderAvatarPicker = (id) => { 
             getEl(id).innerHTML = availableAvatars.map(a => {
                 const isImg = a.startsWith('http');
                 const content = isImg ? `<img src="${a}" class="w-full h-full object-cover rounded-full" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">` : a;
-                return `<button onclick="selectAvatar('${a}', '${id}')" class="w-10 h-10 flex items-center justify-center text-xl rounded-full border-2 ${selectedAvatar === a ? 'border-blue-500 bg-blue-900/40 scale-110' : 'border-transparent'}">${content}</button>`;
+                return `<button type="button" onclick="selectAvatar('${a}', '${id}')" class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-xl md:text-2xl rounded-full border-2 ${selectedAvatar === a ? 'border-blue-500 bg-blue-900/40 scale-110' : 'border-transparent hover:scale-105'} transition-all">${content}</button>`;
             }).join(''); 
         };
         window.selectAvatar = (a, id) => { 
@@ -1012,15 +1113,15 @@
             }
         };
 
-        window.renderUserColorPicker = (id) => { getEl(id).innerHTML = userColorsList.map(c => `<button onclick="selectUserColor('${c}', '${id}')" class="w-8 h-8 rounded-full border-2 ${selectedUserColor === c ? 'border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'border-transparent opacity-50 hover:opacity-100'}" style="background-color: ${c};"></button>`).join(''); };
+        window.renderUserColorPicker = (id) => { getEl(id).innerHTML = userColorsList.map(c => `<button type="button" onclick="selectUserColor('${c}', '${id}')" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 ${selectedUserColor === c ? 'border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'border-transparent opacity-50 hover:opacity-100'} transition-all" style="background-color: ${c};"></button>`).join(''); };
         window.selectUserColor = (c, id) => { selectedUserColor = c; renderUserColorPicker(id); };
 
         window.addTagToEditor = () => { const i = getEl('new-tag-input'); const v = i.value.trim().toLowerCase(); if(v && !currentEditingTags.includes(v)) { currentEditingTags.push(v); i.value = ''; renderEditorTags(); } };
         window.removeTagFromEditor = (t) => { currentEditingTags = currentEditingTags.filter(x => x !== t); renderEditorTags(); };
-        function renderEditorTags() { getEl('edit-tags-list').innerHTML = currentEditingTags.map(t => `<span class="bg-blue-900/60 text-blue-200 px-2.5 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1 border border-blue-500/50">${t}<button onclick="removeTagFromEditor('${t}')"><i class="fa-solid fa-xmark"></i></button></span>`).join(''); }
+        function renderEditorTags() { getEl('edit-tags-list').innerHTML = currentEditingTags.map(t => `<span class="bg-blue-900/60 text-blue-200 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-2 border border-blue-500/50">${t}<button type="button" onclick="removeTagFromEditor('${t}')" class="hover:text-white"><i class="fa-solid fa-xmark"></i></button></span>`).join(''); }
         window.addSubtaskToEditor = () => { const i = getEl('new-subtask-input'); if(i.value.trim()) { currentEditingSubtasks.push({ id: Date.now().toString(), text: i.value.trim(), completed: false }); i.value = ''; renderEditorSubtasks(); } };
         window.removeSubtaskFromEditor = (id) => { currentEditingSubtasks = currentEditingSubtasks.filter(x => x.id !== id); renderEditorSubtasks(); };
-        function renderEditorSubtasks() { getEl('edit-subtasks-list').innerHTML = currentEditingSubtasks.map(s => `<li class="flex justify-between bg-slate-700/50 p-2.5 rounded-lg text-xs text-slate-200 border border-white/5"><span>${s.text}</span><button onclick="removeSubtaskFromEditor('${s.id}')" class="text-red-400"><i class="fa-solid fa-trash-can"></i></button></li>`).join(''); }
+        function renderEditorSubtasks() { getEl('edit-subtasks-list').innerHTML = currentEditingSubtasks.map(s => `<li class="flex justify-between items-center bg-slate-700/50 p-3 rounded-lg text-sm md:text-base text-slate-200 border border-white/5"><span>${s.text}</span><button type="button" onclick="removeSubtaskFromEditor('${s.id}')" class="text-red-400 hover:text-red-300"><i class="fa-solid fa-trash-can"></i></button></li>`).join(''); }
         function escapeHTML(s) { return s.replace(/[&<>'"]/g, t => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t])); }
 
     </script>

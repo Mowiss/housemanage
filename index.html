@@ -28,7 +28,7 @@
 <body class="bg-slate-900 min-h-screen text-slate-200 font-sans selection:bg-blue-500/30 relative">
 
     <!-- ÉCRAN DE CONNEXION À L'INSTANCE -->
-    <div id="instance-gate" class="fixed inset-0 bg-slate-950 z-[1000] flex items-center justify-center px-4">
+    <div id="instance-gate" class="fixed inset-0 bg-slate-950 z-[1000] flex items-center justify-center px-4 w-full">
         <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center slide-up">
             <div class="w-20 h-20 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span class="text-4xl">🏡</span>
@@ -36,7 +36,7 @@
             <h2 class="text-2xl font-black text-white mb-2">Accès au Foyer</h2>
             <p class="text-slate-400 text-sm mb-8 italic">Entrez le code secret de votre foyer.</p>
             
-            <div class="space-y-4">
+            <div class="space-y-4 w-full">
                 <input type="text" id="instance-code-input" placeholder="Ex: MAISON" class="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-center font-black tracking-widest text-blue-400 uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                 <p id="login-error" class="text-red-500 text-xs font-bold hidden mb-2"></p>
                 <button onclick="connectToInstance()" class="w-full bg-white hover:bg-slate-200 text-slate-900 py-4 rounded-2xl font-black shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">
@@ -49,206 +49,201 @@
     </div>
 
     <!-- CONTENU PRINCIPAL -->
-    <div id="main-app" class="hidden">
+    <div id="main-app" class="hidden w-full">
         
         <!-- NAVIGATION RESPONSIVE -->
         <nav class="fixed bottom-0 left-0 right-0 md:top-0 md:w-24 lg:w-64 md:h-screen bg-slate-800 border-t md:border-t-0 md:border-r border-slate-700 z-50 px-2 py-4 md:py-8 flex justify-around md:flex-col md:justify-start md:gap-4 items-center shadow-2xl shrink-0 transition-all">
             <div class="hidden md:flex flex-col items-center justify-center gap-3 mb-8 lg:mb-12 w-full">
-                <div class="w-12 h-12 lg:w-16 lg:h-16 bg-blue-600/20 rounded-full flex items-center justify-center">
+                <div class="w-12 h-12 lg:w-16 lg:h-16 bg-blue-600/20 rounded-full flex items-center justify-center shrink-0">
                     <i class="fa-solid fa-house-user text-2xl lg:text-3xl text-blue-500"></i>
                 </div>
-                <h2 class="hidden lg:block text-slate-100 font-black tracking-widest uppercase text-sm">Notre Foyer</h2>
+                <h2 class="hidden lg:block text-slate-100 font-black tracking-widest uppercase text-sm text-center">Notre Foyer</h2>
             </div>
             <button onclick="switchTab('tasks')" id="tab-tasks-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-blue-400 w-1/4 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
-                <i class="fa-solid fa-check-double text-2xl lg:text-xl w-8 text-center"></i>
+                <i class="fa-solid fa-check-double text-2xl lg:text-xl w-8 text-center shrink-0"></i>
                 <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Tâches</span>
             </button>
             <button onclick="switchTab('agenda')" id="tab-agenda-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 w-1/4 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
-                <i class="fa-solid fa-calendar-days text-2xl lg:text-xl w-8 text-center"></i>
+                <i class="fa-solid fa-calendar-days text-2xl lg:text-xl w-8 text-center shrink-0"></i>
                 <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Agenda</span>
             </button>
             <button onclick="switchTab('accounts')" id="tab-accounts-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 w-1/4 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
-                <i class="fa-solid fa-wallet text-2xl lg:text-xl w-8 text-center"></i>
+                <i class="fa-solid fa-wallet text-2xl lg:text-xl w-8 text-center shrink-0"></i>
                 <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Comptes</span>
             </button>
             <button onclick="switchTab('profile')" id="tab-profile-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 w-1/4 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
-                <i class="fa-solid fa-user-gear text-2xl lg:text-xl w-8 text-center"></i>
+                <i class="fa-solid fa-user-gear text-2xl lg:text-xl w-8 text-center shrink-0"></i>
                 <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Profil</span>
             </button>
         </nav>
 
         <!-- ESPACE DE CONTENU ADAPTATIF -->
-        <div class="md:ml-24 lg:ml-64 pb-24 md:pb-12">
-            <div class="max-w-md md:max-w-3xl lg:max-w-6xl mx-auto pt-8 px-4 sm:pt-12">
+        <div class="md:ml-24 lg:ml-64 pb-24 md:pb-12 w-full">
+            <div class="max-w-md md:max-w-3xl lg:max-w-6xl mx-auto pt-8 px-4 sm:pt-12 w-full min-w-0">
                 
-                <div class="bg-slate-800 rounded-2xl shadow-sm p-6 mb-6 md:mb-10 text-center border border-slate-700 relative overflow-hidden">
+                <div class="bg-slate-800 rounded-2xl shadow-sm p-6 mb-6 md:mb-10 text-center border border-slate-700 relative overflow-hidden w-full">
                     <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
-                    <h1 id="main-title" class="text-2xl font-bold text-slate-100 flex items-center justify-center gap-3 relative z-10">
-                        <i class="fa-solid fa-clipboard-list text-blue-500"></i> Nos Tâches
+                    <h1 id="main-title" class="text-2xl font-bold text-slate-100 flex items-center justify-center gap-3 relative z-10 w-full truncate">
+                        <i class="fa-solid fa-clipboard-list text-blue-500 shrink-0"></i> <span>Nos Tâches</span>
                     </h1>
-                    <p class="text-slate-500 text-[10px] mt-2 font-bold uppercase tracking-widest relative z-10" id="connection-status">Connexion...</p>
+                    <p class="text-slate-500 text-[10px] mt-2 font-bold uppercase tracking-widest relative z-10 w-full truncate" id="connection-status">Connexion...</p>
                 </div>
 
                 <!-- SECTION TÂCHES -->
-                <section id="section-tasks" class="block space-y-6">
-                    <div class="flex gap-3 mb-6">
-                        <button onclick="openEditor()" id="new-task-btn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-xl px-5 py-4 md:py-5 font-bold shadow-lg transition-all flex items-center justify-center gap-3 text-sm md:text-base">
-                            <i class="fa-solid fa-plus"></i> Nouvelle tâche
+                <section id="section-tasks" class="block space-y-6 w-full min-w-0">
+                    <div class="flex gap-3 mb-6 w-full">
+                        <button onclick="openEditor()" id="new-task-btn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-xl px-5 py-4 md:py-5 font-bold shadow-lg transition-all flex items-center justify-center gap-3 text-sm md:text-base min-w-0">
+                            <i class="fa-solid fa-plus shrink-0"></i> <span class="truncate">Nouvelle tâche</span>
                         </button>
-                        <button onclick="toggleTaskArchive()" class="bg-slate-800 border border-slate-700 text-slate-400 px-5 md:px-8 rounded-xl hover:bg-slate-700 transition-colors" title="Archives">
+                        <button onclick="toggleTaskArchive()" class="bg-slate-800 border border-slate-700 text-slate-400 px-5 md:px-8 rounded-xl hover:bg-slate-700 transition-colors shrink-0" title="Archives">
                             <i class="fa-solid fa-box-archive"></i>
                         </button>
                     </div>
                     
-                    <div id="tasks-container">
-                        <div id="active-tasks-view">
-                            <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2 border-b border-slate-800 pb-2">À faire</h2>
-                            <!-- DISPOSITION EN VRAIE MAÇONNERIE CSS (columns) pour empêcher l'éclatement -->
-                            <div id="todo-list" class="columns-1 md:columns-2 gap-4 lg:gap-6 w-full mb-8"></div>
+                    <div id="tasks-container" class="w-full min-w-0">
+                        <div id="active-tasks-view" class="w-full min-w-0">
+                            <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2 border-b border-slate-800 pb-2 w-full">À faire</h2>
+                            <div id="todo-list" class="columns-1 md:columns-2 gap-4 lg:gap-6 w-full mb-8 min-w-0"></div>
                         </div>
-                        <div id="archived-tasks-view" class="hidden">
-                            <div class="flex justify-between items-center mb-4 ml-2 border-b border-slate-800 pb-2">
-                                <h2 class="text-xs font-bold text-blue-400 uppercase tracking-wider italic">Historique</h2>
-                                <button onclick="toggleTaskArchive()" class="text-[10px] text-slate-500 underline hover:text-white">Fermer</button>
+                        <div id="archived-tasks-view" class="hidden w-full min-w-0">
+                            <div class="flex justify-between items-center mb-4 ml-2 border-b border-slate-800 pb-2 w-full">
+                                <h2 class="text-xs font-bold text-blue-400 uppercase tracking-wider italic truncate">Historique</h2>
+                                <button onclick="toggleTaskArchive()" class="text-[10px] text-slate-500 underline hover:text-white shrink-0 ml-2">Fermer</button>
                             </div>
-                            <div id="archived-tasks-list" class="columns-1 md:columns-2 gap-4 lg:gap-6 opacity-60 w-full hover:opacity-100 transition-opacity"></div>
+                            <div id="archived-tasks-list" class="columns-1 md:columns-2 gap-4 lg:gap-6 opacity-60 w-full hover:opacity-100 transition-opacity min-w-0"></div>
                         </div>
                     </div>
                 </section>
 
                 <!-- SECTION AGENDA (VUE MOIS PAR MOIS) -->
-                <section id="section-agenda" class="hidden space-y-6">
-                    <div class="flex flex-col md:flex-row gap-4">
-                        <button onclick="openEventEditor()" class="md:w-1/3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl px-5 py-4 font-bold shadow-lg transition-all flex items-center justify-center gap-3 text-sm md:text-base">
-                            <i class="fa-solid fa-calendar-plus"></i> Ajouter
+                <section id="section-agenda" class="hidden space-y-6 w-full min-w-0">
+                    <div class="flex flex-col md:flex-row gap-4 w-full min-w-0">
+                        <button onclick="openEventEditor()" class="md:w-1/3 bg-violet-600 hover:bg-violet-500 text-white rounded-xl px-5 py-4 font-bold shadow-lg transition-all flex items-center justify-center gap-3 text-sm md:text-base min-w-0 shrink-0">
+                            <i class="fa-solid fa-calendar-plus shrink-0"></i> <span class="truncate">Ajouter</span>
                         </button>
                         
-                        <div class="flex-1 flex justify-between items-center bg-slate-800 p-4 rounded-xl border border-slate-700">
-                            <button onclick="changeMonth(-1)" class="text-slate-400 hover:text-white px-4 py-2 bg-slate-700/50 rounded-lg transition-colors"><i class="fa-solid fa-chevron-left"></i></button>
-                            <h2 id="calendar-month-label" class="text-base md:text-lg font-black text-slate-100 uppercase tracking-wider">Mois Année</h2>
-                            <button onclick="changeMonth(1)" class="text-slate-400 hover:text-white px-4 py-2 bg-slate-700/50 rounded-lg transition-colors"><i class="fa-solid fa-chevron-right"></i></button>
+                        <div class="flex-1 flex justify-between items-center bg-slate-800 p-4 rounded-xl border border-slate-700 min-w-0">
+                            <button onclick="changeMonth(-1)" class="text-slate-400 hover:text-white px-4 py-2 bg-slate-700/50 rounded-lg transition-colors shrink-0"><i class="fa-solid fa-chevron-left"></i></button>
+                            <h2 id="calendar-month-label" class="text-base md:text-lg font-black text-slate-100 uppercase tracking-wider truncate px-2">Mois Année</h2>
+                            <button onclick="changeMonth(1)" class="text-slate-400 hover:text-white px-4 py-2 bg-slate-700/50 rounded-lg transition-colors shrink-0"><i class="fa-solid fa-chevron-right"></i></button>
                         </div>
                     </div>
 
-                    <!-- Grille Calendrier BLINDÉE : grid-rows-6 forcé -->
-                    <div class="bg-slate-800/50 p-2 md:p-4 rounded-2xl border border-slate-700 shadow-xl">
-                        <!-- En-têtes des jours -->
-                        <div class="grid grid-cols-7 gap-1 md:gap-2 text-center text-[9px] md:text-xs font-black text-slate-500 uppercase mb-2">
-                            <div class="py-1 min-w-0">Lun</div><div class="py-1 min-w-0">Mar</div><div class="py-1 min-w-0">Mer</div><div class="py-1 min-w-0">Jeu</div><div class="py-1 min-w-0">Ven</div><div class="py-1 text-violet-400/50 min-w-0">Sam</div><div class="py-1 text-violet-400/50 min-w-0">Dim</div>
+                    <!-- Grille Calendrier BLINDÉE -->
+                    <div class="bg-slate-800/50 p-2 md:p-4 rounded-2xl border border-slate-700 shadow-xl w-full min-w-0">
+                        <div class="grid grid-cols-7 gap-1 md:gap-2 text-center text-[9px] md:text-xs font-black text-slate-500 uppercase mb-2 w-full min-w-0">
+                            <div class="py-1 min-w-0 truncate">Lun</div><div class="py-1 min-w-0 truncate">Mar</div><div class="py-1 min-w-0 truncate">Mer</div><div class="py-1 min-w-0 truncate">Jeu</div><div class="py-1 min-w-0 truncate">Ven</div><div class="py-1 text-violet-400/50 min-w-0 truncate">Sam</div><div class="py-1 text-violet-400/50 min-w-0 truncate">Dim</div>
                         </div>
-                        <!-- Jours générés dynamiquement : Grille immuable 7x6 -->
-                        <div id="calendar-grid" class="grid grid-cols-7 grid-rows-6 gap-1 md:gap-2 w-full">
+                        <div id="calendar-grid" class="grid grid-cols-7 grid-rows-6 gap-1 md:gap-2 w-full min-w-0">
                         </div>
                     </div>
                 </section>
 
                 <!-- SECTION COMPTES -->
-                <section id="section-accounts" class="hidden space-y-6">
-                    <div class="grid md:grid-cols-2 gap-6 mb-8">
-                        <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden flex flex-col h-full">
-                            <div class="p-5 flex justify-between items-center border-b border-slate-700 shrink-0">
-                                <h2 class="text-[10px] md:text-xs font-black uppercase text-slate-500 tracking-widest">Évolution Financière</h2>
-                                <button onclick="toggleFinanceChartVisibility()" class="text-[10px] font-bold bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2">
-                                    <i class="fa-solid fa-chart-area"></i> <span class="hidden md:inline">Afficher / Masquer</span>
+                <section id="section-accounts" class="hidden space-y-6 w-full min-w-0">
+                    <div class="grid md:grid-cols-2 gap-6 mb-8 w-full min-w-0">
+                        <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden flex flex-col h-full min-w-0">
+                            <div class="p-5 flex justify-between items-center border-b border-slate-700 shrink-0 w-full">
+                                <h2 class="text-[10px] md:text-xs font-black uppercase text-slate-500 tracking-widest truncate pr-2">Évolution Financière</h2>
+                                <button onclick="toggleFinanceChartVisibility()" class="text-[10px] font-bold bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 shrink-0">
+                                    <i class="fa-solid fa-chart-area"></i> <span class="hidden md:inline">Graphique</span>
                                 </button>
                             </div>
-                            <div id="finance-chart-container" class="hidden p-5 bg-slate-900/50 flex-1 flex-col justify-end">
-                                <h2 class="text-[10px] font-black uppercase text-slate-600 mb-4 tracking-widest text-center">Historique (6 mois)</h2>
-                                <div class="w-full h-32 md:h-40" id="finance-chart"></div>
+                            <div id="finance-chart-container" class="hidden p-5 bg-slate-900/50 flex-1 flex-col justify-end w-full min-w-0">
+                                <h2 class="text-[10px] font-black uppercase text-slate-600 mb-4 tracking-widest text-center truncate w-full">Historique (6 mois)</h2>
+                                <div class="w-full h-32 md:h-40 min-w-0" id="finance-chart"></div>
                             </div>
                         </div>
 
-                        <div id="balance-card" class="bg-gradient-to-br from-indigo-700 to-slate-900 text-white rounded-2xl p-6 shadow-xl relative border border-white/5 overflow-hidden h-full flex flex-col justify-between">
-                            <div class="flex justify-between items-center mb-6 relative z-10">
-                                <span class="text-xs md:text-sm font-bold uppercase tracking-widest opacity-70" id="current-month-label">Mois</span>
-                                <button onclick="settleAccountsManual()" class="text-xs bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full font-bold border border-white/10 transition-colors shadow-lg">Clôturer</button>
+                        <div id="balance-card" class="bg-gradient-to-br from-indigo-700 to-slate-900 text-white rounded-2xl p-6 shadow-xl relative border border-white/5 overflow-hidden h-full flex flex-col justify-between min-w-0">
+                            <div class="flex justify-between items-center mb-6 relative z-10 w-full">
+                                <span class="text-xs md:text-sm font-bold uppercase tracking-widest opacity-70 truncate pr-2" id="current-month-label">Mois</span>
+                                <button onclick="settleAccountsManual()" class="text-xs bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full font-bold border border-white/10 transition-colors shadow-lg shrink-0">Clôturer</button>
                             </div>
-                            <div id="balance-summary" class="text-center relative z-10"></div>
-                            <div id="visual-stats" class="space-y-4 relative z-10 mt-4"></div>
+                            <div id="balance-summary" class="text-center relative z-10 w-full min-w-0"></div>
+                            <div id="visual-stats" class="space-y-4 relative z-10 mt-4 w-full min-w-0"></div>
                         </div>
                     </div>
 
-                    <div class="flex gap-3 mb-8">
-                        <button onclick="openExpenseEditor()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl px-5 py-4 md:py-5 font-bold shadow-lg flex items-center justify-center gap-3 transition-transform active:scale-95 text-sm md:text-base">
-                            <i class="fa-solid fa-receipt"></i> Nouvelle dépense
+                    <div class="flex gap-3 mb-8 w-full min-w-0">
+                        <button onclick="openExpenseEditor()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl px-5 py-4 md:py-5 font-bold shadow-lg flex items-center justify-center gap-3 transition-transform active:scale-95 text-sm md:text-base min-w-0">
+                            <i class="fa-solid fa-receipt shrink-0"></i> <span class="truncate">Nouvelle dépense</span>
                         </button>
-                        <button onclick="toggleAccountArchive()" class="bg-slate-800 border border-slate-700 text-slate-400 px-5 md:px-8 rounded-xl hover:bg-slate-700 transition-colors">
+                        <button onclick="toggleAccountArchive()" class="bg-slate-800 border border-slate-700 text-slate-400 px-5 md:px-8 rounded-xl hover:bg-slate-700 transition-colors shrink-0">
                             <i class="fa-solid fa-history"></i>
                         </button>
                     </div>
 
-                    <div id="active-accounts-view" class="grid md:grid-cols-2 gap-6 md:gap-8">
-                        <div>
-                            <h2 class="text-xs md:text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2 border-b border-slate-800 pb-2">Charges Fixes</h2>
-                            <ul id="recurring-expenses-list" class="space-y-3"></ul>
+                    <div id="active-accounts-view" class="grid md:grid-cols-2 gap-6 md:gap-8 w-full min-w-0">
+                        <div class="w-full min-w-0">
+                            <h2 class="text-xs md:text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2 border-b border-slate-800 pb-2 truncate w-full">Charges Fixes</h2>
+                            <ul id="recurring-expenses-list" class="space-y-3 w-full min-w-0"></ul>
                         </div>
-                        <div>
-                            <h2 class="text-xs md:text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2 border-b border-slate-800 pb-2 mt-6 md:mt-0">Ponctuelles</h2>
-                            <ul id="ponctuelle-expenses-list" class="space-y-3"></ul>
+                        <div class="w-full min-w-0">
+                            <h2 class="text-xs md:text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2 border-b border-slate-800 pb-2 mt-6 md:mt-0 truncate w-full">Ponctuelles</h2>
+                            <ul id="ponctuelle-expenses-list" class="space-y-3 w-full min-w-0"></ul>
                         </div>
                     </div>
 
-                    <div id="archived-accounts-view" class="hidden">
-                        <div class="flex justify-between items-center mb-6 ml-2 border-b border-slate-800 pb-2">
-                            <h2 class="text-xs font-bold text-emerald-400 uppercase tracking-wider italic">Anciennes clôtures</h2>
-                            <button onclick="toggleAccountArchive()" class="text-[10px] text-slate-500 underline hover:text-white">Fermer</button>
+                    <div id="archived-accounts-view" class="hidden w-full min-w-0">
+                        <div class="flex justify-between items-center mb-6 ml-2 border-b border-slate-800 pb-2 w-full">
+                            <h2 class="text-xs font-bold text-emerald-400 uppercase tracking-wider italic truncate pr-2">Anciennes clôtures</h2>
+                            <button onclick="toggleAccountArchive()" class="text-[10px] text-slate-500 underline hover:text-white shrink-0">Fermer</button>
                         </div>
-                        <ul id="archived-accounts-list" class="space-y-3 opacity-80 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0"></ul>
+                        <ul id="archived-accounts-list" class="space-y-3 opacity-80 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0 w-full min-w-0"></ul>
                     </div>
                 </section>
 
                 <!-- SECTION PROFIL -->
-                <section id="section-profile" class="hidden space-y-6">
-                    <div class="bg-slate-800 rounded-2xl p-6 md:p-10 border border-slate-700 shadow-xl">
+                <section id="section-profile" class="hidden space-y-6 w-full min-w-0">
+                    <div class="bg-slate-800 rounded-2xl p-6 md:p-10 border border-slate-700 shadow-xl w-full min-w-0">
                         
-                        <div class="bg-blue-900/20 border border-blue-500/30 rounded-2xl p-4 flex justify-between items-center mb-8">
-                            <div class="min-w-0">
-                                <p class="text-[8px] md:text-[10px] uppercase font-black text-blue-500 mb-1">Code Foyer Actuel</p>
-                                <p class="font-black text-white tracking-widest truncate text-sm md:text-lg" id="current-instance-id">...</p>
+                        <div class="bg-blue-900/20 border border-blue-500/30 rounded-2xl p-4 flex justify-between items-center mb-8 w-full min-w-0">
+                            <div class="min-w-0 flex-1 pr-2">
+                                <p class="text-[8px] md:text-[10px] uppercase font-black text-blue-500 mb-1 truncate w-full">Code Foyer Actuel</p>
+                                <p class="font-black text-white tracking-widest truncate text-sm md:text-lg w-full" id="current-instance-id">...</p>
                             </div>
-                            <button onclick="window.location.reload()" class="bg-slate-700 p-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-600 transition-colors">
+                            <button onclick="window.location.reload()" class="bg-slate-700 p-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-600 transition-colors shrink-0">
                                 <i class="fa-solid fa-right-from-bracket"></i>
                             </button>
                         </div>
 
-                        <div class="grid md:grid-cols-2 gap-8 items-center">
-                            
-                            <div class="flex flex-col items-center gap-4 border-b md:border-b-0 md:border-r border-slate-700 pb-8 md:pb-0">
-                                <div class="relative">
+                        <div class="grid md:grid-cols-2 gap-8 items-center w-full min-w-0">
+                            <div class="flex flex-col items-center gap-4 border-b md:border-b-0 md:border-r border-slate-700 pb-8 md:pb-0 w-full min-w-0">
+                                <div class="relative shrink-0">
                                     <div id="current-profile-avatar" class="w-24 h-24 md:w-32 md:h-32 rounded-full bg-slate-700 flex items-center justify-center text-5xl md:text-6xl shadow-xl border-4 overflow-hidden" style="border-color: var(--user-color, #3b82f6)"></div>
                                     <div class="absolute -bottom-2 -right-2 w-8 h-8 rounded-full border-4 border-slate-800" id="current-profile-color-badge" style="background-color: var(--user-color, #3b82f6)"></div>
                                 </div>
-                                <div class="text-center mt-2">
-                                    <h2 class="text-2xl font-bold text-slate-100" id="current-profile-name-display">...</h2>
-                                    <p class="text-sm text-slate-500 uppercase font-bold tracking-widest mt-1" id="current-profile-income-display">Revenu : 0€</p>
+                                <div class="text-center mt-2 w-full min-w-0 px-2">
+                                    <h2 class="text-2xl font-bold text-slate-100 truncate w-full" id="current-profile-name-display">...</h2>
+                                    <p class="text-sm text-slate-500 uppercase font-bold tracking-widest mt-1 truncate w-full" id="current-profile-income-display">Revenu : 0€</p>
                                 </div>
                             </div>
 
-                            <div class="space-y-6">
-                                <div>
+                            <div class="space-y-6 w-full min-w-0">
+                                <div class="w-full min-w-0">
                                     <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Prénom</label>
                                     <input type="text" id="settings-name" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-4 font-bold text-slate-100 outline-none focus:border-blue-500">
                                 </div>
-                                <div>
+                                <div class="w-full min-w-0">
                                     <label class="block text-xs font-bold text-slate-500 uppercase mb-2">Revenu Mensuel</label>
                                     <input type="number" id="settings-income" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-4 font-black text-blue-400 outline-none focus:border-blue-500">
                                 </div>
                                 
-                                <div>
+                                <div class="w-full min-w-0">
                                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-3">Votre Avatar</label>
-                                    <div id="settings-avatar-picker" class="flex gap-2 flex-wrap"></div>
+                                    <div id="settings-avatar-picker" class="flex gap-2 flex-wrap w-full"></div>
                                 </div>
 
-                                <div>
+                                <div class="w-full min-w-0">
                                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-3">Couleur d'Agenda</label>
-                                    <div id="settings-user-color-picker" class="flex gap-2 flex-wrap"></div>
+                                    <div id="settings-user-color-picker" class="flex gap-2 flex-wrap w-full"></div>
                                 </div>
                             </div>
-
                         </div>
                         
-                        <div class="mt-8 pt-6 border-t border-slate-700">
-                            <button onclick="updateProfileFromSettings()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 md:py-5 rounded-xl font-black shadow-lg text-white transition-all text-sm md:text-base">
+                        <div class="mt-8 pt-6 border-t border-slate-700 w-full">
+                            <button onclick="updateProfileFromSettings()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 md:py-5 rounded-xl font-black shadow-lg text-white transition-all text-sm md:text-base min-w-0 truncate">
                                 Enregistrer les modifications
                             </button>
                         </div>
@@ -726,15 +721,15 @@
 
             let html = '';
             
-            // 1. Remplir le début (Mois précédent) avec hauteur FIXE (h-20/h-32)
+            // 1. Remplir le début (Mois précédent) avec BLINDAGE css
             for(let i = 1; i < startingDayOfWeek; i++) {
                 const prevDay = prevMonthLastDay - (startingDayOfWeek - 1 - i);
-                html += `<div class="bg-slate-800/30 rounded-xl p-1 md:p-2 border border-transparent flex flex-col min-w-0 h-24 md:h-32 opacity-50 overflow-hidden"><span class="text-[10px] md:text-xs font-black text-slate-600 mb-1 md:mb-2 text-right px-1 shrink-0">${prevDay}</span></div>`;
+                html += `<div class="bg-slate-800/30 rounded-xl p-1 md:p-2 border border-transparent flex flex-col min-w-0 w-full h-24 md:h-32 lg:h-40 opacity-50 overflow-hidden"><span class="text-[10px] md:text-xs font-black text-slate-600 mb-1 md:mb-2 text-right px-1 shrink-0">${prevDay}</span></div>`;
             }
 
             const today = new Date();
 
-            // 2. Remplir le mois en cours avec hauteur FIXE (h-20/h-32)
+            // 2. Remplir le mois en cours avec BLINDAGE css
             for(let day = 1; day <= daysInMonth; day++) {
                 const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
                 const itemsForDay = agendaItems.filter(item => item.date === day);
@@ -743,15 +738,15 @@
                     const isTask = item.type === 'task';
                     const onClick = isTask ? `openEditor('${item.id}')` : `openEventEditor('${item.id}')`;
                     return `
-                    <div onclick="${onClick}" class="text-[8px] md:text-[10px] leading-tight font-bold text-white px-1 py-0.5 rounded mb-1 truncate cursor-pointer shadow-sm hover:brightness-125 transition-all w-full min-w-0" style="background-color: ${item.color}; border-left: 2px solid rgba(255,255,255,0.4)">
+                    <div onclick="${onClick}" class="text-[8px] md:text-[10px] leading-tight font-bold text-white px-1.5 py-1 rounded mb-1 truncate cursor-pointer shadow-sm hover:brightness-125 transition-all w-full min-w-0 block" style="background-color: ${item.color}; border-left: 2px solid rgba(255,255,255,0.4)">
                         ${escapeHTML(item.title)}
                     </div>`;
                 }).join('');
 
                 html += `
-                <div class="bg-slate-800 rounded-xl p-1 md:p-2 border ${isToday ? 'border-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.2)] z-10' : 'border-slate-700'} flex flex-col hover:border-slate-500 transition-colors min-w-0 h-24 md:h-32 overflow-hidden">
+                <div class="bg-slate-800 rounded-xl p-1 md:p-2 border ${isToday ? 'border-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.2)] z-10' : 'border-slate-700'} flex flex-col hover:border-slate-500 transition-colors min-w-0 w-full h-24 md:h-32 lg:h-40 overflow-hidden">
                     <span class="text-[10px] md:text-xs font-black ${isToday ? 'text-violet-400' : 'text-slate-400'} mb-1 md:mb-2 text-right px-1 shrink-0">${day}</span>
-                    <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-0.5 min-w-0">
+                    <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-0.5 min-w-0 min-h-0 w-full">
                         ${itemsHtml}
                     </div>
                 </div>`;
@@ -762,7 +757,7 @@
             const remainingCells = 42 - currentCells;
             for(let i = 0; i < remainingCells; i++) {
                 const nextDay = i + 1;
-                html += `<div class="bg-slate-800/30 rounded-xl p-1 md:p-2 border border-transparent flex flex-col min-w-0 h-24 md:h-32 opacity-50 overflow-hidden"><span class="text-[10px] md:text-xs font-black text-slate-600 mb-1 md:mb-2 text-right px-1 shrink-0">${nextDay}</span></div>`;
+                html += `<div class="bg-slate-800/30 rounded-xl p-1 md:p-2 border border-transparent flex flex-col min-w-0 w-full h-24 md:h-32 lg:h-40 opacity-50 overflow-hidden"><span class="text-[10px] md:text-xs font-black text-slate-600 mb-1 md:mb-2 text-right px-1 shrink-0">${nextDay}</span></div>`;
             }
 
             grid.innerHTML = html;
@@ -848,10 +843,6 @@
             const todo = elements.todoList(); const arch = elements.archivedTasksList();
             if(!todo) return; todo.innerHTML = ''; arch.innerHTML = '';
             
-            // MAÇONNERIE CSS NATIVE (columns) au lieu du Javascript
-            todo.className = "columns-1 md:columns-2 gap-4 lg:gap-6 w-full mb-8";
-            arch.className = "columns-1 md:columns-2 gap-4 lg:gap-6 opacity-60 hover:opacity-100 transition-opacity w-full";
-
             let todoCount = 0;
             let archCount = 0;
 
@@ -863,30 +854,29 @@
                 
                 let detailsHTML = '';
                 if (hasDetails && isExpanded) {
-                    const desc = task.description ? `<p class="text-sm text-slate-300 mt-4 italic whitespace-pre-wrap px-1 break-words">${escapeHTML(task.description)}</p>` : '';
-                    const subs = (task.subtasks || []).map(s => `<li onclick="toggleSubtask(event, '${task.id}', '${s.id}')" class="text-sm flex items-start gap-3 text-slate-200 cursor-pointer hover:text-white transition-colors py-2"><i class="fa-solid ${s.completed ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-500'} text-lg shrink-0 mt-0.5"></i> <span class="${s.completed ? 'line-through opacity-50' : ''} break-words flex-1">${escapeHTML(s.text)}</span></li>`).join('');
-                    detailsHTML = `<div class="mt-4 border-t border-white/10 pt-3" onclick="event.stopPropagation()">${desc}${subs ? `<ul class="mt-4 space-y-1">${subs}</ul>`:''}</div>`;
+                    const desc = task.description ? `<p class="text-sm text-slate-300 mt-4 italic whitespace-pre-wrap px-1 break-words min-w-0 w-full">${escapeHTML(task.description)}</p>` : '';
+                    const subs = (task.subtasks || []).map(s => `<li onclick="toggleSubtask(event, '${task.id}', '${s.id}')" class="text-sm flex items-start gap-3 text-slate-200 cursor-pointer hover:text-white transition-colors py-2 min-w-0 w-full"><i class="fa-solid ${s.completed ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-500'} text-lg shrink-0 mt-0.5"></i> <span class="${s.completed ? 'line-through opacity-50' : ''} break-words min-w-0 flex-1">${escapeHTML(s.text)}</span></li>`).join('');
+                    detailsHTML = `<div class="mt-4 border-t border-white/10 pt-3 min-w-0 w-full" onclick="event.stopPropagation()">${desc}${subs ? `<ul class="mt-4 space-y-1 min-w-0 w-full">${subs}</ul>`:''}</div>`;
                 }
 
                 const li = document.createElement('div');
-                // break-inside-avoid, inline-block et w-full garantissent que le bloc ne se casse pas et ne s'étire pas
-                li.className = `${color.bg} p-4 md:p-5 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all hover:border-slate-500 break-inside-avoid inline-block w-full mb-4 lg:mb-6`;
+                li.className = `${color.bg} p-4 md:p-5 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all hover:border-slate-500 break-inside-avoid inline-block w-full mb-4 lg:mb-6 min-w-0 box-border`;
                 const tags = (task.tags || []).map(t => `<span class="bg-white/10 text-[10px] font-black uppercase px-3 py-1 rounded-full text-white">${t}</span>`).join(' ');
                 
                 li.innerHTML = `
                     <div class="color-accent ${color.accent}"></div>
-                    <div class="flex items-start justify-between gap-3 md:gap-5 min-w-0">
+                    <div class="flex items-start justify-between gap-3 md:gap-5 min-w-0 w-full">
                         <div class="py-1 pr-2 cursor-pointer shrink-0" onclick="event.stopPropagation(); toggleTask('${task.id}', ${!task.completed})">
                             <div class="w-7 h-7 rounded-full border-2 flex items-center justify-center transition-colors ${task.completed ? 'bg-green-500 border-green-500' : 'border-slate-400 hover:border-slate-200'}">
                                 ${task.completed ? '<i class="fa-solid fa-check text-sm text-white"></i>' : ''}
                             </div>
                         </div>
                         <div class="min-w-0 flex-1 cursor-pointer py-1" onclick="toggleCollapse(event, '${task.id}')">
-                            <div class="flex items-start justify-between gap-2 min-w-0">
+                            <div class="flex items-start justify-between gap-2 min-w-0 w-full">
                                 <span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-words leading-tight text-base md:text-lg flex-1 min-w-0">${escapeHTML(task.text)}</span>
                                 ${hasDetails ? `<i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-slate-400 text-base px-2 shrink-0 mt-0.5"></i>` : ''}
                             </div>
-                            <div class="flex flex-wrap gap-2 mt-2">${tags}</div>
+                            <div class="flex flex-wrap gap-2 mt-2 w-full">${tags}</div>
                             ${task.dueDate ? `<p class="text-xs font-black mt-3 ${isOverdue ? 'text-red-400' : 'text-slate-400'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}
                             ${detailsHTML}
                         </div>
@@ -905,10 +895,10 @@
             });
 
             if(todoCount === 0) {
-                todo.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm md:text-base italic bg-slate-800/30 rounded-xl border border-slate-700 border-dashed w-full break-inside-avoid inline-block">La liste est vide...</div>';
+                todo.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm md:text-base italic bg-slate-800/30 rounded-xl border border-slate-700 border-dashed w-full break-inside-avoid inline-block min-w-0">La liste est vide...</div>';
             }
             if(archCount === 0) {
-                arch.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm md:text-base italic w-full break-inside-avoid inline-block">Aucune archive.</div>';
+                arch.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm md:text-base italic w-full break-inside-avoid inline-block min-w-0">Aucune archive.</div>';
             }
         }
 
@@ -919,24 +909,26 @@
             
             expensesData.forEach(exp => {
                 const avatarContent = exp.payer.avatar && exp.payer.avatar.startsWith('http') ? `<img src="${exp.payer.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">` : (exp.payer.avatar || '👤');
+                const dateBadge = (!exp.isRecurring && exp.date) ? `<span class="bg-slate-700 text-slate-300 text-[9px] md:text-[10px] px-2 py-1 rounded-md font-bold shadow-inner shrink-0"><i class="fa-regular fa-calendar"></i> ${new Date(exp.date).toLocaleDateString()}</span>` : '';
                 
-                const dateBadge = (!exp.isRecurring && exp.date) ? `<span class="bg-slate-700 text-slate-300 text-[10px] px-3 py-1 rounded-md ml-2 font-bold shadow-inner"><i class="fa-regular fa-calendar"></i> ${new Date(exp.date).toLocaleDateString()}</span>` : '';
+                const li = document.createElement('li'); 
+                // BLINDAGE CSS sur le LI
+                li.className = "bg-slate-800 p-4 md:p-5 rounded-xl border border-slate-700 flex justify-between items-center shadow-md relative mb-3 hover:border-slate-500 transition-colors w-full min-w-0 box-border overflow-hidden";
                 
-                const li = document.createElement('li'); li.className = "bg-slate-800 p-4 md:p-5 rounded-xl border border-slate-700 flex justify-between items-center shadow-md relative mb-3 hover:border-slate-500 transition-colors";
                 li.innerHTML = `
-                <div class="flex items-center gap-4 min-w-0">
+                <div class="flex items-center gap-3 md:gap-4 min-w-0 flex-1 pr-2">
                     <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-700 flex items-center justify-center text-xl shrink-0 overflow-hidden shadow-lg" style="border: 2px solid ${exp.payer.color||'#3b82f6'}">${avatarContent}</div>
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center flex-wrap gap-y-2">
-                            <p class="font-bold text-slate-100 truncate text-base md:text-lg">${escapeHTML(exp.text)}</p>
+                    <div class="min-w-0 flex-1 flex flex-col justify-center">
+                        <div class="flex items-center gap-2 w-full min-w-0">
+                            <p class="font-bold text-slate-100 truncate text-sm md:text-lg flex-1 min-w-0">${escapeHTML(exp.text)}</p>
                             ${dateBadge}
                         </div>
-                        <p class="text-[10px] text-slate-400 uppercase font-black mt-1">Saisi par ${escapeHTML(exp.payer.name)}</p>
+                        <p class="text-[9px] md:text-[10px] text-slate-400 uppercase font-black mt-1 truncate w-full">Saisi par ${escapeHTML(exp.payer.name)}</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-3 md:gap-5 pl-2 shrink-0">
-                    <span class="font-black text-emerald-400 text-lg md:text-xl">${exp.amount.toFixed(2)}€</span>
-                    <button onclick="deleteExpense('${exp.id}')" class="text-slate-500 hover:text-red-400 p-2 transition-colors"><i class="fa-regular fa-trash-can text-lg md:text-xl"></i></button>
+                <div class="flex items-center gap-3 md:gap-4 pl-2 shrink-0">
+                    <span class="font-black text-emerald-400 text-base md:text-xl">${exp.amount.toFixed(2)}€</span>
+                    <button onclick="deleteExpense('${exp.id}')" class="text-slate-500 hover:text-red-400 p-2 transition-colors shrink-0"><i class="fa-regular fa-trash-can text-lg md:text-xl"></i></button>
                 </div>`;
                 
                 if(exp.isRecurring) { rec.appendChild(li); stats.fixed += exp.amount; } else { pon.appendChild(li); stats.ponct += exp.amount; }
@@ -976,9 +968,9 @@
         function renderFinanceArchives() {
             const list = elements.archivedAccountsList(); if(!list) return;
             list.innerHTML = settlementsData.sort((a,b) => b.settledAt - a.settledAt).map(arc => `
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex justify-between items-center shadow-sm hover:border-slate-500 transition-colors">
-                <div><span class="font-black text-emerald-500 uppercase text-sm md:text-base">${arc.label}</span></div>
-                <span class="font-bold text-slate-100 text-lg md:text-xl">${arc.total.toFixed(2)}€</span>
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 flex justify-between items-center shadow-sm hover:border-slate-500 transition-colors w-full min-w-0">
+                <div class="min-w-0 pr-2"><span class="font-black text-emerald-500 uppercase text-sm md:text-base truncate">${arc.label}</span></div>
+                <span class="font-bold text-slate-100 text-lg md:text-xl shrink-0">${arc.total.toFixed(2)}€</span>
             </div>`).join('');
         }
 

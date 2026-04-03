@@ -27,7 +27,7 @@
 </head>
 <body class="bg-slate-900 min-h-screen text-slate-200 font-sans selection:bg-blue-500/30 relative pb-24">
 
-    <!-- ÉCRAN DE CONNEXION À L'INSTANCE (FOYER) -->
+    <!-- ÉCRAN DE CONNEXION À L'INSTANCE -->
     <div id="instance-gate" class="fixed inset-0 bg-slate-950 z-[1000] flex items-center justify-center px-4">
         <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center slide-up">
             <div class="w-20 h-20 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -41,7 +41,7 @@
                 <p id="login-error" class="text-red-500 text-xs font-bold hidden mb-2"></p>
                 <button onclick="connectToInstance()" class="w-full bg-white hover:bg-slate-200 text-slate-900 py-4 rounded-2xl font-black shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">
                     <svg class="w-6 h-6" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-                    Continuer avec Google
+                    Continuer
                 </button>
             </div>
             <p class="text-[10px] text-slate-600 mt-6 uppercase font-bold tracking-tighter">Usage domestique uniquement</p>
@@ -50,35 +50,41 @@
 
     <!-- CONTENU PRINCIPAL -->
     <div id="main-app" class="hidden">
-        <nav class="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 z-50 px-4 py-3 flex justify-around items-center shadow-2xl">
-            <button onclick="switchTab('tasks')" id="tab-tasks-btn" class="flex flex-col items-center gap-1 text-blue-400">
+        <nav class="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 z-50 px-2 py-3 flex justify-around items-center shadow-2xl">
+            <button onclick="switchTab('tasks')" id="tab-tasks-btn" class="flex flex-col items-center gap-1 text-blue-400 w-1/4">
                 <i class="fa-solid fa-check-double text-xl"></i>
-                <span class="text-[10px] font-bold uppercase">Tâches</span>
+                <span class="text-[9px] font-bold uppercase truncate w-full text-center">Tâches</span>
             </button>
-            <button onclick="switchTab('accounts')" id="tab-accounts-btn" class="flex flex-col items-center gap-1 text-slate-400">
+            <button onclick="switchTab('agenda')" id="tab-agenda-btn" class="flex flex-col items-center gap-1 text-slate-400 w-1/4">
+                <i class="fa-solid fa-calendar-days text-xl"></i>
+                <span class="text-[9px] font-bold uppercase truncate w-full text-center">Agenda</span>
+            </button>
+            <button onclick="switchTab('accounts')" id="tab-accounts-btn" class="flex flex-col items-center gap-1 text-slate-400 w-1/4">
                 <i class="fa-solid fa-wallet text-xl"></i>
-                <span class="text-[10px] font-bold uppercase">Comptes</span>
+                <span class="text-[9px] font-bold uppercase truncate w-full text-center">Comptes</span>
             </button>
-            <button onclick="switchTab('profile')" id="tab-profile-btn" class="flex flex-col items-center gap-1 text-slate-400">
+            <button onclick="switchTab('profile')" id="tab-profile-btn" class="flex flex-col items-center gap-1 text-slate-400 w-1/4">
                 <i class="fa-solid fa-user-gear text-xl"></i>
-                <span class="text-[10px] font-bold uppercase">Profil</span>
+                <span class="text-[9px] font-bold uppercase truncate w-full text-center">Profil</span>
             </button>
         </nav>
 
         <div class="max-w-md mx-auto pt-8 px-4 sm:pt-12">
-            <div class="bg-slate-800 rounded-2xl shadow-sm p-6 mb-6 text-center border border-slate-700 relative">
-                <h1 id="main-title" class="text-2xl font-bold text-slate-100 flex items-center justify-center gap-2">
+            <div class="bg-slate-800 rounded-2xl shadow-sm p-6 mb-6 text-center border border-slate-700 relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl"></div>
+                <h1 id="main-title" class="text-2xl font-bold text-slate-100 flex items-center justify-center gap-2 relative z-10">
                     <i class="fa-solid fa-clipboard-list text-blue-500"></i> Nos Tâches
                 </h1>
-                <p class="text-slate-500 text-[10px] mt-1 font-bold uppercase tracking-widest" id="connection-status">Connexion...</p>
+                <p class="text-slate-500 text-[10px] mt-1 font-bold uppercase tracking-widest relative z-10" id="connection-status">Connexion...</p>
             </div>
 
+            <!-- SECTION TÂCHES -->
             <section id="section-tasks" class="block space-y-6">
                 <div class="flex gap-2">
                     <button onclick="openEditor()" id="new-task-btn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white rounded-xl px-5 py-4 font-bold shadow-lg transition-all flex items-center justify-center gap-3">
                         <i class="fa-solid fa-plus"></i> Nouvelle tâche
                     </button>
-                    <button onclick="toggleTaskArchive()" class="bg-slate-800 border border-slate-700 text-slate-400 px-4 rounded-xl hover:bg-slate-700 transition-colors">
+                    <button onclick="toggleTaskArchive()" class="bg-slate-800 border border-slate-700 text-slate-400 px-4 rounded-xl hover:bg-slate-700 transition-colors" title="Archives">
                         <i class="fa-solid fa-box-archive"></i>
                     </button>
                 </div>
@@ -97,6 +103,17 @@
                 </div>
             </section>
 
+            <!-- SECTION AGENDA -->
+            <section id="section-agenda" class="hidden space-y-6">
+                <button onclick="openEventEditor()" class="w-full bg-violet-600 hover:bg-violet-500 text-white rounded-xl px-5 py-4 font-bold shadow-lg transition-all flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-calendar-plus"></i> Ajouter au calendrier
+                </button>
+                <div id="agenda-container" class="space-y-6">
+                    <!-- Généré dynamiquement -->
+                </div>
+            </section>
+
+            <!-- SECTION COMPTES -->
             <section id="section-accounts" class="hidden space-y-6">
                 <div class="bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-xl">
                     <h2 class="text-[10px] font-black uppercase text-slate-500 mb-4 tracking-widest text-center">Évolution sur 6 mois</h2>
@@ -133,6 +150,7 @@
                 </div>
             </section>
 
+            <!-- SECTION PROFIL -->
             <section id="section-profile" class="hidden space-y-6">
                 <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl space-y-6">
                     <div class="bg-blue-900/20 border border-blue-500/30 rounded-2xl p-4 flex justify-between items-center mb-4">
@@ -145,7 +163,10 @@
                         </button>
                     </div>
                     <div class="flex flex-col items-center gap-4 py-4">
-                        <div id="current-profile-avatar" class="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center text-4xl shadow-xl border-4 border-blue-500/20 overflow-hidden"></div>
+                        <div class="relative">
+                            <div id="current-profile-avatar" class="w-20 h-20 rounded-full bg-slate-700 flex items-center justify-center text-4xl shadow-xl border-4 overflow-hidden" style="border-color: var(--user-color, #3b82f6)"></div>
+                            <div class="absolute -bottom-2 -right-2 w-6 h-6 rounded-full border-2 border-slate-800" id="current-profile-color-badge" style="background-color: var(--user-color, #3b82f6)"></div>
+                        </div>
                         <div class="text-center">
                             <h2 class="text-xl font-bold text-slate-100" id="current-profile-name-display">...</h2>
                             <p class="text-xs text-slate-500 uppercase font-bold tracking-widest mt-1" id="current-profile-income-display">Revenu : 0€</p>
@@ -154,6 +175,12 @@
                     <div class="space-y-4 border-t border-slate-700 pt-6">
                         <input type="text" id="settings-name" placeholder="Prénom" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 font-bold text-slate-100 outline-none">
                         <input type="number" id="settings-income" placeholder="Revenu mensuel" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 font-black text-blue-400 outline-none">
+                        
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2 text-center">Votre couleur d'agenda</label>
+                            <div id="settings-user-color-picker" class="flex justify-center gap-2 flex-wrap"></div>
+                        </div>
+
                         <button onclick="updateProfileFromSettings()" class="w-full bg-blue-600 py-4 rounded-xl font-black shadow-lg">Enregistrer</button>
                     </div>
                 </div>
@@ -161,30 +188,101 @@
         </div>
     </div>
 
-    <!-- MODAL TÂCHE -->
-    <div id="task-modal" class="fixed inset-0 bg-slate-950/60 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
+    <!-- MODAL ÉVÉNEMENT (AGENDA) -->
+    <div id="event-modal" class="fixed inset-0 bg-slate-950/80 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto flex flex-col border border-slate-700">
             <div class="p-5 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
-                <h2 id="modal-title" class="text-lg font-bold">Détail Tâche</h2>
+                <h2 id="event-modal-title" class="text-lg font-bold text-violet-400">Nouvel Événement</h2>
+                <button onclick="closeEventEditor()" class="text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-5 flex-1">
+                <!-- Type Toggle -->
+                <div class="flex bg-slate-900 rounded-xl p-1 border border-slate-700">
+                    <button id="btn-type-ponctuel" onclick="setEventType('ponctuel')" class="flex-1 py-2 text-xs font-bold rounded-lg bg-slate-700 text-white transition-all">Ponctuel</button>
+                    <button id="btn-type-rdv" onclick="setEventType('rdv')" class="flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 hover:text-white transition-all">Rendez-vous</button>
+                </div>
+
+                <input type="text" id="event-title" placeholder="Titre de l'événement" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-slate-100 outline-none focus:border-violet-500 font-bold">
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Date (Début)</label>
+                        <input type="date" id="event-date-start" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-2 text-sm text-slate-100 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Heure</label>
+                        <input type="time" id="event-time-start" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-2 text-sm text-slate-100 outline-none">
+                    </div>
+                </div>
+
+                <!-- Section spécifique RDV (cachée par défaut) -->
+                <div id="event-rdv-fields" class="hidden space-y-5 border-t border-slate-700 pt-5">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Date (Fin)</label>
+                            <input type="date" id="event-date-end" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-2 text-sm text-slate-100 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Heure fin</label>
+                            <input type="time" id="event-time-end" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-2 text-sm text-slate-100 outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1"><i class="fa-solid fa-location-dot"></i> Lieu</label>
+                        <input type="text" id="event-location" placeholder="Adresse ou lieu" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-sm text-slate-100 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1"><i class="fa-solid fa-repeat"></i> Récurrence</label>
+                    <select id="event-recurrence" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-sm text-slate-100 outline-none appearance-none">
+                        <option value="none">Une seule fois</option>
+                        <option value="daily">Tous les jours</option>
+                        <option value="weekly">Toutes les semaines</option>
+                        <option value="biweekly">Une semaine sur deux</option>
+                        <option value="monthly">Tous les mois</option>
+                    </select>
+                </div>
+
+                <textarea id="event-desc" rows="2" placeholder="Description / Notes" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-slate-100 outline-none text-sm resize-none"></textarea>
+            </div>
+            <div class="p-5 border-t border-slate-700 bg-slate-800/50 flex justify-between">
+                <button id="event-delete-btn" onclick="deleteEventFromEditor()" class="text-red-400 font-bold px-4 hidden"><i class="fa-solid fa-trash"></i></button>
+                <div class="flex gap-3 ml-auto">
+                    <button onclick="closeEventEditor()" class="px-5 py-2 rounded-xl text-slate-400">Annuler</button>
+                    <button onclick="saveEvent()" class="px-5 py-2 rounded-xl bg-violet-600 text-white font-bold">Ajouter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TÂCHE -->
+    <div id="task-modal" class="fixed inset-0 bg-slate-950/80 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto flex flex-col border border-slate-700">
+            <div class="p-5 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
+                <h2 id="modal-title" class="text-lg font-bold text-blue-400">Détail Tâche</h2>
                 <button onclick="closeEditor()" class="text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div class="p-6 space-y-5 flex-1">
-                <input type="text" id="edit-title" placeholder="Nom de la tâche" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 text-slate-100 outline-none focus:ring-2 focus:ring-blue-500 font-bold">
-                <textarea id="edit-desc" rows="3" placeholder="Description" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 text-slate-100 outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
+                <input type="text" id="edit-title" placeholder="Nom de la tâche" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-slate-100 outline-none focus:ring-2 focus:ring-blue-500 font-bold">
+                <textarea id="edit-desc" rows="2" placeholder="Description" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-slate-100 outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Étiquettes</label>
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Étiquettes</label>
                     <div class="flex gap-2 mb-2">
-                        <input type="text" id="new-tag-input" class="flex-1 rounded-lg border-slate-600 bg-slate-700 p-2 text-sm outline-none text-white" onkeypress="if(event.key === 'Enter') addTagToEditor()">
+                        <input type="text" id="new-tag-input" class="flex-1 rounded-lg border border-slate-600 bg-slate-700 p-2 text-sm outline-none text-white" onkeypress="if(event.key === 'Enter') addTagToEditor()">
                         <button onclick="addTagToEditor()" class="bg-slate-700 px-4 rounded-lg text-white"><i class="fa-solid fa-tag"></i></button>
                     </div>
                     <div id="edit-tags-list" class="flex flex-wrap gap-2"></div>
                 </div>
-                <input type="date" id="edit-due-date" class="w-full rounded-xl border-slate-600 bg-slate-700 p-3 text-slate-100">
+                <div>
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Date d'échéance (Ajoute à l'agenda)</label>
+                    <input type="date" id="edit-due-date" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-3 text-slate-100">
+                </div>
                 <div id="color-picker" class="flex flex-wrap gap-3 justify-center"></div>
                 <div>
-                    <label class="block text-xs font-bold text-slate-500 mb-2 uppercase">Sous-tâches</label>
+                    <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Sous-tâches</label>
                     <div class="flex gap-2 mb-2">
-                        <input type="text" id="new-subtask-input" class="flex-1 rounded-lg border-slate-600 bg-slate-700 p-2 text-sm outline-none text-white" onkeypress="if(event.key === 'Enter') addSubtaskToEditor()">
+                        <input type="text" id="new-subtask-input" class="flex-1 rounded-lg border border-slate-600 bg-slate-700 p-2 text-sm outline-none text-white" onkeypress="if(event.key === 'Enter') addSubtaskToEditor()">
                         <button onclick="addSubtaskToEditor()" class="bg-slate-700 px-4 rounded-lg text-white"><i class="fa-solid fa-plus"></i></button>
                     </div>
                     <ul id="edit-subtasks-list" class="space-y-2"></ul>
@@ -201,20 +299,20 @@
     </div>
 
     <!-- MODAL DÉPENSE -->
-    <div id="expense-modal" class="fixed inset-0 bg-slate-950/60 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
+    <div id="expense-modal" class="fixed inset-0 bg-slate-950/80 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-sm flex flex-col border border-slate-700">
             <div class="p-5 border-b border-slate-700 flex justify-between items-center">
-                <h2 class="text-lg font-bold">Ajouter un frais</h2>
+                <h2 class="text-lg font-bold text-emerald-400">Ajouter un frais</h2>
                 <button onclick="closeExpenseEditor()" class="text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div class="p-6 space-y-4">
-                <input type="text" id="expense-text" placeholder="Libellé" class="w-full rounded-xl bg-slate-700 p-3 outline-none text-white">
+                <input type="text" id="expense-text" placeholder="Libellé" class="w-full rounded-xl bg-slate-700 border border-slate-600 p-3 outline-none text-white">
                 <div class="flex gap-3">
-                    <input type="number" id="expense-amount" placeholder="0.00 €" class="flex-1 rounded-xl bg-slate-700 p-3 font-bold text-xl outline-none text-white">
-                    <label class="flex flex-col items-center justify-center bg-slate-700 px-3 rounded-xl cursor-pointer">
+                    <input type="number" id="expense-amount" placeholder="0.00 €" class="flex-1 rounded-xl border border-slate-600 bg-slate-700 p-3 font-bold text-xl outline-none text-white">
+                    <label class="flex flex-col items-center justify-center bg-slate-700 border border-slate-600 px-3 rounded-xl cursor-pointer">
                         <input type="checkbox" id="expense-recurring" class="sr-only peer">
                         <div class="w-8 h-4 bg-slate-600 rounded-full peer peer-checked:bg-emerald-500 relative after:absolute after:top-0 after:left-0 after:h-4 after:w-4 after:bg-white after:rounded-full after:transition-all peer-checked:after:translate-x-4"></div>
-                        <span class="text-[8px] uppercase font-bold mt-1 text-slate-500">Fixe</span>
+                        <span class="text-[8px] uppercase font-bold mt-1 text-slate-400">Fixe</span>
                     </label>
                 </div>
             </div>
@@ -231,8 +329,14 @@
             <h2 class="text-2xl font-black text-center mb-6 text-slate-100">Profil Foyer</h2>
             <div class="space-y-4">
                 <div id="initial-profile-avatar" class="w-24 h-24 mx-auto rounded-full bg-slate-700 flex items-center justify-center text-4xl shadow-xl border-4 border-blue-500/20 overflow-hidden mb-4"></div>
-                <input type="text" id="profile-name" placeholder="Votre Prénom" class="w-full rounded-xl bg-slate-700 p-3 font-bold text-center text-white">
-                <input type="number" id="profile-income" placeholder="Revenu mensuel €" class="w-full rounded-xl bg-slate-700 p-3 font-black text-center text-blue-400">
+                <input type="text" id="profile-name" placeholder="Votre Prénom" class="w-full rounded-xl bg-slate-700 border border-slate-600 p-3 font-bold text-center text-white">
+                <input type="number" id="profile-income" placeholder="Revenu mensuel €" class="w-full rounded-xl bg-slate-700 border border-slate-600 p-3 font-black text-center text-blue-400">
+                
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2 text-center mt-4">Choisissez votre couleur</label>
+                    <div id="initial-user-color-picker" class="flex justify-center gap-2 flex-wrap"></div>
+                </div>
+
             </div>
             <button onclick="saveProfile()" class="w-full mt-8 bg-blue-600 py-4 rounded-xl font-black shadow-xl hover:bg-blue-500 text-white">C'est parti !</button>
         </div>
@@ -263,11 +367,11 @@
         const elements = {
             todoList: () => getEl('todo-list'),
             archivedTasksList: () => getEl('archived-tasks-list'),
+            agendaContainer: () => getEl('agenda-container'),
             recurringList: () => getEl('recurring-expenses-list'),
             ponctuelleList: () => getEl('ponctuelle-expenses-list'),
             archivedAccountsList: () => getEl('archived-accounts-list'),
             statusText: () => getEl('connection-status'),
-            newTaskBtn: () => getEl('new-task-btn'),
             financeChart: () => getEl('finance-chart'),
             balanceSummary: () => getEl('balance-summary'),
             visualStats: () => getEl('visual-stats'),
@@ -276,17 +380,22 @@
         };
 
         let tasksData = [];
+        let eventsData = [];
         let expensesData = [];
         let settlementsData = [];
         let currentUser = null;
         let localProfile = null;
+        
         let currentEditingId = null;
         let currentEditingSubtasks = [];
         let currentEditingTags = [];
         let currentSelectedColor = 'white';
         let collapsedTasks = new Set();
 
-        // Palette vibrante
+        let currentEventEditingId = null;
+        let currentEventType = 'ponctuel';
+
+        // Palettes
         const taskColors = {
             'white': { bg: 'bg-slate-800', border: 'border-slate-700', accent: 'bg-slate-400', hex: '#94a3b8' },
             'red': { bg: 'bg-red-950/40', border: 'border-red-500/50', accent: 'bg-red-500', hex: '#ef4444' },
@@ -296,32 +405,25 @@
             'purple': { bg: 'bg-purple-950/40', border: 'border-purple-500/50', accent: 'bg-purple-500', hex: '#a855f7' }
         };
 
+        const userColorsList = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#0ea5e9', '#3b82f6', '#8b5cf6', '#d946ef'];
+        let selectedUserColor = '#3b82f6';
+
+        // --- AUTH & INIT ---
         window.connectToInstance = async () => {
             const input = getEl('instance-code-input').value.trim().toUpperCase();
             const errorEl = getEl('login-error');
-            
-            if(!input || input.length < 4) {
-                errorEl.textContent = "Entrez un code d'au moins 4 caractères.";
-                errorEl.classList.remove('hidden');
-                return;
-            }
-            
+            if(!input || input.length < 4) { errorEl.textContent = "Code invalide."; errorEl.classList.remove('hidden'); return; }
             appId = input;
             errorEl.classList.add('hidden');
-
             try {
                 const result = await signInWithPopup(auth, provider);
                 currentUser = result.user;
-                
                 elements.instanceGate().classList.add('hidden');
                 elements.mainApp().classList.remove('hidden');
                 getEl('current-instance-id').textContent = appId;
-                
                 await startAppFlow();
             } catch (err) {
-                console.error(err);
-                errorEl.textContent = "Échec : Autorisez les pop-ups ou vérifiez Firebase.";
-                errorEl.classList.remove('hidden');
+                console.error(err); errorEl.textContent = "Échec : Autorisez les pop-ups."; errorEl.classList.remove('hidden');
             }
         };
 
@@ -333,41 +435,28 @@
                 
                 if (profileSnap.exists()) {
                     localProfile = profileSnap.data();
+                    if(!localProfile.color) localProfile.color = userColorsList[Math.floor(Math.random()*userColorsList.length)];
                     elements.statusText().textContent = `INST : ${appId}`;
-                    syncProfileUI();
-                    startListening();
-                    checkAutoClose();
+                    syncProfileUI(); startListening(); checkAutoClose();
                 } else {
-                    if(currentUser.displayName) {
-                        getEl('profile-name').value = currentUser.displayName.split(' ')[0];
-                    }
-                    if(currentUser.photoURL) {
-                        getEl('initial-profile-avatar').innerHTML = `<img src="${currentUser.photoURL}" class="w-full h-full object-cover" referrerpolicy="no-referrer">`;
-                    } else {
-                        getEl('initial-profile-avatar').textContent = '👤';
-                    }
+                    if(currentUser.displayName) getEl('profile-name').value = currentUser.displayName.split(' ')[0];
+                    if(currentUser.photoURL) getEl('initial-profile-avatar').innerHTML = `<img src="${currentUser.photoURL}" class="w-full h-full object-cover" referrerpolicy="no-referrer">`;
+                    renderUserColorPicker('initial-user-color-picker');
                     getEl('profile-modal').classList.replace('hidden', 'flex');
                 }
-            } catch (err) {
-                console.error(err);
-                elements.statusText().innerHTML = '<span class="text-red-500">ERREUR BDD</span>';
-            }
+            } catch (err) { console.error(err); elements.statusText().innerHTML = '<span class="text-red-500">ERREUR BDD</span>'; }
         }
 
         function startListening() {
             if (!currentUser || !appId) return;
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), 
-                snap => { tasksData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderTasks(); },
-                err => console.error("Tasks sync error", err)
-            );
+                snap => { tasksData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderTasks(); renderAgenda(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'events'), 
+                snap => { eventsData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderAgenda(); });
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), 
-                snap => { expensesData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderExpenses(); },
-                err => console.error("Expenses sync error", err)
-            );
+                snap => { expensesData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderExpenses(); });
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'settlements'), 
-                snap => { settlementsData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderFinanceArchives(); renderFinanceChart(); },
-                err => console.error("Settlements sync error", err)
-            );
+                snap => { settlementsData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderFinanceArchives(); renderFinanceChart(); });
         }
 
         async function checkAutoClose() {
@@ -381,49 +470,214 @@
             }
         }
 
+        // --- NAVIGATION ---
         window.switchTab = (tab) => {
-            ['tasks', 'accounts', 'profile'].forEach(s => {
-                const sec = getEl(`section-${s}`);
-                const btn = getEl(`tab-${s}-btn`);
+            ['tasks', 'agenda', 'accounts', 'profile'].forEach(s => {
+                const sec = getEl(`section-${s}`); const btn = getEl(`tab-${s}-btn`);
                 if(sec) sec.style.display = tab === s ? 'block' : 'none';
                 if(btn) {
-                    btn.classList.toggle('text-blue-400', tab === s && s !== 'accounts');
+                    btn.classList.toggle('text-blue-400', tab === s && s !== 'accounts' && s !== 'agenda');
                     btn.classList.toggle('text-emerald-500', tab === s && s === 'accounts');
+                    btn.classList.toggle('text-violet-400', tab === s && s === 'agenda');
                     btn.classList.toggle('text-slate-400', tab !== s);
                 }
             });
-            getEl('main-title').textContent = tab === 'tasks' ? 'Nos Tâches' : (tab === 'accounts' ? 'Comptes' : 'Mon Profil');
+            const titles = { 'tasks':'Nos Tâches', 'agenda':'Calendrier', 'accounts':'Comptes', 'profile':'Mon Profil' };
+            const icons = { 'tasks':'fa-clipboard-list text-blue-500', 'agenda':'fa-calendar-days text-violet-500', 'accounts':'fa-wallet text-emerald-500', 'profile':'fa-user-gear text-slate-400' };
+            getEl('main-title').innerHTML = `<i class="fa-solid ${icons[tab]}"></i> ${titles[tab]}`;
         };
 
-        window.toggleCollapse = (e, id) => {
-            e.stopPropagation();
-            if (collapsedTasks.has(id)) collapsedTasks.delete(id);
-            else collapsedTasks.add(id);
-            renderTasks();
-        };
+        // --- AGENDA RENDERER ---
+        function renderAgenda() {
+            const container = elements.agendaContainer();
+            if(!container) return;
 
-        window.toggleSubtask = async (e, taskId, subtaskId) => {
-            e.stopPropagation(); // Empêche de cocher la tâche principale par erreur
-            if (!currentUser || !appId) return;
+            let agendaItems = [];
+            const now = new Date();
+            now.setHours(0,0,0,0);
+            const horizon = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate()); // Horizon 3 mois
 
-            const task = tasksData.find(t => t.id === taskId);
-            if (!task || !task.subtasks) return;
-
-            // On inverse l'état de la sous-tâche ciblée
-            const updatedSubtasks = task.subtasks.map(s => 
-                s.id === subtaskId ? { ...s, completed: !s.completed } : s
-            );
-
-            // Mise à jour sur Firebase
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', taskId), { 
-                subtasks: updatedSubtasks 
+            // 1. Intégrer les tâches avec une Date
+            tasksData.forEach(t => {
+                if(t.dueDate && !t.completed && !t.archived) {
+                    const taskDate = new Date(t.dueDate);
+                    if(taskDate >= new Date(now.getTime() - 86400000)) { // Inclut hier au max
+                        agendaItems.push({
+                            type: 'task', id: t.id, dateObj: taskDate,
+                            title: t.text, color: taskColors[t.color]?.hex || '#94a3b8', 
+                            badge: 'Tâche', data: t
+                        });
+                    }
+                }
             });
+
+            // 2. Intégrer et générer les Événements
+            eventsData.forEach(e => {
+                let current = new Date(e.dateStart + 'T00:00:00');
+                if (e.recurrence === 'none') {
+                    if (current >= new Date(now.getTime() - 86400000)) {
+                        agendaItems.push(formatEventItem(e, current));
+                    }
+                } else {
+                    let i = 0;
+                    // On avance 'current' jusqu'à 'now' pour ne pas générer le passé lointain
+                    while(current < new Date(now.getTime() - 86400000) && i < 500) {
+                        current = getNextOccurrence(current, e.recurrence); i++;
+                    }
+                    i = 0;
+                    while (current <= horizon && i < 50) { // Max 50 occurences
+                        agendaItems.push(formatEventItem(e, new Date(current)));
+                        current = getNextOccurrence(current, e.recurrence); i++;
+                    }
+                }
+            });
+
+            // 3. Trier et Grouper
+            agendaItems.sort((a, b) => a.dateObj - b.dateObj);
+            
+            if(agendaItems.length === 0) {
+                container.innerHTML = '<div class="text-center py-10 text-slate-500 italic text-xs">Rien de prévu pour les 3 prochains mois.</div>';
+                return;
+            }
+
+            let html = '';
+            let currentGroupDate = '';
+
+            agendaItems.forEach(item => {
+                const dateStr = item.dateObj.toISOString().split('T')[0];
+                if (dateStr !== currentGroupDate) {
+                    currentGroupDate = dateStr;
+                    html += `<h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-6 mb-3 sticky top-0 bg-slate-900/90 py-1 backdrop-blur-sm z-10">${formatDateHeader(item.dateObj)}</h3>`;
+                }
+
+                if (item.type === 'task') {
+                    html += `
+                    <div onclick="openEditor('${item.id}')" class="bg-slate-800/80 p-3 rounded-xl border border-slate-700 flex gap-3 items-center mb-2 cursor-pointer shadow-sm">
+                        <div class="w-1.5 h-full rounded-full bg-slate-500 self-stretch" style="background-color: ${item.color}"></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-bold text-slate-200 truncate">${escapeHTML(item.title)}</p>
+                            <p class="text-[8px] uppercase font-black text-slate-500 mt-0.5"><i class="fa-solid fa-check-double"></i> À FAIRE</p>
+                        </div>
+                    </div>`;
+                } else {
+                    const timeStr = item.data.timeStart ? `${item.data.timeStart}${item.data.timeEnd ? ' - '+item.data.timeEnd : ''}` : 'Journée entière';
+                    const locStr = item.data.location ? `<span class="ml-2 text-slate-400"><i class="fa-solid fa-location-dot"></i> ${escapeHTML(item.data.location)}</span>` : '';
+                    html += `
+                    <div onclick="openEventEditor('${item.id}')" class="bg-slate-800 p-3 rounded-xl border border-slate-700 flex gap-3 items-center mb-2 cursor-pointer shadow-md">
+                        <div class="w-1.5 h-full rounded-full self-stretch" style="background-color: ${item.color}"></div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-start">
+                                <p class="text-sm font-bold text-slate-100 truncate">${escapeHTML(item.title)}</p>
+                                ${item.data.author?.avatar ? `<img src="${item.data.author.avatar}" class="w-5 h-5 rounded-full border border-slate-600 ml-2 shrink-0">` : ''}
+                            </div>
+                            <p class="text-[9px] font-bold text-violet-400 mt-1 uppercase tracking-wider">
+                                <i class="fa-regular fa-clock"></i> ${timeStr} ${locStr}
+                            </p>
+                            ${item.data.recurrence !== 'none' ? `<p class="text-[8px] text-slate-500 mt-1"><i class="fa-solid fa-repeat"></i> Répétition</p>` : ''}
+                        </div>
+                    </div>`;
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        function formatEventItem(e, dateObj) {
+            return {
+                type: 'event', id: e.id, dateObj: dateObj,
+                title: e.title, color: e.author?.color || '#8b5cf6', data: e
+            };
+        }
+
+        function getNextOccurrence(date, rule) {
+            let next = new Date(date);
+            if (rule === 'daily') next.setDate(next.getDate() + 1);
+            else if (rule === 'weekly') next.setDate(next.getDate() + 7);
+            else if (rule === 'biweekly') next.setDate(next.getDate() + 14);
+            else if (rule === 'monthly') next.setMonth(next.getMonth() + 1);
+            return next;
+        }
+
+        function formatDateHeader(d) {
+            const today = new Date(); today.setHours(0,0,0,0);
+            const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+            if (d.getTime() === today.getTime()) return "Aujourd'hui";
+            if (d.getTime() === tomorrow.getTime()) return "Demain";
+            const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+            const months = ['Janv','Févr','Mars','Avril','Mai','Juin','Juil','Août','Sept','Oct','Nov','Déc'];
+            return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}`;
+        }
+
+        // --- EVENT EDITOR ---
+        window.openEventEditor = (id = null) => {
+            currentEventEditingId = id;
+            const e = id ? eventsData.find(x => x.id === id) : null;
+            getEl('event-modal-title').textContent = id ? "Modifier Événement" : "Nouvel Événement";
+            
+            getEl('event-title').value = e ? e.title : '';
+            getEl('event-date-start').value = e ? e.dateStart : new Date().toISOString().split('T')[0];
+            getEl('event-time-start').value = e ? (e.timeStart || '') : '';
+            getEl('event-date-end').value = e ? (e.dateEnd || '') : '';
+            getEl('event-time-end').value = e ? (e.timeEnd || '') : '';
+            getEl('event-location').value = e ? (e.location || '') : '';
+            getEl('event-desc').value = e ? (e.description || '') : '';
+            getEl('event-recurrence').value = e ? (e.recurrence || 'none') : 'none';
+            
+            setEventType(e ? e.type : 'ponctuel');
+            getEl('event-delete-btn').classList.toggle('hidden', !id);
+            getEl('event-modal').classList.replace('hidden', 'flex');
+        };
+
+        window.closeEventEditor = () => getEl('event-modal').classList.replace('flex', 'hidden');
+
+        window.setEventType = (type) => {
+            currentEventType = type;
+            getEl('btn-type-ponctuel').className = type === 'ponctuel' ? 'flex-1 py-2 text-xs font-bold rounded-lg bg-slate-700 text-white shadow-sm' : 'flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 hover:text-white';
+            getEl('btn-type-rdv').className = type === 'rdv' ? 'flex-1 py-2 text-xs font-bold rounded-lg bg-slate-700 text-white shadow-sm' : 'flex-1 py-2 text-xs font-bold rounded-lg text-slate-500 hover:text-white';
+            getEl('event-rdv-fields').classList.toggle('hidden', type === 'ponctuel');
+        };
+
+        window.saveEvent = async () => {
+            if (!currentUser || !appId) return;
+            const title = getEl('event-title').value.trim();
+            const dateStart = getEl('event-date-start').value;
+            if(!title || !dateStart) { alert("Le titre et la date sont obligatoires."); return; }
+
+            const data = {
+                type: currentEventType, title, dateStart,
+                timeStart: getEl('event-time-start').value,
+                dateEnd: currentEventType === 'rdv' ? getEl('event-date-end').value : null,
+                timeEnd: currentEventType === 'rdv' ? getEl('event-time-end').value : null,
+                location: currentEventType === 'rdv' ? getEl('event-location').value.trim() : null,
+                description: getEl('event-desc').value.trim(),
+                recurrence: getEl('event-recurrence').value,
+                author: localProfile
+            };
+
+            if(currentEventEditingId) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', currentEventEditingId), data);
+            else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'events'), { ...data, createdAt: Date.now() });
+            
+            closeEventEditor();
+        };
+
+        window.deleteEventFromEditor = async () => {
+            if (!currentUser || !appId || !currentEventEditingId) return;
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'events', currentEventEditingId)); 
+            closeEventEditor();
+        };
+
+        // --- TASKS RENDERER ---
+        window.toggleCollapse = (e, id) => { e.stopPropagation(); if (collapsedTasks.has(id)) collapsedTasks.delete(id); else collapsedTasks.add(id); renderTasks(); };
+        window.toggleSubtask = async (e, taskId, subtaskId) => {
+            e.stopPropagation(); if (!currentUser || !appId) return;
+            const task = tasksData.find(t => t.id === taskId); if (!task || !task.subtasks) return;
+            const updatedSubtasks = task.subtasks.map(s => s.id === subtaskId ? { ...s, completed: !s.completed } : s);
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', taskId), { subtasks: updatedSubtasks });
         };
 
         function renderTasks() {
             const todo = elements.todoList(); const arch = elements.archivedTasksList();
-            if(!todo) return;
-            todo.innerHTML = ''; arch.innerHTML = '';
+            if(!todo) return; todo.innerHTML = ''; arch.innerHTML = '';
             tasksData.sort((a,b) => b.createdAt - a.createdAt).forEach(task => {
                 const color = taskColors[task.color] || taskColors['white'];
                 const isOverdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().setHours(0,0,0,0)) && !task.completed;
@@ -433,138 +687,58 @@
                 let detailsHTML = '';
                 if (hasDetails && isExpanded) {
                     const desc = task.description ? `<p class="text-xs text-slate-400 mt-2 italic whitespace-pre-wrap">${escapeHTML(task.description)}</p>` : '';
-                    
-                    // Rendu interactif des sous-tâches
-                    const subs = (task.subtasks || []).map(s => `
-                        <li onclick="toggleSubtask(event, '${task.id}', '${s.id}')" class="text-[10px] flex items-center gap-2 text-slate-300 cursor-pointer hover:text-white transition-colors py-1">
-                            <i class="fa-solid ${s.completed ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-600'}"></i> 
-                            <span class="${s.completed ? 'line-through opacity-50' : ''}">${escapeHTML(s.text)}</span>
-                        </li>
-                    `).join('');
-                    
-                    const subsList = subs ? `<ul class="mt-2 space-y-0.5">${subs}</ul>` : '';
-                    detailsHTML = `<div class="mt-2 border-t border-white/5 pt-2" onclick="event.stopPropagation()">${desc}${subsList}</div>`;
+                    const subs = (task.subtasks || []).map(s => `<li onclick="toggleSubtask(event, '${task.id}', '${s.id}')" class="text-[10px] flex items-center gap-2 text-slate-300 cursor-pointer hover:text-white transition-colors py-1"><i class="fa-solid ${s.completed ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-600'}"></i> <span class="${s.completed ? 'line-through opacity-50' : ''}">${escapeHTML(s.text)}</span></li>`).join('');
+                    detailsHTML = `<div class="mt-2 border-t border-white/5 pt-2" onclick="event.stopPropagation()">${desc}${subs ? `<ul class="mt-2 space-y-0.5">${subs}</ul>`:''}</div>`;
                 }
                 const expandBtn = hasDetails ? `<button onclick="toggleCollapse(event, '${task.id}')" class="text-slate-500 hover:text-slate-300 px-2 py-1"><i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-[10px]"></i></button>` : '';
 
                 const li = document.createElement('li');
                 li.className = `${color.bg} p-4 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all`;
                 const tags = (task.tags || []).map(t => `<span class="bg-white/10 text-[8px] font-black uppercase px-2 py-0.5 rounded-full text-white">${t}</span>`).join(' ');
-                
-                li.innerHTML = `
-                    <div class="color-accent ${color.accent}"></div>
-                    <div class="flex items-start justify-between">
-                        <div class="flex items-start gap-3 flex-1 cursor-pointer" onclick="toggleTask('${task.id}', ${!task.completed})">
-                            <div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${task.completed ? 'bg-green-500 border-green-500' : 'border-slate-500'}">
-                                ${task.completed ? '<i class="fa-solid fa-check text-[10px] text-white"></i>' : ''}
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-all leading-tight text-sm">${escapeHTML(task.text)}</span>
-                                    ${expandBtn}
-                                </div>
-                                <div class="flex flex-wrap gap-1 mt-1">${tags}</div>
-                                ${task.dueDate ? `<p class="text-[8px] font-black mt-1 ${isOverdue ? 'text-red-400' : 'text-slate-500'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}
-                                ${detailsHTML}
-                            </div>
-                        </div>
-                        <button onclick="openEditor('${task.id}')" class="p-1 text-slate-500 hover:text-blue-400 ml-2"><i class="fa-solid fa-pen text-[10px]"></i></button>
-                    </div>`;
-                    
-                if (task.archived || task.completed) arch.appendChild(li); 
-                else todo.appendChild(li);
+                li.innerHTML = `<div class="color-accent ${color.accent}"></div><div class="flex items-start justify-between"><div class="flex items-start gap-3 flex-1 cursor-pointer" onclick="toggleTask('${task.id}', ${!task.completed})"><div class="w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5 ${task.completed ? 'bg-green-500 border-green-500' : 'border-slate-500'}">${task.completed ? '<i class="fa-solid fa-check text-[10px] text-white"></i>' : ''}</div><div class="min-w-0 flex-1"><div class="flex items-center gap-2"><span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-all leading-tight text-sm">${escapeHTML(task.text)}</span>${expandBtn}</div><div class="flex flex-wrap gap-1 mt-1">${tags}</div>${task.dueDate ? `<p class="text-[8px] font-black mt-1 ${isOverdue ? 'text-red-400' : 'text-slate-500'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}${detailsHTML}</div></div><button onclick="openEditor('${task.id}')" class="p-1 text-slate-500 hover:text-blue-400 ml-2"><i class="fa-solid fa-pen text-[10px]"></i></button></div>`;
+                if (task.archived || task.completed) arch.appendChild(li); else todo.appendChild(li);
             });
-            if(todo.innerHTML === '') todo.innerHTML = '<li class="text-slate-600 text-center py-4 text-xs italic">C\'est calme ici...</li>';
+            if(todo.innerHTML === '') todo.innerHTML = '<li class="text-slate-500 text-center py-6 text-sm italic">C\'est calme ici...</li>';
         }
 
+        // --- EXPENSES RENDERER ---
         function renderExpenses() {
             const rec = elements.recurringList(); const pon = elements.ponctuelleList(); if(!rec) return;
             rec.innerHTML = ''; pon.innerHTML = ''; const stats = { users: {}, fixed: 0, ponct: 0 };
             expensesData.forEach(exp => {
-                const avatarContent = exp.payer.avatar && exp.payer.avatar.startsWith('http') 
-                    ? `<img src="${exp.payer.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer">` 
-                    : (exp.payer.avatar || '👤');
-
-                const li = document.createElement('li'); li.className = "bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex justify-between items-center shadow-sm relative";
-                li.innerHTML = `<div class="flex items-center gap-3 min-w-0"><div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-lg shrink-0 overflow-hidden">${avatarContent}</div><div class="min-w-0"><p class="font-bold text-slate-200 truncate text-sm">${escapeHTML(exp.text)}</p><p class="text-[9px] text-slate-500 uppercase font-black font-bold">Par ${escapeHTML(exp.payer.name)}</p></div></div><div class="flex items-center gap-3"><span class="font-black text-emerald-400 text-sm">${exp.amount.toFixed(2)}€</span><button onclick="deleteExpense('${exp.id}')" class="text-slate-600 hover:text-red-400"><i class="fa-regular fa-trash-can text-xs"></i></button></div>`;
-                
+                const avatarContent = exp.payer.avatar && exp.payer.avatar.startsWith('http') ? `<img src="${exp.payer.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer">` : (exp.payer.avatar || '👤');
+                const li = document.createElement('li'); li.className = "bg-slate-800/50 p-5 rounded-xl border border-slate-700 flex justify-between items-center shadow-sm relative mb-3";
+                li.innerHTML = `<div class="flex items-center gap-4 min-w-0"><div class="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-xl shrink-0 overflow-hidden" style="border: 2px solid ${exp.payer.color||'#3b82f6'}">${avatarContent}</div><div class="min-w-0"><p class="font-bold text-slate-100 truncate text-base">${escapeHTML(exp.text)}</p><p class="text-[10px] text-slate-400 uppercase font-black mt-0.5">Par ${escapeHTML(exp.payer.name)}</p></div></div><div class="flex items-center gap-4"><span class="font-black text-emerald-400 text-lg">${exp.amount.toFixed(2)}€</span><button onclick="deleteExpense('${exp.id}')" class="text-slate-500 hover:text-red-400 p-2"><i class="fa-regular fa-trash-can text-lg"></i></button></div>`;
                 if(exp.isRecurring) { rec.appendChild(li); stats.fixed += exp.amount; } else { pon.appendChild(li); stats.ponct += exp.amount; }
                 const uId = exp.payer.uid; if(!stats.users[uId]) stats.users[uId] = { name: exp.payer.name, spent: 0, income: exp.payer.income || 0 }; stats.users[uId].spent += exp.amount;
             });
-            
-            // On s'assure que l'utilisateur local est toujours dans la liste, même avec 0 dépense
-            if(localProfile && !stats.users[localProfile.uid]) {
-                stats.users[localProfile.uid] = { name: localProfile.name, spent: 0, income: localProfile.income || 0 };
-            }
-            
-            const userList = Object.values(stats.users); 
-            const totalS = stats.fixed + stats.ponct; 
-            let summHTML = '', chartHTML = '';
-
-            // 1. Calcul de la balance commune (uniquement s'il y a 2 personnes)
+            if(localProfile && !stats.users[localProfile.uid]) stats.users[localProfile.uid] = { name: localProfile.name, spent: 0, income: localProfile.income || 0 };
+            const userList = Object.values(stats.users); const totalS = stats.fixed + stats.ponct; let summHTML = '', chartHTML = '';
             if(userList.length >= 2) {
-                const u1 = userList[0], u2 = userList[1];
-                const totalIncome = u1.income + u2.income;
-                const ratio1 = totalIncome > 0 ? u1.income / totalIncome : 0.5;
-                const bal = u1.spent - (totalS * ratio1);
-                
-                if(Math.abs(bal) < 0.1) summHTML = `<p class="text-sm font-bold mb-4 pb-4 border-b border-white/10">Comptes équilibrés ✨</p>`;
-                else { 
-                    const debtor = bal > 0 ? u2.name : u1.name; 
-                    const creditor = bal > 0 ? u1.name : u2.name; 
-                    summHTML = `<p class="text-sm font-black mb-4 pb-4 border-b border-white/10">${debtor} doit <span class="text-emerald-400">${Math.abs(bal).toFixed(2)}€</span> à ${creditor}</p>`; 
-                }
-            } else {
-                summHTML = `<p class="text-sm font-bold mb-4 pb-4 border-b border-white/10 text-slate-300">Total dépensé : <span class="text-white">${totalS.toFixed(2)}€</span></p>`;
-            }
-
-            // 2. Barres de progression individuelles (Paye - Dépenses = Reste à vivre)
+                const u1 = userList[0], u2 = userList[1]; const totalIncome = u1.income + u2.income; const ratio1 = totalIncome > 0 ? u1.income / totalIncome : 0.5; const bal = u1.spent - (totalS * ratio1);
+                if(Math.abs(bal) < 0.1) summHTML = `<p class="text-base font-bold mb-5 pb-5 border-b border-white/10">Comptes équilibrés ✨</p>`;
+                else { const debtor = bal > 0 ? u2.name : u1.name; const creditor = bal > 0 ? u1.name : u2.name; summHTML = `<p class="text-base font-black mb-5 pb-5 border-b border-white/10">${debtor} doit <span class="text-emerald-400">${Math.abs(bal).toFixed(2)}€</span> à ${creditor}</p>`; }
+            } else summHTML = `<p class="text-base font-bold mb-5 pb-5 border-b border-white/10 text-slate-300">Total dépensé : <span class="text-white">${totalS.toFixed(2)}€</span></p>`;
             chartHTML = userList.map(u => {
-                const pct = u.income > 0 ? Math.min((u.spent / u.income) * 100, 100) : (u.spent > 0 ? 100 : 0);
-                const remaining = u.income - u.spent;
-                const overspent = remaining < 0;
-                const barColor = overspent ? 'bg-red-500' : (pct > 85 ? 'bg-amber-500' : 'bg-blue-500');
-                
-                return `
-                <div class="mb-3 text-left">
-                    <div class="flex justify-between text-[10px] mb-1">
-                        <span class="font-bold text-slate-300">${escapeHTML(u.name)}</span>
-                        <span class="font-black ${overspent ? 'text-red-400' : 'text-emerald-400'}">Reste: ${remaining.toFixed(2)}€</span>
-                    </div>
-                    <div class="w-full h-4 bg-black/40 rounded-full overflow-hidden border border-white/10 relative">
-                        <div class="${barColor} h-full transition-all duration-700 ease-out" style="width:${pct}%"></div>
-                        <div class="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white mix-blend-overlay drop-shadow-md">
-                            ${u.spent.toFixed(2)}€ / ${u.income > 0 ? u.income + '€' : 'N/A'}
-                        </div>
-                    </div>
-                </div>`;
+                const pct = u.income > 0 ? Math.min((u.spent / u.income) * 100, 100) : (u.spent > 0 ? 100 : 0); const remaining = u.income - u.spent; const overspent = remaining < 0; const barColor = overspent ? 'bg-red-500' : (pct > 85 ? 'bg-amber-500' : 'bg-emerald-500');
+                return `<div class="mb-4 text-left"><div class="flex justify-between text-xs mb-2"><span class="font-bold text-slate-300">${escapeHTML(u.name)}</span><span class="font-black ${overspent ? 'text-red-400' : 'text-emerald-400'}">Reste: ${remaining.toFixed(2)}€</span></div><div class="w-full h-5 bg-black/40 rounded-full overflow-hidden border border-white/10 relative"><div class="${barColor} h-full transition-all duration-700 ease-out" style="width:${pct}%"></div><div class="absolute inset-0 flex items-center justify-center text-[10px] font-black text-white mix-blend-overlay drop-shadow-md">${u.spent.toFixed(2)}€ / ${u.income > 0 ? u.income + '€' : 'N/A'}</div></div></div>`;
             }).join('');
-
-            elements.balanceSummary().innerHTML = summHTML; 
-            elements.visualStats().innerHTML = chartHTML;
-            getEl('current-month-label').textContent = `${["Janv", "Févr", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"][new Date().getMonth()]} ${new Date().getFullYear()}`;
+            elements.balanceSummary().innerHTML = summHTML; elements.visualStats().innerHTML = chartHTML; getEl('current-month-label').textContent = `${["Janv", "Févr", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"][new Date().getMonth()]} ${new Date().getFullYear()}`;
         }
 
         function renderFinanceArchives() {
             const list = elements.archivedAccountsList(); if(!list) return;
-            list.innerHTML = settlementsData.sort((a,b) => b.settledAt - a.settledAt).map(arc => `
-                <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex justify-between items-center">
-                    <div><span class="font-black text-blue-400 uppercase text-xs">${arc.label}</span></div>
-                    <span class="font-bold text-slate-200">${arc.total.toFixed(2)}€</span>
-                </div>`).join('');
+            list.innerHTML = settlementsData.sort((a,b) => b.settledAt - a.settledAt).map(arc => `<div class="bg-slate-800/50 p-5 rounded-xl border border-slate-700 flex justify-between items-center mb-3"><div><span class="font-black text-blue-400 uppercase text-sm">${arc.label}</span></div><span class="font-bold text-slate-100 text-lg">${arc.total.toFixed(2)}€</span></div>`).join('');
         }
 
         function renderFinanceChart() {
             const chart = elements.financeChart(); if(!chart) return;
-            if(settlementsData.length === 0) { chart.innerHTML = '<p class="text-[10px] text-slate-600 w-full text-center py-10 italic">Aucune donnée historique</p>'; return; }
-            const last6 = settlementsData.sort((a,b) => b.settledAt - a.settledAt).slice(0, 6).reverse();
-            const maxVal = Math.max(...last6.map(s => s.total), 500);
-            chart.innerHTML = last6.map(s => {
-                const height = (s.total / maxVal) * 100;
-                return `<div class="flex-1 flex flex-col items-center gap-1 h-full justify-end"><span class="text-[8px] font-bold text-emerald-400">${Math.round(s.total)}€</span><div class="w-full bg-slate-700 rounded-t-sm chart-bar-anim relative overflow-hidden" style="height: ${height}%"><div class="absolute inset-0 bg-gradient-to-t from-emerald-600/50 to-emerald-400/50"></div></div><span class="text-[7px] text-slate-500 font-black uppercase truncate w-full text-center">${s.label.split(' ')[0]}</span></div>`;
-            }).join('');
+            if(settlementsData.length === 0) { chart.innerHTML = '<p class="text-xs text-slate-500 w-full text-center py-10 italic">Aucune donnée historique</p>'; return; }
+            const last6 = settlementsData.sort((a,b) => b.settledAt - a.settledAt).slice(0, 6).reverse(); const maxVal = Math.max(...last6.map(s => s.total), 500);
+            chart.innerHTML = last6.map(s => { const height = (s.total / maxVal) * 100; return `<div class="flex-1 flex flex-col items-center gap-1 h-full justify-end"><span class="text-[10px] font-bold text-emerald-400">${Math.round(s.total)}€</span><div class="w-full bg-slate-700 rounded-t-sm chart-bar-anim relative overflow-hidden" style="height: ${height}%"><div class="absolute inset-0 bg-gradient-to-t from-emerald-600/50 to-emerald-400/50"></div></div><span class="text-[9px] text-slate-400 font-black uppercase truncate w-full text-center mt-1">${s.label.split(' ')[0]}</span></div>`;}).join('');
         }
 
+        // --- ACTIONS API ---
         window.saveTask = async () => {
             if (!currentUser || !appId) return;
             const title = getEl('edit-title').value.trim(); if(!title) return;
@@ -573,17 +747,8 @@
             else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), { ...data, author: localProfile, completed: false, archived: false, createdAt: Date.now() });
             closeEditor();
         };
-
-        window.toggleTask = async (id, status) => {
-            if (!currentUser || !appId) return;
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', id), { completed: status, completedBy: status ? localProfile : null });
-        };
-
-        window.deleteTaskFromEditor = async () => {
-            if (!currentUser || !appId || !currentEditingId) return;
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', currentEditingId)); closeEditor();
-        };
-
+        window.toggleTask = async (id, status) => { if (!currentUser || !appId) return; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', id), { completed: status, completedBy: status ? localProfile : null }); };
+        window.deleteTaskFromEditor = async () => { if (!currentUser || !appId || !currentEditingId) return; await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', currentEditingId)); closeEditor(); };
         window.saveExpense = async () => {
             if (!currentUser || !appId) return;
             const text = getEl('expense-text').value.trim(); const amount = parseFloat(getEl('expense-amount').value); const isRec = getEl('expense-recurring').checked;
@@ -591,16 +756,8 @@
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), { text, amount, isRecurring: isRec, payer: localProfile, createdAt: Date.now() });
             closeExpenseEditor();
         };
-
-        window.deleteExpense = async (id) => {
-            if (!currentUser || !appId) return;
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id));
-        };
-
-        window.settleAccountsManual = async () => {
-            if(confirm("Clôturer le mois ?")) await settleAccounts();
-        };
-
+        window.deleteExpense = async (id) => { if (!currentUser || !appId) return; await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id)); };
+        window.settleAccountsManual = async () => { if(confirm("Clôturer le mois ?")) await settleAccounts(); };
         async function settleAccounts() {
             if (!currentUser || !appId || expensesData.length === 0) return;
             const now = new Date(); const label = `${["Jan", "Fév", "Mar", "Avr", "Mai", "Jui", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"][now.getMonth()]} ${now.getFullYear()}`;
@@ -609,39 +766,43 @@
             for(const exp of expensesData) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', exp.id));
         }
 
+        // --- PROFILE ---
         window.saveProfile = async () => {
             if (!currentUser || !appId) return;
             const n = getEl('profile-name').value.trim(); const inc = parseFloat(getEl('profile-income').value) || 0; if(!n) return;
             const photo = currentUser.photoURL || '👤';
-            localProfile = { uid: currentUser.uid, name: n, income: inc, avatar: photo };
+            localProfile = { uid: currentUser.uid, name: n, income: inc, avatar: photo, color: selectedUserColor };
             await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data'), localProfile);
             getEl('profile-modal').classList.replace('flex', 'hidden');
             syncProfileUI(); startListening();
         };
-
         window.updateProfileFromSettings = async () => {
             if (!currentUser || !appId) return;
             const n = getEl('settings-name').value.trim(); const inc = parseFloat(getEl('settings-income').value) || 0; if(!n) return;
             const photo = currentUser.photoURL || '👤';
-            localProfile = { ...localProfile, name: n, income: inc, avatar: photo };
+            localProfile = { ...localProfile, name: n, income: inc, avatar: photo, color: selectedUserColor };
             await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data'), localProfile);
-            syncProfileUI(); alert("Profil mis à jour !");
+            syncProfileUI(); alert("Profil mis à jour !"); renderAgenda(); // Rafraîchit l'agenda avec la nv couleur
         };
 
         function syncProfileUI() {
             if(!localProfile) return;
-            
-            const avatarContent = localProfile.avatar && localProfile.avatar.startsWith('http') 
-                ? `<img src="${localProfile.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer">` 
-                : (localProfile.avatar || '👤');
-            getEl('current-profile-avatar').innerHTML = avatarContent;
+            const avatarContent = localProfile.avatar && localProfile.avatar.startsWith('http') ? `<img src="${localProfile.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer">` : (localProfile.avatar || '👤');
+            const avatarEl = getEl('current-profile-avatar');
+            avatarEl.innerHTML = avatarContent;
+            avatarEl.style.borderColor = localProfile.color || '#3b82f6';
+            getEl('current-profile-color-badge').style.backgroundColor = localProfile.color || '#3b82f6';
             
             getEl('current-profile-name-display').textContent = localProfile.name;
             getEl('current-profile-income-display').textContent = `Revenu : ${localProfile.income}€`;
             getEl('settings-name').value = localProfile.name;
             getEl('settings-income').value = localProfile.income;
+            
+            selectedUserColor = localProfile.color || '#3b82f6';
+            renderUserColorPicker('settings-user-color-picker');
         }
 
+        // --- UTILS ÉDITEURS ---
         window.toggleTaskArchive = () => { getEl('active-tasks-view').classList.toggle('hidden'); getEl('archived-tasks-view').classList.toggle('hidden'); };
         window.toggleAccountArchive = () => { getEl('active-accounts-view').classList.toggle('hidden'); getEl('archived-accounts-view').classList.toggle('hidden'); };
         window.openEditor = (id = null) => {
@@ -657,15 +818,12 @@
         window.closeExpenseEditor = () => getEl('expense-modal').classList.replace('flex', 'hidden');
         window.openExpenseEditor = () => getEl('expense-modal').classList.replace('hidden', 'flex');
         
-        window.renderColorPicker = () => { 
-            getEl('color-picker').innerHTML = Object.keys(taskColors).map(c => `
-            <button onclick="selectColor('${c}')" 
-                class="w-10 h-10 rounded-full border-2 ${currentSelectedColor === c ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'border-transparent opacity-50 hover:opacity-100'}" 
-                style="background-color: ${taskColors[c].hex};">
-            </button>`).join(''); 
-        };
+        window.renderColorPicker = () => { getEl('color-picker').innerHTML = Object.keys(taskColors).map(c => `<button onclick="selectColor('${c}')" class="w-10 h-10 rounded-full border-2 ${currentSelectedColor === c ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.3)]' : 'border-transparent opacity-50 hover:opacity-100'}" style="background-color: ${taskColors[c].hex};"></button>`).join(''); };
         window.selectColor = (c) => { currentSelectedColor = c; renderColorPicker(); };
-        
+
+        window.renderUserColorPicker = (id) => { getEl(id).innerHTML = userColorsList.map(c => `<button onclick="selectUserColor('${c}', '${id}')" class="w-8 h-8 rounded-full border-2 ${selectedUserColor === c ? 'border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'border-transparent opacity-50 hover:opacity-100'}" style="background-color: ${c};"></button>`).join(''); };
+        window.selectUserColor = (c, id) => { selectedUserColor = c; renderUserColorPicker(id); };
+
         window.addTagToEditor = () => { const i = getEl('new-tag-input'); const v = i.value.trim().toLowerCase(); if(v && !currentEditingTags.includes(v)) { currentEditingTags.push(v); i.value = ''; renderEditorTags(); } };
         window.removeTagFromEditor = (t) => { currentEditingTags = currentEditingTags.filter(x => x !== t); renderEditorTags(); };
         function renderEditorTags() { getEl('edit-tags-list').innerHTML = currentEditingTags.map(t => `<span class="bg-blue-900/60 text-blue-200 px-2.5 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-1 border border-blue-500/50">${t}<button onclick="removeTagFromEditor('${t}')"><i class="fa-solid fa-xmark"></i></button></span>`).join(''); }

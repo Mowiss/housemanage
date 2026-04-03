@@ -372,7 +372,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // VOS CLÉS FIREBASE DÉFINITIVES
@@ -439,10 +439,10 @@
         const availableAvatars = ['🦊', '🐱', '🐼', '🐨', '🐯', '🦉', '🦋', '🐥', '🦕'];
         let selectedAvatar = '👤';
 
-        // --- GESTION DU RETOUR DE REDIRECTION ---
-        getRedirectResult(auth).then(async (result) => {
-            if (result) {
-                currentUser = result.user;
+        // --- ÉCOUTEUR GLOBAL DE CONNEXION (Gère les retours de Google) ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
                 appId = sessionStorage.getItem('savedInstanceCode'); 
                 if(appId) {
                     elements.instanceGate().classList.add('hidden');
@@ -451,11 +451,14 @@
                     await startAppFlow();
                 }
             }
-        }).catch(err => {
+        });
+
+        // Capture les erreurs potentielles de la redirection Google
+        getRedirectResult(auth).catch(err => {
             console.error("Erreur de redirection Firebase:", err);
             const errorEl = getEl('login-error');
             if (errorEl) {
-                errorEl.textContent = "Erreur lors de la connexion Google.";
+                errorEl.textContent = "La connexion Google a été interrompue.";
                 errorEl.classList.remove('hidden');
             }
         });
@@ -473,6 +476,16 @@
             
             appId = input;
             sessionStorage.setItem('savedInstanceCode', appId); 
+
+            // Si Google vous a déjà connecté en arrière-plan (Mémoire du navigateur)
+            if (auth.currentUser) {
+                currentUser = auth.currentUser;
+                elements.instanceGate().classList.add('hidden');
+                elements.mainApp().classList.remove('hidden');
+                getEl('current-instance-id').textContent = appId;
+                await startAppFlow();
+                return;
+            }
             
             errorEl.textContent = "Redirection sécurisée en cours...";
             errorEl.classList.remove('text-red-500');

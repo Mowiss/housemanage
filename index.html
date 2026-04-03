@@ -402,6 +402,24 @@
             renderTasks();
         };
 
+        window.toggleSubtask = async (e, taskId, subtaskId) => {
+            e.stopPropagation(); // Empêche de cocher la tâche principale par erreur
+            if (!currentUser || !appId) return;
+
+            const task = tasksData.find(t => t.id === taskId);
+            if (!task || !task.subtasks) return;
+
+            // On inverse l'état de la sous-tâche ciblée
+            const updatedSubtasks = task.subtasks.map(s => 
+                s.id === subtaskId ? { ...s, completed: !s.completed } : s
+            );
+
+            // Mise à jour sur Firebase
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', taskId), { 
+                subtasks: updatedSubtasks 
+            });
+        };
+
         function renderTasks() {
             const todo = elements.todoList(); const arch = elements.archivedTasksList();
             if(!todo) return;
@@ -415,8 +433,16 @@
                 let detailsHTML = '';
                 if (hasDetails && isExpanded) {
                     const desc = task.description ? `<p class="text-xs text-slate-400 mt-2 italic whitespace-pre-wrap">${escapeHTML(task.description)}</p>` : '';
-                    const subs = (task.subtasks || []).map(s => `<li class="text-[10px] flex items-center gap-2 text-slate-300"><i class="fa-solid ${s.completed ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-600'}"></i> ${escapeHTML(s.text)}</li>`).join('');
-                    const subsList = subs ? `<ul class="mt-2 space-y-1">${subs}</ul>` : '';
+                    
+                    // Rendu interactif des sous-tâches
+                    const subs = (task.subtasks || []).map(s => `
+                        <li onclick="toggleSubtask(event, '${task.id}', '${s.id}')" class="text-[10px] flex items-center gap-2 text-slate-300 cursor-pointer hover:text-white transition-colors py-1">
+                            <i class="fa-solid ${s.completed ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-600'}"></i> 
+                            <span class="${s.completed ? 'line-through opacity-50' : ''}">${escapeHTML(s.text)}</span>
+                        </li>
+                    `).join('');
+                    
+                    const subsList = subs ? `<ul class="mt-2 space-y-0.5">${subs}</ul>` : '';
                     detailsHTML = `<div class="mt-2 border-t border-white/5 pt-2" onclick="event.stopPropagation()">${desc}${subsList}</div>`;
                 }
                 const expandBtn = hasDetails ? `<button onclick="toggleCollapse(event, '${task.id}')" class="text-slate-500 hover:text-slate-300 px-2 py-1"><i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-[10px]"></i></button>` : '';

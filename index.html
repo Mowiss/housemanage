@@ -27,6 +27,7 @@
 </head>
 <body class="bg-slate-900 min-h-screen text-slate-200 font-sans selection:bg-blue-500/30 relative pb-24">
 
+    <!-- ÉCRAN DE CONNEXION À L'INSTANCE (FOYER) -->
     <div id="instance-gate" class="fixed inset-0 bg-slate-950 z-[1000] flex items-center justify-center px-4">
         <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl w-full max-w-sm text-center slide-up">
             <div class="w-20 h-20 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -47,6 +48,7 @@
         </div>
     </div>
 
+    <!-- CONTENU PRINCIPAL -->
     <div id="main-app" class="hidden">
         <nav class="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 z-50 px-4 py-3 flex justify-around items-center shadow-2xl">
             <button onclick="switchTab('tasks')" id="tab-tasks-btn" class="flex flex-col items-center gap-1 text-blue-400">
@@ -162,6 +164,7 @@
         </div>
     </div>
 
+    <!-- MODAL TÂCHE -->
     <div id="task-modal" class="fixed inset-0 bg-slate-950/60 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto flex flex-col border border-slate-700">
             <div class="p-5 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
@@ -200,6 +203,7 @@
         </div>
     </div>
 
+    <!-- MODAL DÉPENSE -->
     <div id="expense-modal" class="fixed inset-0 bg-slate-950/60 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-sm flex flex-col border border-slate-700">
             <div class="p-5 border-b border-slate-700 flex justify-between items-center">
@@ -224,6 +228,7 @@
         </div>
     </div>
 
+    <!-- MODAL PROFIL INITIAL -->
     <div id="profile-modal" class="fixed inset-0 bg-slate-950/95 hidden items-center justify-center z-[600] px-4 backdrop-blur-xl">
         <div class="bg-slate-800 rounded-2xl p-8 w-full max-w-sm border border-slate-700 shadow-2xl">
             <h2 class="text-2xl font-black text-center mb-6 text-slate-100">Profil Foyer</h2>
@@ -286,7 +291,7 @@
         let collapsedTasks = new Set();
         let selectedAvatar = '🦊';
 
-        // Palette vibrante pour corriger les couleurs invisibles
+        // Palette vibrante
         const taskColors = {
             'white': { bg: 'bg-slate-800', border: 'border-slate-700', accent: 'bg-slate-400', hex: '#94a3b8' },
             'red': { bg: 'bg-red-950/40', border: 'border-red-500/50', accent: 'bg-red-500', hex: '#ef4444' },
@@ -370,7 +375,8 @@
 
         async function checkAutoClose() {
             if (!currentUser || !appId) return;
-            const metaRef = doc(db, 'artifacts', appId, 'public', 'data', 'metadata');
+            // CORRECTION: Ajout du segment 'settings' pour rendre le chemin pair et valide (6 segments)
+            const metaRef = doc(db, 'artifacts', appId, 'public', 'data', 'metadata', 'settings');
             const metaSnap = await getDoc(metaRef);
             const currentM = `${new Date().getMonth()}-${new Date().getFullYear()}`;
             if (!metaSnap.exists() || metaSnap.data().lastClose !== currentM) {
@@ -490,7 +496,7 @@
 
         async function settleAccounts() {
             if (!currentUser || !appId || expensesData.length === 0) return;
-            const now = new Date(); const label = `${["Jan", "Fév", "Mar", "Avr", "Mai", "Jui", "Jul", "Août", "Sep", "Oct", "Nov", "Déc"][now.getMonth()]} ${now.getFullYear()}`;
+            const now = new Date(); const label = `${["Jan", "Fév", "Mar", "Avr", "Mai", "Jui", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"][now.getMonth()]} ${now.getFullYear()}`;
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'settlements'), { label, total: expensesData.reduce((acc, e) => acc + e.amount, 0), settledAt: Date.now(), snapshot: expensesData });
             for(const task of tasksData.filter(t => t.completed && !t.archived)) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', task.id), { archived: true });
             for(const exp of expensesData) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', exp.id));
@@ -538,7 +544,6 @@
         window.closeExpenseEditor = () => getEl('expense-modal').classList.replace('flex', 'hidden');
         window.openExpenseEditor = () => getEl('expense-modal').classList.replace('hidden', 'flex');
         
-        // CORRECTION COULEURS: Utilisation explicite du background-color via le style inline avec les hexadécimaux vifs
         window.renderColorPicker = () => { 
             getEl('color-picker').innerHTML = Object.keys(taskColors).map(c => `
             <button onclick="selectColor('${c}')" 

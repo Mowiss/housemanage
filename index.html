@@ -103,15 +103,15 @@
                     <div id="tasks-container">
                         <div id="active-tasks-view">
                             <h2 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2 border-b border-slate-800 pb-2">À faire</h2>
-                            <!-- BLINDAGE DE GRILLE : min-w-0 pour empêcher l'éclatement -->
-                            <div id="todo-list" class="w-full mb-8"></div>
+                            <!-- DISPOSITION EN VRAIE MAÇONNERIE CSS (columns) pour empêcher l'éclatement -->
+                            <div id="todo-list" class="columns-1 md:columns-2 gap-4 lg:gap-6 w-full mb-8"></div>
                         </div>
                         <div id="archived-tasks-view" class="hidden">
                             <div class="flex justify-between items-center mb-4 ml-2 border-b border-slate-800 pb-2">
                                 <h2 class="text-xs font-bold text-blue-400 uppercase tracking-wider italic">Historique</h2>
                                 <button onclick="toggleTaskArchive()" class="text-[10px] text-slate-500 underline hover:text-white">Fermer</button>
                             </div>
-                            <div id="archived-tasks-list" class="w-full"></div>
+                            <div id="archived-tasks-list" class="columns-1 md:columns-2 gap-4 lg:gap-6 opacity-60 w-full hover:opacity-100 transition-opacity"></div>
                         </div>
                     </div>
                 </section>
@@ -130,14 +130,14 @@
                         </div>
                     </div>
 
-                    <!-- Grille Calendrier -->
+                    <!-- Grille Calendrier BLINDÉE : grid-rows-6 forcé -->
                     <div class="bg-slate-800/50 p-2 md:p-4 rounded-2xl border border-slate-700 shadow-xl">
                         <!-- En-têtes des jours -->
                         <div class="grid grid-cols-7 gap-1 md:gap-2 text-center text-[9px] md:text-xs font-black text-slate-500 uppercase mb-2">
                             <div class="py-1 min-w-0">Lun</div><div class="py-1 min-w-0">Mar</div><div class="py-1 min-w-0">Mer</div><div class="py-1 min-w-0">Jeu</div><div class="py-1 min-w-0">Ven</div><div class="py-1 text-violet-400/50 min-w-0">Sam</div><div class="py-1 text-violet-400/50 min-w-0">Dim</div>
                         </div>
-                        <!-- Jours générés dynamiquement avec min-w-0 pour forcer la largeur égale -->
-                        <div id="calendar-grid" class="grid grid-cols-7 gap-1 md:gap-2 w-full">
+                        <!-- Jours générés dynamiquement : Grille immuable 7x6 -->
+                        <div id="calendar-grid" class="grid grid-cols-7 grid-rows-6 gap-1 md:gap-2 w-full">
                         </div>
                     </div>
                 </section>
@@ -726,15 +726,15 @@
 
             let html = '';
             
-            // 1. Remplir le début (Mois précédent)
+            // 1. Remplir le début (Mois précédent) avec hauteur FIXE (h-20/h-32)
             for(let i = 1; i < startingDayOfWeek; i++) {
                 const prevDay = prevMonthLastDay - (startingDayOfWeek - 1 - i);
-                html += `<div class="bg-slate-800/30 rounded-xl p-1 md:p-2 border border-transparent flex flex-col min-w-0 overflow-hidden aspect-square opacity-50"><span class="text-[10px] md:text-xs font-black text-slate-600 mb-1 md:mb-2 text-right px-1 shrink-0">${prevDay}</span></div>`;
+                html += `<div class="bg-slate-800/30 rounded-xl p-1 md:p-2 border border-transparent flex flex-col min-w-0 h-24 md:h-32 opacity-50 overflow-hidden"><span class="text-[10px] md:text-xs font-black text-slate-600 mb-1 md:mb-2 text-right px-1 shrink-0">${prevDay}</span></div>`;
             }
 
             const today = new Date();
 
-            // 2. Remplir le mois en cours
+            // 2. Remplir le mois en cours avec hauteur FIXE (h-20/h-32)
             for(let day = 1; day <= daysInMonth; day++) {
                 const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
                 const itemsForDay = agendaItems.filter(item => item.date === day);
@@ -749,9 +749,9 @@
                 }).join('');
 
                 html += `
-                <div class="bg-slate-800 rounded-xl p-1 md:p-2 border ${isToday ? 'border-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.2)] z-10' : 'border-slate-700'} flex flex-col hover:border-slate-500 transition-colors min-w-0 overflow-hidden aspect-square">
+                <div class="bg-slate-800 rounded-xl p-1 md:p-2 border ${isToday ? 'border-violet-500 shadow-[0_0_10px_rgba(139,92,246,0.2)] z-10' : 'border-slate-700'} flex flex-col hover:border-slate-500 transition-colors min-w-0 h-24 md:h-32 overflow-hidden">
                     <span class="text-[10px] md:text-xs font-black ${isToday ? 'text-violet-400' : 'text-slate-400'} mb-1 md:mb-2 text-right px-1 shrink-0">${day}</span>
-                    <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col min-w-0">
+                    <div class="flex-1 overflow-y-auto no-scrollbar flex flex-col gap-0.5 min-w-0">
                         ${itemsHtml}
                     </div>
                 </div>`;
@@ -762,7 +762,7 @@
             const remainingCells = 42 - currentCells;
             for(let i = 0; i < remainingCells; i++) {
                 const nextDay = i + 1;
-                html += `<div class="bg-slate-800/30 rounded-xl p-1 md:p-2 border border-transparent flex flex-col min-w-0 overflow-hidden aspect-square opacity-50"><span class="text-[10px] md:text-xs font-black text-slate-600 mb-1 md:mb-2 text-right px-1 shrink-0">${nextDay}</span></div>`;
+                html += `<div class="bg-slate-800/30 rounded-xl p-1 md:p-2 border border-transparent flex flex-col min-w-0 h-24 md:h-32 opacity-50 overflow-hidden"><span class="text-[10px] md:text-xs font-black text-slate-600 mb-1 md:mb-2 text-right px-1 shrink-0">${nextDay}</span></div>`;
             }
 
             grid.innerHTML = html;
@@ -848,13 +848,11 @@
             const todo = elements.todoList(); const arch = elements.archivedTasksList();
             if(!todo) return; todo.innerHTML = ''; arch.innerHTML = '';
             
-            // On prépare DEUX colonnes physiques (Vraie Maçonnerie CSS) pour garantir l'indépendance des largeurs
-            const col1 = document.createElement('div'); col1.className = 'flex flex-col gap-4 lg:gap-6 w-full min-w-0';
-            const col2 = document.createElement('div'); col2.className = 'flex flex-col gap-4 lg:gap-6 w-full min-w-0';
-            let todoCount = 0;
+            // MAÇONNERIE CSS NATIVE (columns) au lieu du Javascript
+            todo.className = "columns-1 md:columns-2 gap-4 lg:gap-6 w-full mb-8";
+            arch.className = "columns-1 md:columns-2 gap-4 lg:gap-6 opacity-60 hover:opacity-100 transition-opacity w-full";
 
-            const archCol1 = document.createElement('div'); archCol1.className = 'flex flex-col gap-4 lg:gap-6 w-full min-w-0';
-            const archCol2 = document.createElement('div'); archCol2.className = 'flex flex-col gap-4 lg:gap-6 w-full min-w-0';
+            let todoCount = 0;
             let archCount = 0;
 
             tasksData.sort((a,b) => b.createdAt - a.createdAt).forEach(task => {
@@ -865,16 +863,16 @@
                 
                 let detailsHTML = '';
                 if (hasDetails && isExpanded) {
-                    const desc = task.description ? `<p class="text-sm text-slate-300 mt-4 italic whitespace-pre-wrap px-1 break-words min-w-0">${escapeHTML(task.description)}</p>` : '';
-                    const subs = (task.subtasks || []).map(s => `<li onclick="toggleSubtask(event, '${task.id}', '${s.id}')" class="text-sm flex items-start gap-3 text-slate-200 cursor-pointer hover:text-white transition-colors py-2 min-w-0"><i class="fa-solid ${s.completed ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-500'} text-lg shrink-0 mt-0.5"></i> <span class="${s.completed ? 'line-through opacity-50' : ''} break-words min-w-0 flex-1">${escapeHTML(s.text)}</span></li>`).join('');
-                    detailsHTML = `<div class="mt-4 border-t border-white/10 pt-3 min-w-0" onclick="event.stopPropagation()">${desc}${subs ? `<ul class="mt-4 space-y-1 min-w-0">${subs}</ul>`:''}</div>`;
+                    const desc = task.description ? `<p class="text-sm text-slate-300 mt-4 italic whitespace-pre-wrap px-1 break-words">${escapeHTML(task.description)}</p>` : '';
+                    const subs = (task.subtasks || []).map(s => `<li onclick="toggleSubtask(event, '${task.id}', '${s.id}')" class="text-sm flex items-start gap-3 text-slate-200 cursor-pointer hover:text-white transition-colors py-2"><i class="fa-solid ${s.completed ? 'fa-check-circle text-green-500' : 'fa-circle text-slate-500'} text-lg shrink-0 mt-0.5"></i> <span class="${s.completed ? 'line-through opacity-50' : ''} break-words flex-1">${escapeHTML(s.text)}</span></li>`).join('');
+                    detailsHTML = `<div class="mt-4 border-t border-white/10 pt-3" onclick="event.stopPropagation()">${desc}${subs ? `<ul class="mt-4 space-y-1">${subs}</ul>`:''}</div>`;
                 }
 
                 const li = document.createElement('div');
-                li.className = `${color.bg} p-4 md:p-5 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all hover:border-slate-500 w-full min-w-0`;
+                // break-inside-avoid, inline-block et w-full garantissent que le bloc ne se casse pas et ne s'étire pas
+                li.className = `${color.bg} p-4 md:p-5 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all hover:border-slate-500 break-inside-avoid inline-block w-full mb-4 lg:mb-6`;
                 const tags = (task.tags || []).map(t => `<span class="bg-white/10 text-[10px] font-black uppercase px-3 py-1 rounded-full text-white">${t}</span>`).join(' ');
                 
-                // min-w-0 et flex-1 ajoutés partout pour FORCER le retour à la ligne et empêcher l'éclatement de grille
                 li.innerHTML = `
                     <div class="color-accent ${color.accent}"></div>
                     <div class="flex items-start justify-between gap-3 md:gap-5 min-w-0">
@@ -885,7 +883,7 @@
                         </div>
                         <div class="min-w-0 flex-1 cursor-pointer py-1" onclick="toggleCollapse(event, '${task.id}')">
                             <div class="flex items-start justify-between gap-2 min-w-0">
-                                <span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-words leading-tight text-base md:text-lg min-w-0 flex-1">${escapeHTML(task.text)}</span>
+                                <span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-words leading-tight text-base md:text-lg flex-1 min-w-0">${escapeHTML(task.text)}</span>
                                 ${hasDetails ? `<i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-slate-400 text-base px-2 shrink-0 mt-0.5"></i>` : ''}
                             </div>
                             <div class="flex flex-wrap gap-2 mt-2">${tags}</div>
@@ -898,33 +896,19 @@
                     </div>`;
                     
                 if (task.archived || task.completed) {
-                    if (archCount % 2 === 0) archCol1.appendChild(li);
-                    else archCol2.appendChild(li);
+                    arch.appendChild(li);
                     archCount++;
                 } else {
-                    if (todoCount % 2 === 0) col1.appendChild(li);
-                    else col2.appendChild(li);
+                    todo.appendChild(li);
                     todoCount++;
                 }
             });
 
-            // Injection des 2 colonnes dans le DOM
             if(todoCount === 0) {
-                todo.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm md:text-base italic bg-slate-800/30 rounded-xl border border-slate-700 border-dashed w-full min-w-0">La liste est vide...</div>';
-                todo.className = "w-full min-w-0";
-            } else {
-                todo.className = "grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 w-full items-start min-w-0";
-                todo.appendChild(col1);
-                todo.appendChild(col2);
+                todo.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm md:text-base italic bg-slate-800/30 rounded-xl border border-slate-700 border-dashed w-full break-inside-avoid inline-block">La liste est vide...</div>';
             }
-
             if(archCount === 0) {
-                arch.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm md:text-base italic w-full min-w-0">Aucune archive.</div>';
-                arch.className = "w-full min-w-0";
-            } else {
-                arch.className = "grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 opacity-60 hover:opacity-100 transition-opacity w-full items-start min-w-0";
-                arch.appendChild(archCol1);
-                arch.appendChild(archCol2);
+                arch.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm md:text-base italic w-full break-inside-avoid inline-block">Aucune archive.</div>';
             }
         }
 

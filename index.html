@@ -154,15 +154,58 @@
                 <section id="section-accounts" class="hidden space-y-6 w-full min-w-0">
                     <div class="grid md:grid-cols-2 gap-6 mb-8 w-full min-w-0">
                         <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden flex flex-col h-full min-w-0">
-                            <div class="p-5 flex justify-between items-center border-b border-slate-700 shrink-0 w-full">
-                                <h2 class="text-[10px] md:text-xs font-black uppercase text-slate-500 tracking-widest truncate pr-2">Évolution Financière</h2>
-                                <button onclick="toggleFinanceChartVisibility()" class="text-[10px] font-bold bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 shrink-0">
-                                    <i class="fa-solid fa-chart-area"></i> <span class="hidden md:inline">Historique</span>
-                                </button>
+                            <div class="p-4 flex justify-between items-center border-b border-slate-700 shrink-0 w-full bg-slate-800/80">
+                                <h2 class="text-[10px] md:text-xs font-black uppercase text-slate-500 tracking-widest truncate pr-2">Vue Financière</h2>
+                                <div class="flex gap-1 bg-slate-900/80 p-1 rounded-lg border border-slate-700/50">
+                                    <button onclick="switchFinanceTab('chart')" id="fin-tab-chart" class="text-[10px] md:text-xs font-bold px-3 py-1.5 rounded-md bg-slate-700 text-white shadow-sm transition-all flex items-center gap-2">
+                                        <i class="fa-solid fa-chart-area"></i> <span class="hidden md:inline">Histo</span>
+                                    </button>
+                                    <button onclick="switchFinanceTab('forecast')" id="fin-tab-forecast" class="text-[10px] md:text-xs font-bold px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-300 transition-all flex items-center gap-2">
+                                        <i class="fa-solid fa-calculator"></i> <span class="hidden md:inline">Prévi</span>
+                                    </button>
+                                </div>
                             </div>
-                            <div id="finance-chart-container" class="hidden p-5 bg-slate-900/50 flex-1 flex-col justify-end w-full min-w-0">
+                            
+                            <!-- VUE 1 : HISTORIQUE -->
+                            <div id="finance-chart-container" class="p-5 bg-slate-900/50 flex-1 flex-col justify-end w-full min-w-0">
                                 <h2 class="text-[10px] font-black uppercase text-slate-600 mb-4 tracking-widest text-center truncate w-full">Historique (6 mois)</h2>
                                 <div class="w-full h-32 md:h-40 min-w-0" id="finance-chart"></div>
+                            </div>
+
+                            <!-- VUE 2 : PRÉVISIONNEL -->
+                            <div id="finance-forecast-container" class="hidden p-5 bg-slate-900/50 flex-1 flex-col w-full min-w-0 gap-4">
+                                <h2 class="text-[10px] font-black uppercase text-slate-600 tracking-widest text-center w-full">Prévisionnel du mois</h2>
+                                
+                                <div class="space-y-3 flex-1 mt-2">
+                                    <div class="flex justify-between items-center text-xs md:text-sm">
+                                        <span class="text-slate-400 font-bold">Revenus Foyer</span>
+                                        <span id="forecast-income" class="font-black text-emerald-400">0€</span>
+                                    </div>
+                                    <div class="flex justify-between items-center text-xs md:text-sm">
+                                        <span class="text-slate-400 font-bold">Charges Fixes</span>
+                                        <span id="forecast-fixed" class="font-black text-blue-400">0€</span>
+                                    </div>
+                                    
+                                    <div class="border-t border-slate-700/50 pt-4 mt-2">
+                                        <label class="flex justify-between text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-3">
+                                            <span>Option d'épargne</span>
+                                            <span id="forecast-savings-val" class="font-black text-amber-400 bg-amber-900/30 px-2 py-0.5 rounded">0€ (10%)</span>
+                                        </label>
+                                        <input type="range" id="forecast-savings-slider" min="0" max="50" value="10" step="1" class="w-full accent-amber-500" oninput="updateForecast()">
+                                        <div class="flex justify-between text-[8px] text-slate-600 font-bold mt-1 px-1">
+                                            <span>0%</span>
+                                            <span>50%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-auto pt-4 border-t border-slate-700 flex justify-between items-end">
+                                    <div class="flex flex-col">
+                                        <span class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Reste à vivre</span>
+                                        <span class="text-[8px] text-slate-600 italic">Pour vos loisirs, courses...</span>
+                                    </div>
+                                    <span id="forecast-remaining" class="text-2xl font-black text-white">0€</span>
+                                </div>
                             </div>
                         </div>
 
@@ -571,6 +614,10 @@
         
         let currentCalendarDate = new Date();
 
+        // Variables globales pour le prévisionnel
+        let currentTotalIncome = 0;
+        let currentFixedExpenses = 0;
+
         // Ajout du paramètre pour suivre le type de graphique à afficher (membres ou catégories)
         let currentChartMode = 'members';
         window.setChartMode = (mode) => {
@@ -834,9 +881,55 @@
             if(tab === 'agenda') renderAgenda(); 
         };
 
-        window.toggleFinanceChartVisibility = () => {
-            const container = getEl('finance-chart-container');
-            if (container) container.classList.toggle('hidden');
+        window.switchFinanceTab = (tab) => {
+            const chartCont = getEl('finance-chart-container');
+            const forecastCont = getEl('finance-forecast-container');
+            const btnChart = getEl('fin-tab-chart');
+            const btnForecast = getEl('fin-tab-forecast');
+            
+            if (!chartCont || !forecastCont) return;
+
+            if(tab === 'chart') {
+                chartCont.classList.remove('hidden');
+                forecastCont.classList.add('hidden');
+                
+                btnChart.classList.add('bg-slate-700', 'text-white', 'shadow-sm');
+                btnChart.classList.remove('text-slate-500', 'hover:text-slate-300');
+                
+                btnForecast.classList.remove('bg-slate-700', 'text-white', 'shadow-sm');
+                btnForecast.classList.add('text-slate-500', 'hover:text-slate-300');
+            } else {
+                forecastCont.classList.remove('hidden');
+                chartCont.classList.add('hidden');
+                
+                btnForecast.classList.add('bg-slate-700', 'text-white', 'shadow-sm');
+                btnForecast.classList.remove('text-slate-500', 'hover:text-slate-300');
+                
+                btnChart.classList.remove('bg-slate-700', 'text-white', 'shadow-sm');
+                btnChart.classList.add('text-slate-500', 'hover:text-slate-300');
+                
+                if(window.updateForecast) window.updateForecast();
+            }
+        };
+
+        window.updateForecast = () => {
+            const incomeEl = getEl('forecast-income');
+            const fixedEl = getEl('forecast-fixed');
+            const savingsValEl = getEl('forecast-savings-val');
+            const remainingEl = getEl('forecast-remaining');
+            const slider = getEl('forecast-savings-slider');
+            
+            if(!incomeEl || !slider) return;
+            
+            const pct = parseInt(slider.value) || 0;
+            const savingsAmt = (currentTotalIncome * pct) / 100;
+            const remaining = currentTotalIncome - currentFixedExpenses - savingsAmt;
+            
+            incomeEl.textContent = currentTotalIncome.toFixed(0) + '€';
+            fixedEl.textContent = currentFixedExpenses.toFixed(0) + '€';
+            savingsValEl.textContent = savingsAmt.toFixed(0) + '€ (' + pct + '%)';
+            remainingEl.textContent = remaining.toFixed(0) + '€';
+            remainingEl.className = `text-2xl font-black ${remaining < 0 ? 'text-red-400' : 'text-white'}`;
         };
 
         window.changeMonth = (delta) => {
@@ -1189,6 +1282,11 @@
             const totalS = stats.fixed + stats.ponct; 
             const totalIncome = userList.reduce((acc, u) => acc + (u.income || 0), 0);
             
+            // Mise à jour des variables globales pour l'outil de prévisionnel
+            currentTotalIncome = totalIncome;
+            currentFixedExpenses = stats.fixed;
+            if(window.updateForecast) window.updateForecast();
+            
             const summHTML = `<p class="text-sm md:text-base font-bold mb-6 pb-5 border-b border-slate-700 text-slate-300">Total des dépenses : <span class="text-white text-base md:text-lg ml-2 px-3 py-1 bg-slate-800 rounded-lg shadow-inner border border-slate-700">${totalS.toFixed(2)}€</span></p>`;
             
             let gradientStops = [];
@@ -1308,9 +1406,15 @@
                             currentPct += spentPct;
                         }
                         
-                        // Jauge de répartition par membre
+                        // Jauge de répartition par membre avec ordre constant (tri alphabétique)
                         let gaugeHTML = '';
-                        Object.keys(catStats[catId].users).forEach(uid => {
+                        const sortedUids = Object.keys(catStats[catId].users).sort((uidA, uidB) => {
+                            const nameA = (stats.users[uidA]?.name || 'Z').toLowerCase();
+                            const nameB = (stats.users[uidB]?.name || 'Z').toLowerCase();
+                            return nameA.localeCompare(nameB);
+                        });
+
+                        sortedUids.forEach(uid => {
                             const userAmount = catStats[catId].users[uid];
                             const userPct = (userAmount / amount) * 100;
                             const userProfile = stats.users[uid] || { name: 'Inconnu', color: '#94a3b8' };

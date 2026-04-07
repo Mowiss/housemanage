@@ -11,6 +11,7 @@
     <meta name="apple-mobile-web-app-title" content="Notre Foyer">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#0f172a">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏡</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏡</text></svg>">
     <link id="dynamic-manifest" rel="manifest" href="">
 
@@ -55,7 +56,7 @@
                 </button>
             </div>
             <!-- VERSION MISE À JOUR -->
-            <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V1.12</p>
+            <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V1.13</p>
         </div>
     </div>
 
@@ -260,11 +261,11 @@
                     <div id="active-accounts-view" class="grid md:grid-cols-2 gap-6 md:gap-8 w-full min-w-0">
                         <div class="w-full min-w-0">
                             <h2 class="text-xs md:text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2 border-b border-slate-800 pb-2 truncate w-full">Charges Fixes</h2>
-                            <ul id="recurring-expenses-list" class="space-y-3 w-full min-w-0"></ul>
+                            <div id="recurring-expenses-list" class="w-full min-w-0"></div>
                         </div>
                         <div class="w-full min-w-0">
                             <h2 class="text-xs md:text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4 ml-2 border-b border-slate-800 pb-2 mt-6 md:mt-0 truncate w-full">Ponctuelles</h2>
-                            <ul id="ponctuelle-expenses-list" class="space-y-3 w-full min-w-0"></ul>
+                            <div id="ponctuelle-expenses-list" class="w-full min-w-0"></div>
                         </div>
                     </div>
 
@@ -686,6 +687,29 @@
         let currentFixedExpenses = 0;
         let forecastItems = [];
         let forecastInitialized = false;
+
+        // Variables globales pour l'accordéon des dépenses
+        let collapsedFixedGroups = new Set();
+        let collapsedWeekGroups = new Set();
+
+        window.toggleFixedGroup = (uid) => { 
+            collapsedFixedGroups.has(uid) ? collapsedFixedGroups.delete(uid) : collapsedFixedGroups.add(uid); 
+            renderExpenses(); 
+        };
+        
+        window.toggleWeekGroup = (week) => { 
+            collapsedWeekGroups.has(week) ? collapsedWeekGroups.delete(week) : collapsedWeekGroups.add(week); 
+            renderExpenses(); 
+        };
+
+        function getExpenseWeek(dateStr) {
+            if (!dateStr) return 'S1';
+            const day = new Date(dateStr).getDate();
+            if (day <= 7) return 'S1';
+            if (day <= 14) return 'S2';
+            if (day <= 21) return 'S3';
+            return 'S4';
+        }
 
         // Ajout du paramètre pour suivre le type de graphique à afficher (membres ou catégories)
         let currentChartMode = 'members';
@@ -1346,8 +1370,8 @@
 
         // --- EXPENSES RENDERER ---
         function renderExpenses() {
-            const rec = elements.recurringList(); const pon = elements.ponctuelleList(); if(!rec) return;
-            rec.innerHTML = ''; pon.innerHTML = ''; const stats = { users: {}, fixed: 0, ponct: 0 };
+            const rec = elements.recurringList(); const pon = elements.ponctuelleList(); if(!rec || !pon) return;
+            const stats = { users: {}, fixed: 0, ponct: 0 };
             
             Object.values(membersData).forEach(m => {
                 stats.users[m.uid] = { name: m.name, spent: 0, income: m.income || 0, avatar: m.avatar, color: m.color };
@@ -1355,6 +1379,9 @@
             if(localProfile && !stats.users[localProfile.uid]) {
                 stats.users[localProfile.uid] = { name: localProfile.name, spent: 0, income: localProfile.income || 0, avatar: localProfile.avatar, color: localProfile.color };
             }
+
+            const groupedFixed = {};
+            const groupedPonct = { 'S1': { total: 0, items: [] }, 'S2': { total: 0, items: [] }, 'S3': { total: 0, items: [] }, 'S4': { total: 0, items: [] } };
 
             expensesData.forEach(exp => {
                 const uId = exp.payer.uid;
@@ -1376,31 +1403,98 @@
                 
                 const catBadge = `<span class="${catData.bg} ${catData.color} ${catData.border} border text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0 whitespace-nowrap">${catData.icon} <span class="hidden md:inline">${catData.label}</span></span>`;
                 
-                const li = document.createElement('li'); 
-                // Ajout de cursor-pointer et onclick pour éditer
-                li.className = `bg-slate-800 p-4 md:p-5 rounded-xl border ${catData.border} flex justify-between items-center shadow-md relative mb-3 hover:border-slate-400 transition-colors w-full min-w-0 box-border overflow-hidden cursor-pointer group`;
-                li.onclick = () => openExpenseEditor(exp.id);
-                
-                li.innerHTML = `
-                <div class="flex items-center gap-3 md:gap-4 min-w-0 flex-1 pr-2">
-                    <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-700 flex items-center justify-center text-xl shrink-0 overflow-hidden shadow-lg" style="border: 2px solid ${memberProfile.color||'#3b82f6'}">${avatarContent}</div>
-                    <div class="min-w-0 flex-1 flex flex-col justify-center gap-1.5">
-                        <div class="flex items-center gap-2 w-full min-w-0">
-                            ${catBadge}
-                            <p class="font-bold text-slate-100 truncate text-sm md:text-base flex-1 min-w-0">${escapeHTML(exp.text)}</p>
-                            ${dateBadge}
+                const liHTML = `
+                <li onclick="openExpenseEditor('${exp.id}')" class="bg-slate-800 p-4 rounded-xl border ${catData.border} flex justify-between items-center shadow-md relative hover:border-slate-400 transition-colors w-full min-w-0 box-border overflow-hidden cursor-pointer group">
+                    <div class="flex items-center gap-3 md:gap-4 min-w-0 flex-1 pr-2">
+                        <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-700 flex items-center justify-center text-sm md:text-base shrink-0 overflow-hidden shadow-sm" style="border: 2px solid ${memberProfile.color||'#3b82f6'}">${avatarContent}</div>
+                        <div class="min-w-0 flex-1 flex flex-col justify-center gap-1">
+                            <div class="flex items-center gap-2 w-full min-w-0">
+                                ${catBadge}
+                                <p class="font-bold text-slate-100 truncate text-sm flex-1 min-w-0">${escapeHTML(exp.text)}</p>
+                                ${dateBadge}
+                            </div>
+                            <p class="text-[9px] text-slate-400 uppercase font-black truncate w-full">Saisi par ${escapeHTML(memberProfile.name)}</p>
                         </div>
-                        <p class="text-[9px] md:text-[10px] text-slate-400 uppercase font-black truncate w-full">Saisi par ${escapeHTML(memberProfile.name)}</p>
                     </div>
-                </div>
-                <div class="flex items-center gap-3 md:gap-4 pl-2 shrink-0">
-                    <span class="font-black ${catData.color} text-base md:text-xl">${exp.amount.toFixed(2)}€</span>
-                    <button class="text-slate-500 group-hover:text-blue-400 p-2 transition-colors shrink-0"><i class="fa-solid fa-pen"></i></button>
-                </div>`;
+                    <div class="flex items-center gap-3 pl-2 shrink-0">
+                        <span class="font-black ${catData.color} text-base">${exp.amount.toFixed(2)}€</span>
+                        <button class="text-slate-500 group-hover:text-blue-400 p-2 transition-colors shrink-0"><i class="fa-solid fa-pen"></i></button>
+                    </div>
+                </li>`;
                 
-                if(exp.isRecurring) { rec.appendChild(li); stats.fixed += exp.amount; } else { pon.appendChild(li); stats.ponct += exp.amount; }
+                if(exp.isRecurring) { 
+                    stats.fixed += exp.amount; 
+                    if(!groupedFixed[uId]) groupedFixed[uId] = { profile: memberProfile, total: 0, items: [] };
+                    groupedFixed[uId].total += exp.amount;
+                    groupedFixed[uId].items.push(liHTML);
+                } else { 
+                    stats.ponct += exp.amount; 
+                    const week = getExpenseWeek(exp.date);
+                    groupedPonct[week].total += exp.amount;
+                    groupedPonct[week].items.push(liHTML);
+                }
                 stats.users[uId].spent += exp.amount;
             });
+
+            // Affichage des charges fixes regroupées par utilisateur
+            if (Object.keys(groupedFixed).length === 0) {
+                rec.innerHTML = '<p class="text-xs text-slate-500 italic py-4 w-full text-center bg-slate-800/30 rounded-xl border border-slate-700 border-dashed">Aucune charge fixe.</p>';
+            } else {
+                rec.innerHTML = Object.keys(groupedFixed).map(uid => {
+                    const group = groupedFixed[uid];
+                    const isCollapsed = collapsedFixedGroups.has(uid);
+                    const avatarContent = group.profile.avatar && group.profile.avatar.startsWith('http') ? `<img src="${group.profile.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">` : (group.profile.avatar || '👤');
+
+                    return `
+                    <div class="mb-4">
+                        <div onclick="toggleFixedGroup('${uid}')" class="bg-slate-700/50 p-3 rounded-xl border border-slate-600 flex justify-between items-center cursor-pointer hover:bg-slate-700 transition-colors shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs overflow-hidden border-2" style="border-color: ${group.profile.color||'#3b82f6'};">${avatarContent}</div>
+                                <span class="font-bold text-slate-200 text-sm">${escapeHTML(group.profile.name)}</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="font-black text-blue-400">${group.total.toFixed(2)}€</span>
+                                <div class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 shrink-0">
+                                    <i class="fa-solid fa-chevron-${isCollapsed ? 'down' : 'up'} transition-transform"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <ul class="${isCollapsed ? 'hidden' : 'block'} mt-3 pl-2 md:pl-4 border-l-2 border-slate-700/50 space-y-3">
+                            ${group.items.join('')}
+                        </ul>
+                    </div>`;
+                }).join('');
+            }
+
+            // Affichage des dépenses ponctuelles regroupées par semaine
+            if (stats.ponct === 0) {
+                pon.innerHTML = '<p class="text-xs text-slate-500 italic py-4 w-full text-center bg-slate-800/30 rounded-xl border border-slate-700 border-dashed">Aucune dépense ponctuelle.</p>';
+            } else {
+                pon.innerHTML = Object.keys(groupedPonct).map(week => {
+                    const group = groupedPonct[week];
+                    if (group.items.length === 0) return '';
+                    const isCollapsed = collapsedWeekGroups.has(week);
+
+                    return `
+                    <div class="mb-4">
+                        <div onclick="toggleWeekGroup('${week}')" class="bg-slate-700/50 p-3 rounded-xl border border-slate-600 flex justify-between items-center cursor-pointer hover:bg-slate-700 transition-colors shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <span class="bg-amber-500/20 text-amber-400 w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs border border-amber-500/30 shrink-0">${week}</span>
+                                <span class="font-bold text-slate-200 text-sm truncate">Semaine ${week.replace('S', '')}</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="font-black text-amber-400">${group.total.toFixed(2)}€</span>
+                                <div class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 shrink-0">
+                                    <i class="fa-solid fa-chevron-${isCollapsed ? 'down' : 'up'} transition-transform"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <ul class="${isCollapsed ? 'hidden' : 'block'} mt-3 pl-2 md:pl-4 border-l-2 border-slate-700/50 space-y-3">
+                            ${group.items.join('')}
+                        </ul>
+                    </div>`;
+                }).join('');
+            }
             
             const userList = Object.values(stats.users); 
             const totalS = stats.fixed + stats.ponct; 

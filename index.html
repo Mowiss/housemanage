@@ -55,7 +55,7 @@
                 </button>
             </div>
             <!-- VERSION MISE À JOUR -->
-            <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V1.05</p>
+            <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V1.07</p>
         </div>
     </div>
 
@@ -157,7 +157,7 @@
                             <div class="p-5 flex justify-between items-center border-b border-slate-700 shrink-0 w-full">
                                 <h2 class="text-[10px] md:text-xs font-black uppercase text-slate-500 tracking-widest truncate pr-2">Évolution Financière</h2>
                                 <button onclick="toggleFinanceChartVisibility()" class="text-[10px] font-bold bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-2 shrink-0">
-                                    <i class="fa-solid fa-chart-area"></i> <span class="hidden md:inline">Graphique</span>
+                                    <i class="fa-solid fa-chart-area"></i> <span class="hidden md:inline">Historique</span>
                                 </button>
                             </div>
                             <div id="finance-chart-container" class="hidden p-5 bg-slate-900/50 flex-1 flex-col justify-end w-full min-w-0">
@@ -219,7 +219,7 @@
                             </button>
                         </div>
 
-                        <!-- CARTE DE STATISTIQUES DU MOIS DÉPLACÉE DANS LE PROFIL -->
+                        <!-- CARTE DE STATISTIQUES DU MOIS DANS LE PROFIL (Avec icône $ corrigée) -->
                         <div class="bg-slate-900/50 rounded-2xl border border-slate-700/50 shadow-inner overflow-hidden mb-8 w-full min-w-0">
                             <div class="p-4 border-b border-slate-700/50 w-full">
                                 <h2 class="text-[10px] md:text-xs font-black uppercase text-slate-500 tracking-widest truncate">Statistiques du Foyer (Mois en cours)</h2>
@@ -237,9 +237,9 @@
                                     <span class="text-2xl font-black text-slate-100" id="stat-subtasks">0</span>
                                     <span class="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold mt-1">Étapes finies</span>
                                 </div>
-                                <!-- Dépenses fixes -->
+                                <!-- Dépenses fixes (MODIFIÉ AVEC $) -->
                                 <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center shadow-sm">
-                                    <i class="fa-solid fa-house-circle-check text-emerald-500 text-2xl mb-2"></i>
+                                    <i class="fa-solid fa-dollar-sign text-emerald-500 text-2xl mb-2"></i>
                                     <span class="text-xl md:text-2xl font-black text-emerald-400" id="stat-fixed-exp">0€</span>
                                     <span class="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold mt-1">Charges fixes</span>
                                 </div>
@@ -365,7 +365,7 @@
         </div>
     </div>
 
-    <!-- MODAL TÂCHE (Tags retirés, Assignation ajoutée) -->
+    <!-- MODAL TÂCHE -->
     <div id="task-modal" class="fixed inset-0 bg-slate-950/80 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto flex flex-col border border-slate-700">
             <div class="p-5 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
@@ -545,9 +545,8 @@
         let currentEditingId = null;
         let currentEditingSubtasks = [];
         let currentSelectedColor = 'white';
-        let currentEditingAssignee = null; // Nouvelle variable pour l'assignation
+        let currentEditingAssignee = null;
         
-        // MODIFICATION : Les tâches sont PLIÉES par défaut. Ce Set garde la mémoire des tâches DÉPLIÉES.
         let expandedTasks = new Set();
 
         let currentEventEditingId = null;
@@ -575,7 +574,7 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
-                appId = sessionStorage.getItem('savedInstanceCode'); 
+                appId = localStorage.getItem('savedInstanceCode'); 
                 if(appId) {
                     elements.instanceGate().classList.add('hidden');
                     elements.mainApp().classList.replace('hidden', 'md:flex');
@@ -606,7 +605,7 @@
             }
             
             appId = input;
-            sessionStorage.setItem('savedInstanceCode', appId); 
+            localStorage.setItem('savedInstanceCode', appId); 
 
             if (auth.currentUser) {
                 currentUser = auth.currentUser;
@@ -646,7 +645,6 @@
                     localProfile = profileSnap.data();
                     if(!localProfile.color) localProfile.color = userColorsList[Math.floor(Math.random()*userColorsList.length)];
                     
-                    // SYNC VERS LE REGISTRE PUBLIC
                     setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'members', currentUser.uid), localProfile);
                     
                     elements.statusText().textContent = `INST : ${appId}`;
@@ -667,21 +665,17 @@
             } catch (err) { console.error(err); elements.statusText().innerHTML = '<span class="text-red-500">ERREUR BDD</span>'; }
         }
 
-        // --- NOUVEAU : FONCTION DE RENDU DES STATISTIQUES MENSUELLES ---
+        // --- FONCTION DE RENDU DES STATISTIQUES MENSUELLES ---
         function renderStats() {
-            // Calcul Tâches (Uniquement celles qui ne sont pas encore archivées)
             const completedTasksCount = tasksData.filter(t => t.completed && !t.archived).length;
             
-            // Calcul Sous-tâches (Uniquement dans les tâches non archivées)
             const completedSubtasksCount = tasksData.filter(t => !t.archived).reduce((acc, t) => {
                 return acc + (t.subtasks ? t.subtasks.filter(s => s.completed).length : 0);
             }, 0);
 
-            // Calcul Dépenses
             const fixedExpTotal = expensesData.filter(e => e.isRecurring).reduce((acc, e) => acc + e.amount, 0);
             const ponctExpTotal = expensesData.filter(e => !e.isRecurring).reduce((acc, e) => acc + e.amount, 0);
 
-            // Mise à jour de l'UI
             const elTasks = getEl('stat-tasks');
             const elSubtasks = getEl('stat-subtasks');
             const elFixed = getEl('stat-fixed-exp');
@@ -696,7 +690,6 @@
         function startListening() {
             if (!currentUser || !appId) return;
             
-            // Écoute du registre public des membres
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'members'), snap => {
                 membersData = {};
                 snap.forEach(d => membersData[d.id] = d.data());
@@ -709,7 +702,7 @@
                 tasksData = snap.docs.map(d => ({id: d.id, ...d.data()})); 
                 renderTasks(); 
                 renderAgenda(); 
-                renderStats(); // Update stats
+                renderStats();
             });
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'events'), snap => { 
                 eventsData = snap.docs.map(d => ({id: d.id, ...d.data()})); 
@@ -718,7 +711,7 @@
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), snap => { 
                 expensesData = snap.docs.map(d => ({id: d.id, ...d.data()})); 
                 renderExpenses(); 
-                renderStats(); // Update stats
+                renderStats(); 
             });
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'settlements'), snap => { 
                 settlementsData = snap.docs.map(d => ({id: d.id, ...d.data()})); 
@@ -785,7 +778,6 @@
             const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
             getEl('calendar-month-label').textContent = `${monthNames[month]} ${year}`;
 
-            // Calculer toujours EXACTEMENT 42 cases (6 semaines)
             const firstDay = new Date(year, month, 1);
             let startingDayOfWeek = firstDay.getDay();
             if(startingDayOfWeek === 0) startingDayOfWeek = 7;
@@ -810,7 +802,7 @@
                 }
             });
 
-            // Events (Synchronisation dynamique avec membersData)
+            // Events 
             eventsData.forEach(e => {
                 let current = new Date(e.dateStart + 'T00:00:00');
                 const authorProfile = e.author ? (membersData[e.author.uid] || e.author) : null;
@@ -836,7 +828,6 @@
 
             let html = '';
             
-            // 1. Remplir le début (Mois précédent)
             for(let i = 1; i < startingDayOfWeek; i++) {
                 const prevDay = prevMonthLastDay - (startingDayOfWeek - 1 - i);
                 html += `<div class="bg-slate-800/30 rounded-xl p-1 md:p-2 border border-transparent flex flex-col min-w-0 w-full h-24 md:h-32 lg:h-40 opacity-50 overflow-hidden"><span class="text-[10px] md:text-xs font-black text-slate-600 mb-1 md:mb-2 text-right px-1 shrink-0">${prevDay}</span></div>`;
@@ -844,7 +835,6 @@
 
             const today = new Date();
 
-            // 2. Remplir le mois en cours
             for(let day = 1; day <= daysInMonth; day++) {
                 const isToday = today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
                 const itemsForDay = agendaItems.filter(item => item.date === day);
@@ -867,7 +857,6 @@
                 </div>`;
             }
 
-            // 3. Remplir la fin pour atteindre STRICTEMENT 42 cases
             const currentCells = (startingDayOfWeek - 1) + daysInMonth;
             const remainingCells = 42 - currentCells;
             for(let i = 0; i < remainingCells; i++) {
@@ -948,7 +937,6 @@
         // --- TASKS RENDERER ---
         window.toggleCollapse = (e, id) => { 
             e.stopPropagation(); 
-            // Inversion de la logique : on garde en mémoire les tâches ouvertes, elles sont pliées par défaut.
             if (expandedTasks.has(id)) expandedTasks.delete(id); 
             else expandedTasks.add(id); 
             renderTasks(); 
@@ -974,7 +962,6 @@
             tasksData.sort((a,b) => b.createdAt - a.createdAt).forEach(task => {
                 const color = taskColors[task.color] || taskColors['white'];
                 const isOverdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().setHours(0,0,0,0)) && !task.completed;
-                // La tâche est dépliée UNIQUEMENT si son ID est dans le Set expandedTasks
                 const isExpanded = expandedTasks.has(task.id);
                 const hasDetails = task.description || (task.subtasks && task.subtasks.length > 0);
                 
@@ -985,7 +972,6 @@
                     detailsHTML = `<div class="mt-4 border-t border-white/10 pt-3 min-w-0 w-full" onclick="event.stopPropagation()">${desc}${subs ? `<ul class="mt-4 space-y-1 min-w-0 w-full">${subs}</ul>`:''}</div>`;
                 }
 
-                // Génération de l'avatar du membre assigné
                 let assigneeHTML = '';
                 if (task.assigneeUid && membersData[task.assigneeUid]) {
                     const m = membersData[task.assigneeUid];
@@ -1042,7 +1028,6 @@
             const rec = elements.recurringList(); const pon = elements.ponctuelleList(); if(!rec) return;
             rec.innerHTML = ''; pon.innerHTML = ''; const stats = { users: {}, fixed: 0, ponct: 0 };
             
-            // 1. Initialiser le tableau avec TOUS les membres du foyer
             Object.values(membersData).forEach(m => {
                 stats.users[m.uid] = { name: m.name, spent: 0, income: m.income || 0, avatar: m.avatar, color: m.color };
             });
@@ -1050,7 +1035,6 @@
                 stats.users[localProfile.uid] = { name: localProfile.name, spent: 0, income: localProfile.income || 0, avatar: localProfile.avatar, color: localProfile.color };
             }
 
-            // 2. Parcourir les dépenses
             expensesData.forEach(exp => {
                 const uId = exp.payer.uid;
                 const memberProfile = membersData[uId] || exp.payer; 
@@ -1092,27 +1076,39 @@
             
             const summHTML = `<p class="text-sm md:text-base font-bold mb-6 pb-5 border-b border-slate-700 text-slate-300">Total des dépenses : <span class="text-white text-base md:text-lg ml-2 px-3 py-1 bg-slate-800 rounded-lg shadow-inner border border-slate-700">${totalS.toFixed(2)}€</span></p>`;
             
-            // CALCUL DU CAMEMBERT GLOBAL
+            // --- NOUVEAU CAMEMBERT TERRITORIAL (Par Salaire) ---
             const totalIncome = userList.reduce((acc, u) => acc + (u.income || 0), 0);
-            const pieBase = totalIncome > 0 ? Math.max(totalIncome, totalS) : Math.max(1, totalS);
             
             let gradientStops = [];
             let currentPct = 0;
             let legendHTML = '';
 
-            if (pieBase > 0) {
+            if (totalIncome > 0) {
                 userList.forEach(u => {
-                    const spentPct = (u.spent / pieBase) * 100;
-                    if (spentPct > 0) {
-                        // Ajout de la part de camembert avec la couleur de l'utilisateur
-                        gradientStops.push(`${u.color || '#3b82f6'} ${currentPct}% ${currentPct + spentPct}%`);
-                        currentPct += spentPct;
+                    const uIncome = u.income || 0;
+                    if (uIncome > 0) {
+                        const territoryPct = (uIncome / totalIncome) * 100;
+                        const spentRatio = Math.min(u.spent / uIncome, 1);
+                        const spentPct = territoryPct * spentRatio;
+                        const remPct = territoryPct - spentPct;
+                        
+                        // Partie Dépensée (Pleine couleur)
+                        if (spentPct > 0) {
+                            gradientStops.push(`${u.color || '#3b82f6'} ${currentPct}% ${currentPct + spentPct}%`);
+                            currentPct += spentPct;
+                        }
+                        
+                        // Partie Restante (Translucide - territoire non consommé)
+                        if (remPct > 0) {
+                            gradientStops.push(`${u.color || '#3b82f6'}33 ${currentPct}% ${currentPct + remPct}%`);
+                            currentPct += remPct;
+                        }
                     }
                     
                     const remaining = (u.income || 0) - u.spent;
                     const overspent = remaining < 0;
                     
-                    // Légende détaillée par membre
+                    // Légende
                     legendHTML += `
                         <div class="flex items-center justify-between text-xs mb-2 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 hover:bg-slate-800 transition-colors">
                             <div class="flex items-center gap-3">
@@ -1126,18 +1122,23 @@
                         </div>
                     `;
                 });
-                
-                // Remplissage du vide restant
-                if (currentPct < 100) {
-                    gradientStops.push(`transparent ${currentPct}% 100%`);
-                }
+            } else if (totalS > 0) {
+                // Secours si revenus à 0
+                userList.forEach(u => {
+                    const spentPct = (u.spent / totalS) * 100;
+                    if (spentPct > 0) {
+                        gradientStops.push(`${u.color || '#3b82f6'} ${currentPct}% ${currentPct + spentPct}%`);
+                        currentPct += spentPct;
+                    }
+                    legendHTML += `<div class="flex items-center justify-between text-xs mb-2 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50"><div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full" style="background-color: ${u.color || '#3b82f6'}"></div><span class="font-bold text-slate-200">${escapeHTML(u.name)}</span></div><span class="font-black text-amber-400">${u.spent.toFixed(2)}€ dépensés</span></div>`;
+                });
             } else {
+                gradientStops.push(`transparent 0% 100%`);
                 legendHTML = '<p class="text-xs text-slate-500 italic text-center w-full">Aucun revenu paramétré ou dépense pour le moment.</p>';
             }
 
             const chartHTML = `
                 <div class="flex flex-col items-center w-full">
-                    <!-- Graphique Camembert en CSS (Conic Gradient) -->
                     <div class="relative w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-slate-800 shadow-[0_0_25px_rgba(0,0,0,0.4)] mb-8 flex items-center justify-center transition-all" 
                          style="background: conic-gradient(${gradientStops.join(', ')}); background-color: #1e293b;">
                          <div class="w-28 h-28 md:w-32 md:h-32 bg-slate-900 rounded-full shadow-inner flex flex-col items-center justify-center z-10 border border-slate-800">
@@ -1217,7 +1218,7 @@
                 text: title, 
                 description: getEl('edit-desc').value.trim(), 
                 dueDate: getEl('edit-due-date').value, 
-                assigneeUid: currentEditingAssignee, // Sauvegarde de l'assignation
+                assigneeUid: currentEditingAssignee, 
                 color: currentSelectedColor, 
                 subtasks: currentEditingSubtasks 
             };
@@ -1272,7 +1273,7 @@
             const n = getEl('profile-name').value.trim(); const inc = parseFloat(getEl('profile-income').value) || 0; if(!n) return;
             localProfile = { uid: currentUser.uid, name: n, income: inc, avatar: selectedAvatar, color: selectedUserColor };
             await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data'), localProfile);
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'members', currentUser.uid), localProfile); // Synchro auto
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'members', currentUser.uid), localProfile);
             getEl('profile-modal').classList.replace('flex', 'hidden');
             syncProfileUI(); startListening();
         };
@@ -1281,7 +1282,7 @@
             const n = getEl('settings-name').value.trim(); const inc = parseFloat(getEl('settings-income').value) || 0; if(!n) return;
             localProfile = { ...localProfile, name: n, income: inc, avatar: selectedAvatar, color: selectedUserColor };
             await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'profile', 'data'), localProfile);
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'members', currentUser.uid), localProfile); // Synchro auto
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'members', currentUser.uid), localProfile);
             syncProfileUI(); alert("Profil mis à jour !"); renderAgenda(); 
         };
 
@@ -1319,7 +1320,7 @@
             } else {
                 currentSelectedColor = 'white';
             }
-            currentEditingAssignee = t ? (t.assigneeUid || null) : null; // Chargement de l'assignation
+            currentEditingAssignee = t ? (t.assigneeUid || null) : null;
             
             getEl('modal-delete-btn').classList.toggle('hidden', !id);
             renderColorPicker(); renderEditorSubtasks(); renderEditorAssignee(); 
@@ -1332,7 +1333,6 @@
         window.renderColorPicker = () => { getEl('color-picker').innerHTML = Object.keys(taskColors).map(c => `<button type="button" onclick="selectColor('${c}')" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 ${currentSelectedColor === c ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.4)]' : 'border-transparent opacity-50 hover:opacity-100'} transition-all" style="background-color: ${taskColors[c].hex};"></button>`).join(''); };
         window.selectColor = (c) => { currentSelectedColor = c; renderColorPicker(); };
 
-        // Générateur de la liste d'assignation
         window.renderEditorAssignee = () => {
             const container = getEl('edit-assignee-list');
             if(!container) return;

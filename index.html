@@ -1281,15 +1281,25 @@
                     const catStats = {};
                     expensesData.forEach(exp => {
                         const catId = exp.isRecurring ? 'fixe' : (exp.category || 'divers');
-                        if(!catStats[catId]) catStats[catId] = 0;
-                        catStats[catId] += exp.amount;
+                        const payerUid = exp.payer.uid;
+                        
+                        if(!catStats[catId]) {
+                            catStats[catId] = { total: 0, users: {} };
+                        }
+                        
+                        catStats[catId].total += exp.amount;
+                        
+                        if(!catStats[catId].users[payerUid]) {
+                            catStats[catId].users[payerUid] = 0;
+                        }
+                        catStats[catId].users[payerUid] += exp.amount;
                     });
 
                     // Trier les catégories de la plus grosse à la plus petite dépense
-                    const sortedCats = Object.keys(catStats).sort((a,b) => catStats[b] - catStats[a]);
+                    const sortedCats = Object.keys(catStats).sort((a,b) => catStats[b].total - catStats[a].total);
 
                     sortedCats.forEach(catId => {
-                        const amount = catStats[catId];
+                        const amount = catStats[catId].total;
                         const catData = expenseCategories[catId] || expenseCategories['divers'];
                         const spentPct = (amount / totalS) * 100;
                         
@@ -1298,15 +1308,30 @@
                             currentPct += spentPct;
                         }
                         
+                        // Jauge de répartition par membre
+                        let gaugeHTML = '';
+                        Object.keys(catStats[catId].users).forEach(uid => {
+                            const userAmount = catStats[catId].users[uid];
+                            const userPct = (userAmount / amount) * 100;
+                            const userProfile = stats.users[uid] || { name: 'Inconnu', color: '#94a3b8' };
+                            
+                            gaugeHTML += `<div style="width: ${userPct}%; background-color: ${userProfile.color||'#3b82f6'};" class="h-full border-r border-slate-800 last:border-0 hover:brightness-110 transition-all cursor-help" title="${escapeHTML(userProfile.name)} : ${userAmount.toFixed(2)}€"></div>`;
+                        });
+                        
                         legendHTML += `
-                            <div class="flex items-center justify-between text-xs mb-2 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 hover:bg-slate-800 transition-colors">
-                                <div class="flex items-center gap-3">
-                                    <span class="text-base md:text-lg">${catData.icon}</span>
-                                    <span class="font-bold text-slate-200 text-sm">${catData.label}</span>
+                            <div class="flex flex-col text-xs mb-2 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 hover:bg-slate-800 transition-colors">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-base md:text-lg">${catData.icon}</span>
+                                        <span class="font-bold text-slate-200 text-sm">${catData.label}</span>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="block font-black ${catData.color}">${amount.toFixed(2)}€</span>
+                                        <span class="block text-[10px] text-slate-500 font-bold uppercase mt-0.5">${spentPct.toFixed(1)}% du total</span>
+                                    </div>
                                 </div>
-                                <div class="text-right">
-                                    <span class="block font-black ${catData.color}">${amount.toFixed(2)}€</span>
-                                    <span class="block text-[10px] text-slate-500 font-bold uppercase mt-0.5">${spentPct.toFixed(1)}% du total</span>
+                                <div class="w-full h-1.5 bg-slate-700/50 rounded-full flex overflow-hidden shadow-inner">
+                                    ${gaugeHTML}
                                 </div>
                             </div>
                         `;

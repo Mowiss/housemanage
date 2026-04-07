@@ -54,7 +54,8 @@
                     Continuer
                 </button>
             </div>
-            <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V1.02</p>
+            <!-- VERSION MISE À JOUR -->
+            <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V1.05</p>
         </div>
     </div>
 
@@ -218,6 +219,39 @@
                             </button>
                         </div>
 
+                        <!-- CARTE DE STATISTIQUES DU MOIS DÉPLACÉE DANS LE PROFIL -->
+                        <div class="bg-slate-900/50 rounded-2xl border border-slate-700/50 shadow-inner overflow-hidden mb-8 w-full min-w-0">
+                            <div class="p-4 border-b border-slate-700/50 w-full">
+                                <h2 class="text-[10px] md:text-xs font-black uppercase text-slate-500 tracking-widest truncate">Statistiques du Foyer (Mois en cours)</h2>
+                            </div>
+                            <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+                                <!-- Tâches -->
+                                <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center shadow-sm">
+                                    <i class="fa-solid fa-check-double text-blue-500 text-2xl mb-2"></i>
+                                    <span class="text-2xl font-black text-slate-100" id="stat-tasks">0</span>
+                                    <span class="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold mt-1">Tâches finies</span>
+                                </div>
+                                <!-- Sous-tâches -->
+                                <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center shadow-sm">
+                                    <i class="fa-solid fa-list-check text-blue-400 text-2xl mb-2"></i>
+                                    <span class="text-2xl font-black text-slate-100" id="stat-subtasks">0</span>
+                                    <span class="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold mt-1">Étapes finies</span>
+                                </div>
+                                <!-- Dépenses fixes -->
+                                <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center shadow-sm">
+                                    <i class="fa-solid fa-house-circle-check text-emerald-500 text-2xl mb-2"></i>
+                                    <span class="text-xl md:text-2xl font-black text-emerald-400" id="stat-fixed-exp">0€</span>
+                                    <span class="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold mt-1">Charges fixes</span>
+                                </div>
+                                <!-- Dépenses ponctuelles -->
+                                <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center shadow-sm">
+                                    <i class="fa-solid fa-cart-shopping text-amber-500 text-2xl mb-2"></i>
+                                    <span class="text-xl md:text-2xl font-black text-amber-400" id="stat-ponct-exp">0€</span>
+                                    <span class="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold mt-1">Ponctuelles</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="grid md:grid-cols-2 gap-8 items-center w-full min-w-0">
                             <div class="flex flex-col items-center gap-4 border-b md:border-b-0 md:border-r border-slate-700 pb-8 md:pb-0 w-full min-w-0">
                                 <div class="relative shrink-0">
@@ -331,7 +365,7 @@
         </div>
     </div>
 
-    <!-- MODAL TÂCHE -->
+    <!-- MODAL TÂCHE (Tags retirés, Assignation ajoutée) -->
     <div id="task-modal" class="fixed inset-0 bg-slate-950/80 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
         <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto flex flex-col border border-slate-700">
             <div class="p-5 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
@@ -354,12 +388,8 @@
                 </div>
 
                 <div class="border-t border-slate-700 pt-5">
-                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Étiquettes</label>
-                    <div class="flex gap-2 mb-3">
-                        <input type="text" id="new-tag-input" class="flex-1 rounded-xl border border-slate-600 bg-slate-700 p-3 text-sm outline-none text-white focus:border-blue-500" onkeypress="if(event.key === 'Enter') addTagToEditor()" placeholder="Ajouter un tag...">
-                        <button onclick="addTagToEditor()" class="bg-slate-700 hover:bg-slate-600 px-5 rounded-xl text-white transition-colors"><i class="fa-solid fa-plus"></i></button>
-                    </div>
-                    <div id="edit-tags-list" class="flex flex-wrap gap-2"></div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Assigner à</label>
+                    <div id="edit-assignee-list" class="flex flex-wrap gap-3"></div>
                 </div>
 
                 <div class="border-t border-slate-700 pt-5">
@@ -514,9 +544,11 @@
         
         let currentEditingId = null;
         let currentEditingSubtasks = [];
-        let currentEditingTags = [];
         let currentSelectedColor = 'white';
-        let collapsedTasks = new Set();
+        let currentEditingAssignee = null; // Nouvelle variable pour l'assignation
+        
+        // MODIFICATION : Les tâches sont PLIÉES par défaut. Ce Set garde la mémoire des tâches DÉPLIÉES.
+        let expandedTasks = new Set();
 
         let currentEventEditingId = null;
         let currentEventType = 'ponctuel';
@@ -635,21 +667,64 @@
             } catch (err) { console.error(err); elements.statusText().innerHTML = '<span class="text-red-500">ERREUR BDD</span>'; }
         }
 
+        // --- NOUVEAU : FONCTION DE RENDU DES STATISTIQUES MENSUELLES ---
+        function renderStats() {
+            // Calcul Tâches (Uniquement celles qui ne sont pas encore archivées)
+            const completedTasksCount = tasksData.filter(t => t.completed && !t.archived).length;
+            
+            // Calcul Sous-tâches (Uniquement dans les tâches non archivées)
+            const completedSubtasksCount = tasksData.filter(t => !t.archived).reduce((acc, t) => {
+                return acc + (t.subtasks ? t.subtasks.filter(s => s.completed).length : 0);
+            }, 0);
+
+            // Calcul Dépenses
+            const fixedExpTotal = expensesData.filter(e => e.isRecurring).reduce((acc, e) => acc + e.amount, 0);
+            const ponctExpTotal = expensesData.filter(e => !e.isRecurring).reduce((acc, e) => acc + e.amount, 0);
+
+            // Mise à jour de l'UI
+            const elTasks = getEl('stat-tasks');
+            const elSubtasks = getEl('stat-subtasks');
+            const elFixed = getEl('stat-fixed-exp');
+            const elPonct = getEl('stat-ponct-exp');
+
+            if(elTasks) elTasks.textContent = completedTasksCount;
+            if(elSubtasks) elSubtasks.textContent = completedSubtasksCount;
+            if(elFixed) elFixed.textContent = fixedExpTotal.toFixed(2) + '€';
+            if(elPonct) elPonct.textContent = ponctExpTotal.toFixed(2) + '€';
+        }
+
         function startListening() {
             if (!currentUser || !appId) return;
             
-            // Écoute du registre public des membres (Met à jour les dépenses dynamiquement)
+            // Écoute du registre public des membres
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'members'), snap => {
                 membersData = {};
                 snap.forEach(d => membersData[d.id] = d.data());
                 renderExpenses();
                 renderAgenda();
+                renderTasks();
             });
 
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), snap => { tasksData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderTasks(); renderAgenda(); });
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'events'), snap => { eventsData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderAgenda(); });
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), snap => { expensesData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderExpenses(); });
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'settlements'), snap => { settlementsData = snap.docs.map(d => ({id: d.id, ...d.data()})); renderFinanceArchives(); renderFinanceChart(); });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), snap => { 
+                tasksData = snap.docs.map(d => ({id: d.id, ...d.data()})); 
+                renderTasks(); 
+                renderAgenda(); 
+                renderStats(); // Update stats
+            });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'events'), snap => { 
+                eventsData = snap.docs.map(d => ({id: d.id, ...d.data()})); 
+                renderAgenda(); 
+            });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), snap => { 
+                expensesData = snap.docs.map(d => ({id: d.id, ...d.data()})); 
+                renderExpenses(); 
+                renderStats(); // Update stats
+            });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'settlements'), snap => { 
+                settlementsData = snap.docs.map(d => ({id: d.id, ...d.data()})); 
+                renderFinanceArchives(); 
+                renderFinanceChart(); 
+            });
         }
 
         async function checkAutoClose() {
@@ -871,7 +946,14 @@
         };
 
         // --- TASKS RENDERER ---
-        window.toggleCollapse = (e, id) => { e.stopPropagation(); if (collapsedTasks.has(id)) collapsedTasks.delete(id); else collapsedTasks.add(id); renderTasks(); };
+        window.toggleCollapse = (e, id) => { 
+            e.stopPropagation(); 
+            // Inversion de la logique : on garde en mémoire les tâches ouvertes, elles sont pliées par défaut.
+            if (expandedTasks.has(id)) expandedTasks.delete(id); 
+            else expandedTasks.add(id); 
+            renderTasks(); 
+        };
+        
         window.toggleSubtask = async (e, taskId, subtaskId) => {
             e.stopPropagation(); if (!currentUser || !appId) return;
             const task = tasksData.find(t => t.id === taskId); if (!task || !task.subtasks) return;
@@ -883,13 +965,17 @@
             const todo = elements.todoList(); const arch = elements.archivedTasksList();
             if(!todo) return; todo.innerHTML = ''; arch.innerHTML = '';
             
+            todo.className = "columns-1 md:columns-2 gap-4 lg:gap-6 w-full mb-8";
+            arch.className = "columns-1 md:columns-2 gap-4 lg:gap-6 opacity-60 hover:opacity-100 transition-opacity w-full";
+
             let todoCount = 0;
             let archCount = 0;
 
             tasksData.sort((a,b) => b.createdAt - a.createdAt).forEach(task => {
                 const color = taskColors[task.color] || taskColors['white'];
                 const isOverdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().setHours(0,0,0,0)) && !task.completed;
-                const isExpanded = !collapsedTasks.has(task.id);
+                // La tâche est dépliée UNIQUEMENT si son ID est dans le Set expandedTasks
+                const isExpanded = expandedTasks.has(task.id);
                 const hasDetails = task.description || (task.subtasks && task.subtasks.length > 0);
                 
                 let detailsHTML = '';
@@ -899,9 +985,16 @@
                     detailsHTML = `<div class="mt-4 border-t border-white/10 pt-3 min-w-0 w-full" onclick="event.stopPropagation()">${desc}${subs ? `<ul class="mt-4 space-y-1 min-w-0 w-full">${subs}</ul>`:''}</div>`;
                 }
 
+                // Génération de l'avatar du membre assigné
+                let assigneeHTML = '';
+                if (task.assigneeUid && membersData[task.assigneeUid]) {
+                    const m = membersData[task.assigneeUid];
+                    const avatarContent = m.avatar && m.avatar.startsWith('http') ? `<img src="${m.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">` : (m.avatar || '👤');
+                    assigneeHTML = `<div class="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center text-xs shrink-0 overflow-hidden shadow-sm bg-slate-800" style="border-color: ${m.color || '#3b82f6'};" title="Assigné à ${escapeHTML(m.name)}">${avatarContent}</div>`;
+                }
+
                 const li = document.createElement('div');
                 li.className = `${color.bg} p-4 md:p-5 rounded-xl shadow-lg border ${color.border} ${isOverdue ? 'overdue-glow' : ''} group relative pl-5 overflow-hidden transition-all hover:border-slate-500 break-inside-avoid inline-block w-full mb-4 lg:mb-6 min-w-0 box-border`;
-                const tags = (task.tags || []).map(t => `<span class="bg-white/10 text-[10px] font-black uppercase px-3 py-1 rounded-full text-white">${t}</span>`).join(' ');
                 
                 li.innerHTML = `
                     <div class="color-accent ${color.accent}"></div>
@@ -916,13 +1009,15 @@
                                 <span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-words leading-tight text-base md:text-lg flex-1 min-w-0">${escapeHTML(task.text)}</span>
                                 ${hasDetails ? `<i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-slate-400 text-base px-2 shrink-0 mt-0.5"></i>` : ''}
                             </div>
-                            <div class="flex flex-wrap gap-2 mt-2 w-full">${tags}</div>
                             ${task.dueDate ? `<p class="text-xs font-black mt-3 ${isOverdue ? 'text-red-400' : 'text-slate-400'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}
                             ${detailsHTML}
                         </div>
-                        <button onclick="event.stopPropagation(); openEditor('${task.id}')" class="p-3 -mr-3 text-slate-400 hover:text-blue-400 transition-colors shrink-0">
-                            <i class="fa-solid fa-pen text-base"></i>
-                        </button>
+                        <div class="flex items-center gap-2 shrink-0 pt-1 -mr-1">
+                            ${assigneeHTML}
+                            <button onclick="event.stopPropagation(); openEditor('${task.id}')" class="p-2 text-slate-400 hover:text-blue-400 transition-colors shrink-0">
+                                <i class="fa-solid fa-pen text-base"></i>
+                            </button>
+                        </div>
                     </div>`;
                     
                 if (task.archived || task.completed) {
@@ -958,9 +1053,8 @@
             // 2. Parcourir les dépenses
             expensesData.forEach(exp => {
                 const uId = exp.payer.uid;
-                const memberProfile = membersData[uId] || exp.payer; // Registre prioritaire sur le snapshot
+                const memberProfile = membersData[uId] || exp.payer; 
                 
-                // Sécurité : si un membre externe a été supprimé du registre, on le recrée depuis la dépense
                 if(!stats.users[uId]) {
                     stats.users[uId] = { name: memberProfile.name, spent: 0, income: memberProfile.income || 0, avatar: memberProfile.avatar, color: memberProfile.color };
                 }
@@ -996,27 +1090,70 @@
             const userList = Object.values(stats.users); 
             const totalS = stats.fixed + stats.ponct; 
             
-            const summHTML = `<p class="text-sm md:text-base font-bold mb-6 pb-5 border-b border-white/10 text-slate-300">Total du mois : <span class="text-white text-base md:text-lg ml-2 px-3 py-1 bg-slate-800 rounded-lg shadow-inner">${totalS.toFixed(2)}€</span></p>`;
+            const summHTML = `<p class="text-sm md:text-base font-bold mb-6 pb-5 border-b border-slate-700 text-slate-300">Total des dépenses : <span class="text-white text-base md:text-lg ml-2 px-3 py-1 bg-slate-800 rounded-lg shadow-inner border border-slate-700">${totalS.toFixed(2)}€</span></p>`;
             
-            const chartHTML = userList.map(u => {
-                const pct = u.income > 0 ? Math.min((u.spent / u.income) * 100, 100) : (u.spent > 0 ? 100 : 0); 
-                const remaining = u.income - u.spent; 
-                const overspent = remaining < 0; 
-                const barColor = overspent ? 'bg-red-500' : (pct > 85 ? 'bg-amber-500' : 'bg-emerald-500');
-                return `
-                <div class="mb-5 text-left">
-                    <div class="flex justify-between text-xs md:text-sm mb-2">
-                        <span class="font-bold text-slate-300">${escapeHTML(u.name)}</span>
-                        <span class="font-black ${overspent ? 'text-red-400' : 'text-emerald-400'}">Reste: ${remaining.toFixed(2)}€</span>
-                    </div>
-                    <div class="w-full h-6 bg-black/40 rounded-full overflow-hidden border border-white/10 relative shadow-inner">
-                        <div class="${barColor} h-full transition-all duration-700 ease-out" style="width:${pct}%"></div>
-                        <div class="absolute inset-0 flex items-center justify-center text-[10px] md:text-xs font-black text-white mix-blend-overlay drop-shadow-md">
-                            ${u.spent.toFixed(2)}€ / ${u.income > 0 ? u.income + '€' : 'N/A'}
+            // CALCUL DU CAMEMBERT GLOBAL
+            const totalIncome = userList.reduce((acc, u) => acc + (u.income || 0), 0);
+            const pieBase = totalIncome > 0 ? Math.max(totalIncome, totalS) : Math.max(1, totalS);
+            
+            let gradientStops = [];
+            let currentPct = 0;
+            let legendHTML = '';
+
+            if (pieBase > 0) {
+                userList.forEach(u => {
+                    const spentPct = (u.spent / pieBase) * 100;
+                    if (spentPct > 0) {
+                        // Ajout de la part de camembert avec la couleur de l'utilisateur
+                        gradientStops.push(`${u.color || '#3b82f6'} ${currentPct}% ${currentPct + spentPct}%`);
+                        currentPct += spentPct;
+                    }
+                    
+                    const remaining = (u.income || 0) - u.spent;
+                    const overspent = remaining < 0;
+                    
+                    // Légende détaillée par membre
+                    legendHTML += `
+                        <div class="flex items-center justify-between text-xs mb-2 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 hover:bg-slate-800 transition-colors">
+                            <div class="flex items-center gap-3">
+                                <div class="w-4 h-4 rounded-full shadow-sm border border-slate-600" style="background-color: ${u.color || '#3b82f6'}"></div>
+                                <span class="font-bold text-slate-200 text-sm">${escapeHTML(u.name)}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="block font-black ${overspent ? 'text-red-400' : 'text-emerald-400'}">Reste: ${remaining.toFixed(2)}€</span>
+                                <span class="block text-[10px] text-slate-500 font-bold uppercase mt-0.5">${u.spent.toFixed(2)}€ dépensés</span>
+                            </div>
                         </div>
+                    `;
+                });
+                
+                // Remplissage du vide restant
+                if (currentPct < 100) {
+                    gradientStops.push(`transparent ${currentPct}% 100%`);
+                }
+            } else {
+                legendHTML = '<p class="text-xs text-slate-500 italic text-center w-full">Aucun revenu paramétré ou dépense pour le moment.</p>';
+            }
+
+            const chartHTML = `
+                <div class="flex flex-col items-center w-full">
+                    <!-- Graphique Camembert en CSS (Conic Gradient) -->
+                    <div class="relative w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-slate-800 shadow-[0_0_25px_rgba(0,0,0,0.4)] mb-8 flex items-center justify-center transition-all" 
+                         style="background: conic-gradient(${gradientStops.join(', ')}); background-color: #1e293b;">
+                         <div class="w-28 h-28 md:w-32 md:h-32 bg-slate-900 rounded-full shadow-inner flex flex-col items-center justify-center z-10 border border-slate-800">
+                            <span class="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Reste Foyer</span>
+                            <span class="text-xl md:text-2xl font-black ${totalIncome - totalS < 0 ? 'text-red-400' : 'text-emerald-400'}">${(totalIncome - totalS).toFixed(0)}€</span>
+                         </div>
                     </div>
-                </div>`;
-            }).join('');
+                    <div class="w-full space-y-1 mb-4">
+                        ${legendHTML}
+                    </div>
+                    <div class="w-full mt-2 pt-4 border-t border-slate-700/50 flex justify-between text-xs">
+                        <span class="text-slate-500 font-bold uppercase tracking-wider">Budget Global</span>
+                        <span class="text-slate-300 font-black text-sm">${totalIncome.toFixed(2)}€</span>
+                    </div>
+                </div>
+            `;
             
             elements.balanceSummary().innerHTML = summHTML; 
             elements.visualStats().innerHTML = chartHTML; 
@@ -1076,7 +1213,14 @@
         window.saveTask = async () => {
             if (!currentUser || !appId) return;
             const title = getEl('edit-title').value.trim(); if(!title) return;
-            const data = { text: title, description: getEl('edit-desc').value.trim(), dueDate: getEl('edit-due-date').value, tags: currentEditingTags, color: currentSelectedColor, subtasks: currentEditingSubtasks };
+            const data = { 
+                text: title, 
+                description: getEl('edit-desc').value.trim(), 
+                dueDate: getEl('edit-due-date').value, 
+                assigneeUid: currentEditingAssignee, // Sauvegarde de l'assignation
+                color: currentSelectedColor, 
+                subtasks: currentEditingSubtasks 
+            };
             if(currentEditingId) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', currentEditingId), data);
             else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), { ...data, author: localProfile, completed: false, archived: false, createdAt: Date.now() });
             closeEditor();
@@ -1163,20 +1307,47 @@
         // --- UTILS ÉDITEURS ---
         window.toggleTaskArchive = () => { getEl('active-tasks-view').classList.toggle('hidden'); getEl('archived-tasks-view').classList.toggle('hidden'); };
         window.toggleAccountArchive = () => { getEl('active-accounts-view').classList.toggle('hidden'); getEl('archived-accounts-view').classList.toggle('hidden'); };
+        
         window.openEditor = (id = null) => {
-            currentEditingId = id; currentEditingSubtasks = []; currentEditingTags = [];
+            currentEditingId = id; currentEditingSubtasks = [];
             const t = id ? tasksData.find(x => x.id === id) : null;
             getEl('modal-title').textContent = id ? "Modifier" : "Nouvelle Tâche";
             getEl('edit-title').value = t ? t.text : ''; getEl('edit-desc').value = t ? t.description : ''; getEl('edit-due-date').value = t ? t.dueDate : '';
-            if(t) { currentEditingSubtasks = [...(t.subtasks || [])]; currentEditingTags = [...(t.tags || [])]; currentSelectedColor = t.color || 'white'; }
+            if(t) { 
+                currentEditingSubtasks = [...(t.subtasks || [])]; 
+                currentSelectedColor = t.color || 'white'; 
+            } else {
+                currentSelectedColor = 'white';
+            }
+            currentEditingAssignee = t ? (t.assigneeUid || null) : null; // Chargement de l'assignation
+            
             getEl('modal-delete-btn').classList.toggle('hidden', !id);
-            renderColorPicker(); renderEditorSubtasks(); renderEditorTags(); getEl('task-modal').classList.replace('hidden', 'flex');
+            renderColorPicker(); renderEditorSubtasks(); renderEditorAssignee(); 
+            getEl('task-modal').classList.replace('hidden', 'flex');
         };
+        
         window.closeEditor = () => getEl('task-modal').classList.replace('flex', 'hidden');
         window.closeExpenseEditor = () => getEl('expense-modal').classList.replace('flex', 'hidden');
         
         window.renderColorPicker = () => { getEl('color-picker').innerHTML = Object.keys(taskColors).map(c => `<button type="button" onclick="selectColor('${c}')" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 ${currentSelectedColor === c ? 'border-white scale-110 shadow-[0_0_15px_rgba(255,255,255,0.4)]' : 'border-transparent opacity-50 hover:opacity-100'} transition-all" style="background-color: ${taskColors[c].hex};"></button>`).join(''); };
         window.selectColor = (c) => { currentSelectedColor = c; renderColorPicker(); };
+
+        // Générateur de la liste d'assignation
+        window.renderEditorAssignee = () => {
+            const container = getEl('edit-assignee-list');
+            if(!container) return;
+            
+            let html = `<button type="button" onclick="selectAssignee(null)" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 flex items-center justify-center bg-slate-700/50 text-slate-400 transition-all ${currentEditingAssignee === null ? 'border-blue-500 scale-110 shadow-[0_0_10px_rgba(59,130,246,0.5)] text-white' : 'border-transparent opacity-50 hover:opacity-100'}"><i class="fa-solid fa-users"></i></button>`;
+            
+            Object.values(membersData).forEach(m => {
+                const isSelected = currentEditingAssignee === m.uid;
+                const avatarContent = m.avatar && m.avatar.startsWith('http') ? `<img src="${m.avatar}" class="w-full h-full object-cover rounded-full" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">` : (m.avatar || '👤');
+                
+                html += `<button type="button" onclick="selectAssignee('${m.uid}')" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 flex items-center justify-center text-sm md:text-base transition-all ${isSelected ? 'border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'border-transparent opacity-50 hover:opacity-100'}" style="${isSelected && m.color ? `background-color: ${m.color}40; border-color: ${m.color};` : 'background-color: #334155;'}">${avatarContent}</button>`;
+            });
+            container.innerHTML = html;
+        };
+        window.selectAssignee = (uid) => { currentEditingAssignee = uid; renderEditorAssignee(); };
 
         window.renderAvatarPicker = (id) => { 
             getEl(id).innerHTML = availableAvatars.map(a => {
@@ -1201,9 +1372,6 @@
         window.renderUserColorPicker = (id) => { getEl(id).innerHTML = userColorsList.map(c => `<button type="button" onclick="selectUserColor('${c}', '${id}')" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 ${selectedUserColor === c ? 'border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'border-transparent opacity-50 hover:opacity-100'} transition-all" style="background-color: ${c};"></button>`).join(''); };
         window.selectUserColor = (c, id) => { selectedUserColor = c; renderUserColorPicker(id); };
 
-        window.addTagToEditor = () => { const i = getEl('new-tag-input'); const v = i.value.trim().toLowerCase(); if(v && !currentEditingTags.includes(v)) { currentEditingTags.push(v); i.value = ''; renderEditorTags(); } };
-        window.removeTagFromEditor = (t) => { currentEditingTags = currentEditingTags.filter(x => x !== t); renderEditorTags(); };
-        function renderEditorTags() { getEl('edit-tags-list').innerHTML = currentEditingTags.map(t => `<span class="bg-blue-900/60 text-blue-200 px-3 py-1 rounded-full text-[10px] font-black uppercase flex items-center gap-2 border border-blue-500/50">${t}<button type="button" onclick="removeTagFromEditor('${t}')" class="hover:text-white"><i class="fa-solid fa-xmark"></i></button></span>`).join(''); }
         window.addSubtaskToEditor = () => { const i = getEl('new-subtask-input'); if(i.value.trim()) { currentEditingSubtasks.push({ id: Date.now().toString(), text: i.value.trim(), completed: false }); i.value = ''; renderEditorSubtasks(); } };
         window.removeSubtaskFromEditor = (id) => { currentEditingSubtasks = currentEditingSubtasks.filter(x => x.id !== id); renderEditorSubtasks(); };
         function renderEditorSubtasks() { getEl('edit-subtasks-list').innerHTML = currentEditingSubtasks.map(s => `<li class="flex justify-between items-center bg-slate-700/50 p-3 rounded-lg text-sm md:text-base text-slate-200 border border-white/5 min-w-0"><span class="break-words min-w-0 flex-1">${s.text}</span><button type="button" onclick="removeSubtaskFromEditor('${s.id}')" class="text-red-400 hover:text-red-300 shrink-0 ml-2"><i class="fa-solid fa-trash-can"></i></button></li>`).join(''); }

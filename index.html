@@ -55,7 +55,7 @@
                 </button>
             </div>
             <!-- VERSION MISE À JOUR -->
-            <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V1.10</p>
+            <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V1.12</p>
         </div>
     </div>
 
@@ -169,7 +169,6 @@
                         <div id="balance-card" class="bg-gradient-to-br from-indigo-700 to-slate-900 text-white rounded-2xl p-6 shadow-xl relative border border-white/5 overflow-hidden h-full flex flex-col justify-between min-w-0">
                             <div class="flex justify-between items-center mb-6 relative z-10 w-full">
                                 <span class="text-xs md:text-sm font-bold uppercase tracking-widest opacity-70 truncate pr-2" id="current-month-label">Mois</span>
-                                <!-- BOUTON CLÔTURER SUPPRIMÉ : C'EST 100% AUTOMATIQUE DÉSORMAIS -->
                                 <span class="text-[10px] text-slate-300 italic opacity-50 shrink-0">Clôture automatique</span>
                             </div>
                             <div id="balance-summary" class="text-center relative z-10 w-full min-w-0"></div>
@@ -412,14 +411,14 @@
         </div>
     </div>
 
-    <!-- MODAL DÉPENSE -->
+    <!-- MODAL DÉPENSE ÉDITABLE (AVEC CATÉGORIES) -->
     <div id="expense-modal" class="fixed inset-0 bg-slate-950/80 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
-        <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-sm flex flex-col border border-slate-700">
-            <div class="p-5 border-b border-slate-700 flex justify-between items-center">
-                <h2 class="text-lg font-bold text-emerald-400">Ajouter un frais</h2>
+        <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-md flex flex-col border border-slate-700 max-h-[90vh] overflow-y-auto">
+            <div class="p-5 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
+                <h2 id="expense-modal-title" class="text-lg font-bold text-emerald-400">Ajouter un frais</h2>
                 <button onclick="closeExpenseEditor()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
             </div>
-            <div class="p-6 space-y-5">
+            <div class="p-6 space-y-5 flex-1">
                 <input type="text" id="expense-text" placeholder="Libellé (ex: Courses)" class="w-full rounded-xl bg-slate-700 border border-slate-600 p-4 outline-none text-white focus:border-emerald-500 font-bold">
                 
                 <div class="flex gap-3">
@@ -436,20 +435,28 @@
                 <div class="flex items-center justify-between pt-4 border-t border-slate-700">
                     <div class="text-left">
                         <p class="text-xs font-bold text-slate-300">Charge Fixe</p>
-                        <p class="text-[9px] text-slate-500">Se répète chaque mois</p>
+                        <p class="text-[9px] text-slate-500">Se répète chaque mois (Catégorie ⚙️ forcé)</p>
                     </div>
                     <label class="flex items-center gap-3 cursor-pointer">
                         <div class="relative">
-                            <input type="checkbox" id="expense-recurring" class="sr-only peer" onchange="document.getElementById('expense-date').disabled = this.checked; if(this.checked) document.getElementById('expense-date').value = '';">
+                            <input type="checkbox" id="expense-recurring" class="sr-only peer" onchange="document.getElementById('expense-date').disabled = this.checked; if(this.checked) document.getElementById('expense-date').value = ''; toggleExpenseCategoryVisibility();">
                             <div class="w-12 h-6 bg-slate-600 rounded-full peer peer-checked:bg-emerald-500 transition-all"></div>
                             <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-6"></div>
                         </div>
                     </label>
                 </div>
+
+                <div id="expense-category-container" class="pt-4 border-t border-slate-700">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-3">Catégorie</label>
+                    <div id="expense-category-picker" class="flex flex-wrap gap-2"></div>
+                </div>
             </div>
-            <div class="p-5 flex gap-3 border-t border-slate-700 bg-slate-800/50">
-                <button onclick="closeExpenseEditor()" class="flex-1 py-3 text-slate-400 font-bold rounded-xl hover:bg-slate-700 transition-colors">Annuler</button>
-                <button onclick="saveExpense()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-white shadow-lg transition-colors">Valider</button>
+            <div class="p-5 flex justify-between items-center border-t border-slate-700 bg-slate-800/50">
+                <button id="expense-delete-btn" onclick="deleteExpenseFromEditor()" class="text-red-400 font-bold px-4 hidden hover:text-red-300"><i class="fa-solid fa-trash text-lg"></i></button>
+                <div class="flex gap-3 ml-auto w-full md:w-auto">
+                    <button onclick="closeExpenseEditor()" class="px-6 py-3 rounded-xl text-slate-400 font-bold hover:bg-slate-700 transition-colors flex-1 md:flex-none">Annuler</button>
+                    <button onclick="saveExpense()" class="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-bold text-white shadow-lg transition-colors flex-1 md:flex-none">Valider</button>
+                </div>
             </div>
         </div>
     </div>
@@ -539,7 +546,7 @@
         let eventsData = [];
         let expensesData = [];
         let settlementsData = [];
-        let membersData = {}; // REGISTRE PUBLIC DES MEMBRES
+        let membersData = {}; 
         let currentUser = null;
         let localProfile = null;
         
@@ -548,6 +555,9 @@
         let currentSelectedColor = 'white';
         let currentEditingAssignee = null;
         
+        let currentExpenseEditingId = null;
+        let currentExpenseCategory = 'divers';
+
         let expandedTasks = new Set();
 
         let currentEventEditingId = null;
@@ -555,7 +565,7 @@
         
         let currentCalendarDate = new Date();
 
-        // Palettes
+        // Palettes des Tâches
         const taskColors = {
             'white': { bg: 'bg-slate-800', border: 'border-slate-700', accent: 'bg-slate-400', hex: '#94a3b8' },
             'red': { bg: 'bg-red-950/40', border: 'border-red-500/50', accent: 'bg-red-500', hex: '#ef4444' },
@@ -565,13 +575,24 @@
             'purple': { bg: 'bg-purple-950/40', border: 'border-purple-500/50', accent: 'bg-purple-500', hex: '#a855f7' }
         };
 
+        // Palettes des Catégories de Dépenses
+        const expenseCategories = {
+            'habits': { icon: '👗', label: 'Habits', color: 'text-pink-400', border: 'border-pink-500/30', bg: 'bg-pink-900/30' },
+            'carburant': { icon: '⛽', label: 'Carburant', color: 'text-orange-400', border: 'border-orange-500/30', bg: 'bg-orange-900/30' },
+            'loisir': { icon: '🎮', label: 'Loisir', color: 'text-purple-400', border: 'border-purple-500/30', bg: 'bg-purple-900/30' },
+            'courses': { icon: '🛒', label: 'Courses', color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-900/30' },
+            'restauration': { icon: '🍕', label: 'Resto', color: 'text-red-400', border: 'border-red-500/30', bg: 'bg-red-900/30' },
+            'apero': { icon: '🍸', label: 'Apéro', color: 'text-yellow-400', border: 'border-yellow-500/30', bg: 'bg-yellow-900/30' },
+            'divers': { icon: '🔍', label: 'Divers', color: 'text-slate-400', border: 'border-slate-700', bg: 'bg-slate-800' },
+            'fixe': { icon: '⚙️', label: 'Fixe', color: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-900/30' }
+        };
+
         const userColorsList = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#0ea5e9', '#3b82f6', '#8b5cf6', '#d946ef'];
         let selectedUserColor = '#3b82f6';
         
         const availableAvatars = ['🦊', '🐱', '🐼', '🐨', '🐯', '🦉', '🦋', '🐥', '🦕'];
         let selectedAvatar = '👤';
 
-        // --- ÉCOUTEUR GLOBAL DE CONNEXION ---
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
@@ -585,7 +606,6 @@
             }
         });
 
-        // --- AUTH & INIT ---
         window.connectToInstance = async () => {
             const input = getEl('instance-code-input').value.trim().toUpperCase();
             const errorEl = getEl('login-error');
@@ -662,16 +682,13 @@
             } catch (err) { console.error(err); elements.statusText().innerHTML = '<span class="text-red-500">ERREUR BDD</span>'; }
         }
 
-        // --- FONCTION DE RENDU DES STATISTIQUES MENSUELLES ---
         function renderStats() {
             if (!currentUser) return;
 
-            // 1. Initialiser les scores de tout le foyer
             const scores = {};
             Object.keys(membersData).forEach(uid => scores[uid] = { tasks: 0, fixed: 0, ponct: 0 });
             if (!scores[currentUser.uid]) scores[currentUser.uid] = { tasks: 0, fixed: 0, ponct: 0 };
 
-            // 2. Calculer les scores globaux
             tasksData.forEach(t => {
                 if (t.completed && !t.archived && t.completedBy && scores[t.completedBy.uid]) {
                     scores[t.completedBy.uid].tasks++;
@@ -686,7 +703,6 @@
                 }
             });
 
-            // 3. Trouver les maximums absolus du foyer
             let maxTasks = 0, maxFixed = 0, maxPonct = 0;
             Object.values(scores).forEach(s => {
                 if (s.tasks > maxTasks) maxTasks = s.tasks;
@@ -694,10 +710,8 @@
                 if (s.ponct > maxPonct) maxPonct = s.ponct;
             });
 
-            // 4. Isoler mes propres scores
             const myScores = scores[currentUser.uid];
 
-            // Sous-tâches (On compte uniquement celles de MES tâches assignées ou créées)
             const mySubtasks = tasksData.filter(t => !t.archived && (t.assigneeUid === currentUser.uid || (!t.assigneeUid && t.author?.uid === currentUser.uid)))
                 .reduce((acc, t) => acc + (t.subtasks ? t.subtasks.filter(s => s.completed).length : 0), 0);
 
@@ -709,7 +723,7 @@
             const trophyHTML = '<i class="fa-solid fa-trophy absolute top-2 right-2 text-yellow-400 text-xs md:text-sm drop-shadow-md" title="Meilleur score du foyer !"></i>';
 
             if(elTasks) elTasks.innerHTML = `${myScores.tasks} ${myScores.tasks > 0 && myScores.tasks >= maxTasks ? trophyHTML : ''}`;
-            if(elSubtasks) elSubtasks.innerHTML = `${mySubtasks}`; // Pas de trophée pour les sous-tâches (pas de suivi individuel direct)
+            if(elSubtasks) elSubtasks.innerHTML = `${mySubtasks}`; 
             if(elFixed) elFixed.innerHTML = `${myScores.fixed.toFixed(2)}€ ${myScores.fixed > 0 && myScores.fixed >= maxFixed ? trophyHTML : ''}`;
             if(elPonct) elPonct.innerHTML = `${myScores.ponct.toFixed(2)}€ ${myScores.ponct > 0 && myScores.ponct >= maxPonct ? trophyHTML : ''}`;
         }
@@ -747,7 +761,6 @@
             });
         }
 
-        // --- NOUVEAU SYSTÈME DE CLÔTURE 100% AUTOMATIQUE ---
         async function checkAutoClose() {
             if (!currentUser || !appId) return;
             const metaRef = doc(db, 'artifacts', appId, 'public', 'data', 'metadata', 'settings');
@@ -756,7 +769,6 @@
             const currentM = `${now.getMonth()}-${now.getFullYear()}`;
 
             if (!metaSnap.exists() || metaSnap.data().lastClose !== currentM) {
-                // C'est un nouveau mois, on exécute la clôture à froid via des requêtes directes
                 const expSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'));
                 const tasksSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'));
 
@@ -771,12 +783,10 @@
                     const total = exps.reduce((acc, e) => acc + e.amount, 0);
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'settlements'), { label, total, settledAt: Date.now(), snapshot: exps });
                     
-                    // Archiver les tâches complétées
                     for(const task of tsks.filter(t => t.completed && !t.archived)) {
                         await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', task.id), { archived: true });
                     }
                     
-                    // Supprimer UNIQUEMENT les dépenses ponctuelles (on garde les charges fixes pour le nouveau mois)
                     for(const exp of exps) {
                         if (!exp.isRecurring) {
                             await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', exp.id));
@@ -787,7 +797,6 @@
             }
         }
 
-        // --- NAVIGATION ---
         window.switchTab = (tab) => {
             ['tasks', 'agenda', 'accounts', 'profile'].forEach(s => {
                 const sec = getEl(`section-${s}`); const btn = getEl(`tab-${s}-btn`);
@@ -817,7 +826,6 @@
             if (container) container.classList.toggle('hidden');
         };
 
-        // --- AGENDA RENDERER (VUE MOIS PAR MOIS) ---
         window.changeMonth = (delta) => {
             currentCalendarDate.setDate(1);
             currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
@@ -845,7 +853,6 @@
 
             let agendaItems = [];
 
-            // Tasks
             tasksData.forEach(t => {
                 if(t.dueDate && !t.completed && !t.archived) {
                     const taskDate = new Date(t.dueDate);
@@ -858,25 +865,54 @@
                 }
             });
 
-            // Events 
             eventsData.forEach(e => {
-                let current = new Date(e.dateStart + 'T00:00:00');
+                const start = new Date(e.dateStart + 'T00:00:00');
+                
+                let end = start;
+                if (e.type === 'rdv' && e.dateEnd) {
+                    end = new Date(e.dateEnd + 'T00:00:00');
+                    if (end < start) end = start; 
+                }
+                
+                const durationDays = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
                 const authorProfile = e.author ? (membersData[e.author.uid] || e.author) : null;
                 const authorColor = authorProfile?.color || '#8b5cf6';
 
-                if (e.recurrence === 'none') {
-                    if (current >= monthStart && current <= monthEnd) {
-                        agendaItems.push({ date: current.getDate(), type: 'event', id: e.id, title: e.title, color: authorColor, authorProfile: authorProfile });
+                const pushOccurrenceRange = (occStart) => {
+                    for (let i = 0; i < durationDays; i++) {
+                        let currentDay = new Date(occStart);
+                        currentDay.setDate(currentDay.getDate() + i);
+
+                        if (currentDay >= monthStart && currentDay <= monthEnd) {
+                            agendaItems.push({ 
+                                date: currentDay.getDate(), 
+                                type: 'event', 
+                                id: e.id, 
+                                title: e.title, 
+                                color: authorColor, 
+                                authorProfile: authorProfile 
+                            });
+                        }
                     }
+                };
+
+                if (e.recurrence === 'none') {
+                    pushOccurrenceRange(start);
                 } else {
                     let maxIter = 1000;
-                    while(current < monthStart && maxIter > 0) {
-                        current = getNextOccurrence(current, e.recurrence);
+                    let currentOccStart = new Date(start);
+                    
+                    let evaluateFrom = new Date(monthStart);
+                    evaluateFrom.setDate(evaluateFrom.getDate() - durationDays);
+
+                    while(currentOccStart < evaluateFrom && maxIter > 0) {
+                        currentOccStart = getNextOccurrence(currentOccStart, e.recurrence);
                         maxIter--;
                     }
-                    while (current <= monthEnd && maxIter > 0) { 
-                        agendaItems.push({ date: current.getDate(), type: 'event', id: e.id, title: e.title, color: authorColor, authorProfile: authorProfile });
-                        current = getNextOccurrence(current, e.recurrence);
+                    while (currentOccStart <= monthEnd && maxIter > 0) { 
+                        pushOccurrenceRange(currentOccStart);
+                        currentOccStart = getNextOccurrence(currentOccStart, e.recurrence);
                         maxIter--;
                     }
                 }
@@ -932,7 +968,6 @@
             return next;
         }
 
-        // --- EVENT EDITOR ---
         window.openEventEditor = (id = null) => {
             currentEventEditingId = id;
             const e = id ? eventsData.find(x => x.id === id) : null;
@@ -1104,23 +1139,33 @@
                 
                 const dateBadge = (!exp.isRecurring && exp.date) ? `<span class="bg-slate-700 text-slate-300 text-[9px] md:text-[10px] px-2 py-1 rounded-md font-bold shadow-inner shrink-0"><i class="fa-regular fa-calendar"></i> ${new Date(exp.date).toLocaleDateString()}</span>` : '';
                 
+                // GESTION DES CATÉGORIES
+                const isRec = exp.isRecurring;
+                const catId = isRec ? 'fixe' : (exp.category || 'divers');
+                const catData = expenseCategories[catId] || expenseCategories['divers'];
+                
+                const catBadge = `<span class="${catData.bg} ${catData.color} ${catData.border} border text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 shrink-0 whitespace-nowrap">${catData.icon} <span class="hidden md:inline">${catData.label}</span></span>`;
+                
                 const li = document.createElement('li'); 
-                li.className = "bg-slate-800 p-4 md:p-5 rounded-xl border border-slate-700 flex justify-between items-center shadow-md relative mb-3 hover:border-slate-500 transition-colors w-full min-w-0 box-border overflow-hidden";
+                // Ajout de cursor-pointer et onclick pour éditer
+                li.className = `bg-slate-800 p-4 md:p-5 rounded-xl border ${catData.border} flex justify-between items-center shadow-md relative mb-3 hover:border-slate-400 transition-colors w-full min-w-0 box-border overflow-hidden cursor-pointer group`;
+                li.onclick = () => openExpenseEditor(exp.id);
                 
                 li.innerHTML = `
                 <div class="flex items-center gap-3 md:gap-4 min-w-0 flex-1 pr-2">
                     <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-slate-700 flex items-center justify-center text-xl shrink-0 overflow-hidden shadow-lg" style="border: 2px solid ${memberProfile.color||'#3b82f6'}">${avatarContent}</div>
-                    <div class="min-w-0 flex-1 flex flex-col justify-center">
+                    <div class="min-w-0 flex-1 flex flex-col justify-center gap-1.5">
                         <div class="flex items-center gap-2 w-full min-w-0">
-                            <p class="font-bold text-slate-100 truncate text-sm md:text-lg flex-1 min-w-0">${escapeHTML(exp.text)}</p>
+                            ${catBadge}
+                            <p class="font-bold text-slate-100 truncate text-sm md:text-base flex-1 min-w-0">${escapeHTML(exp.text)}</p>
                             ${dateBadge}
                         </div>
-                        <p class="text-[9px] md:text-[10px] text-slate-400 uppercase font-black mt-1 truncate w-full">Saisi par ${escapeHTML(memberProfile.name)}</p>
+                        <p class="text-[9px] md:text-[10px] text-slate-400 uppercase font-black truncate w-full">Saisi par ${escapeHTML(memberProfile.name)}</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3 md:gap-4 pl-2 shrink-0">
-                    <span class="font-black text-emerald-400 text-base md:text-xl">${exp.amount.toFixed(2)}€</span>
-                    <button onclick="deleteExpense('${exp.id}')" class="text-slate-500 hover:text-red-400 p-2 transition-colors shrink-0"><i class="fa-regular fa-trash-can text-lg md:text-xl"></i></button>
+                    <span class="font-black ${catData.color} text-base md:text-xl">${exp.amount.toFixed(2)}€</span>
+                    <button class="text-slate-500 group-hover:text-blue-400 p-2 transition-colors shrink-0"><i class="fa-solid fa-pen"></i></button>
                 </div>`;
                 
                 if(exp.isRecurring) { rec.appendChild(li); stats.fixed += exp.amount; } else { pon.appendChild(li); stats.ponct += exp.amount; }
@@ -1261,7 +1306,7 @@
             `;
         }
 
-        // --- ACTIONS API ---
+        // --- ACTIONS API TÂCHES ---
         window.saveTask = async () => {
             if (!currentUser || !appId) return;
             const title = getEl('edit-title').value.trim(); if(!title) return;
@@ -1280,13 +1325,51 @@
         window.toggleTask = async (id, status) => { if (!currentUser || !appId) return; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', id), { completed: status, completedBy: status ? localProfile : null }); };
         window.deleteTaskFromEditor = async () => { if (!currentUser || !appId || !currentEditingId) return; await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', currentEditingId)); closeEditor(); };
         
-        window.openExpenseEditor = () => {
-            getEl('expense-text').value = '';
-            getEl('expense-amount').value = '';
-            getEl('expense-date').value = new Date().toISOString().split('T')[0];
-            getEl('expense-recurring').checked = false;
-            getEl('expense-date').disabled = false;
+        // --- ACTIONS API DÉPENSES ---
+        window.openExpenseEditor = (id = null) => {
+            currentExpenseEditingId = id;
+            const e = id ? expensesData.find(x => x.id === id) : null;
+            
+            getEl('expense-text').value = e ? e.text : '';
+            getEl('expense-amount').value = e ? e.amount : '';
+            getEl('expense-date').value = e && !e.isRecurring ? e.date : new Date().toISOString().split('T')[0];
+            getEl('expense-recurring').checked = e ? e.isRecurring : false;
+            getEl('expense-date').disabled = e ? e.isRecurring : false;
+            
+            currentExpenseCategory = e && e.category ? e.category : 'divers';
+            
+            getEl('expense-delete-btn').classList.toggle('hidden', !id);
+            getEl('expense-modal-title').textContent = id ? "Modifier Dépense" : "Nouvel Frais";
+            
+            renderExpenseCategoryPicker();
+            window.toggleExpenseCategoryVisibility();
+            
             getEl('expense-modal').classList.replace('hidden', 'flex');
+        };
+
+        window.renderExpenseCategoryPicker = () => {
+            const picker = getEl('expense-category-picker');
+            if(!picker) return;
+            picker.innerHTML = Object.keys(expenseCategories).filter(cat => cat !== 'fixe').map(cat => {
+                const c = expenseCategories[cat];
+                const isSelected = currentExpenseCategory === cat;
+                return `<button type="button" onclick="selectExpenseCategory('${cat}')" class="px-3 py-2 rounded-xl border text-sm flex items-center gap-2 transition-all ${isSelected ? `${c.border} ${c.bg} ${c.color} shadow-sm scale-105 font-bold` : 'border-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-800'}">${c.icon} <span class="${isSelected ? '' : 'hidden md:inline'}">${c.label}</span></button>`;
+            }).join('');
+        };
+
+        window.selectExpenseCategory = (cat) => {
+            currentExpenseCategory = cat;
+            renderExpenseCategoryPicker();
+        };
+
+        window.toggleExpenseCategoryVisibility = () => {
+            const isRec = getEl('expense-recurring').checked;
+            const container = getEl('expense-category-container');
+            if (isRec) {
+                container.classList.add('hidden'); 
+            } else {
+                container.classList.remove('hidden');
+            }
         };
 
         window.saveExpense = async () => {
@@ -1298,19 +1381,29 @@
             
             if(!text || isNaN(amount) || amount <= 0) return;
             
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), { 
+            const data = { 
                 text, 
                 amount, 
                 isRecurring: isRec, 
                 date: isRec ? null : expDate, 
-                payer: localProfile, 
-                createdAt: Date.now() 
-            });
+                category: isRec ? 'fixe' : currentExpenseCategory,
+                payer: localProfile 
+            };
+
+            if (currentExpenseEditingId) {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', currentExpenseEditingId), data);
+            } else {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'), { ...data, createdAt: Date.now() });
+            }
             closeExpenseEditor();
         };
-        window.deleteExpense = async (id) => { if (!currentUser || !appId) return; await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id)); };
 
-        // --- PROFILE ---
+        window.deleteExpenseFromEditor = async () => {
+            if (!currentUser || !appId || !currentExpenseEditingId) return;
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', currentExpenseEditingId));
+            closeExpenseEditor();
+        };
+
         window.saveProfile = async () => {
             if (!currentUser || !appId) return;
             const n = getEl('profile-name').value.trim(); const inc = parseFloat(getEl('profile-income').value) || 0; if(!n) return;
@@ -1348,7 +1441,6 @@
             renderUserColorPicker('settings-user-color-picker');
         }
 
-        // --- UTILS ÉDITEURS ---
         window.toggleTaskArchive = () => { getEl('active-tasks-view').classList.toggle('hidden'); getEl('archived-tasks-view').classList.toggle('hidden'); };
         window.toggleAccountArchive = () => { getEl('active-accounts-view').classList.toggle('hidden'); getEl('archived-accounts-view').classList.toggle('hidden'); };
         

@@ -450,6 +450,11 @@
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-3">Catégorie</label>
                     <div id="expense-category-picker" class="flex flex-wrap gap-2"></div>
                 </div>
+
+                <div class="pt-4 border-t border-slate-700">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-3">Payé par</label>
+                    <div id="expense-payer-picker" class="flex flex-wrap gap-3"></div>
+                </div>
             </div>
             <div class="p-5 flex justify-between items-center border-t border-slate-700 bg-slate-800/50">
                 <button id="expense-delete-btn" onclick="deleteExpenseFromEditor()" class="text-red-400 font-bold px-4 hidden hover:text-red-300"><i class="fa-solid fa-trash text-lg"></i></button>
@@ -557,6 +562,7 @@
         
         let currentExpenseEditingId = null;
         let currentExpenseCategory = 'divers';
+        let currentExpensePayerUid = null;
 
         let expandedTasks = new Set();
 
@@ -1413,11 +1419,13 @@
             getEl('expense-date').disabled = e ? e.isRecurring : false;
             
             currentExpenseCategory = e && e.category ? e.category : 'divers';
+            currentExpensePayerUid = e && e.payer ? e.payer.uid : currentUser.uid;
             
             getEl('expense-delete-btn').classList.toggle('hidden', !id);
             getEl('expense-modal-title').textContent = id ? "Modifier Dépense" : "Nouvel Frais";
             
             renderExpenseCategoryPicker();
+            renderExpensePayerPicker();
             window.toggleExpenseCategoryVisibility();
             
             getEl('expense-modal').classList.replace('hidden', 'flex');
@@ -1436,6 +1444,25 @@
         window.selectExpenseCategory = (cat) => {
             currentExpenseCategory = cat;
             renderExpenseCategoryPicker();
+        };
+
+        window.renderExpensePayerPicker = () => {
+            const container = getEl('expense-payer-picker');
+            if(!container) return;
+            
+            let html = '';
+            Object.values(membersData).forEach(m => {
+                const isSelected = currentExpensePayerUid === m.uid;
+                const avatarContent = m.avatar && m.avatar.startsWith('http') ? `<img src="${m.avatar}" class="w-full h-full object-cover rounded-full" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">` : (m.avatar || '👤');
+                
+                html += `<button type="button" onclick="selectExpensePayer('${m.uid}')" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 flex items-center justify-center text-sm md:text-base transition-all ${isSelected ? 'border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'border-transparent opacity-50 hover:opacity-100'}" style="${isSelected && m.color ? `background-color: ${m.color}40; border-color: ${m.color};` : 'background-color: #334155;'}">${avatarContent}</button>`;
+            });
+            container.innerHTML = html;
+        };
+
+        window.selectExpensePayer = (uid) => {
+            currentExpensePayerUid = uid;
+            renderExpensePayerPicker();
         };
 
         window.toggleExpenseCategoryVisibility = () => {
@@ -1457,13 +1484,15 @@
             
             if(!text || isNaN(amount) || amount <= 0) return;
             
+            const payerProfile = membersData[currentExpensePayerUid] || localProfile;
+            
             const data = { 
                 text, 
                 amount, 
                 isRecurring: isRec, 
                 date: isRec ? null : expDate, 
                 category: isRec ? 'fixe' : currentExpenseCategory,
-                payer: localProfile 
+                payer: payerProfile 
             };
 
             if (currentExpenseEditingId) {

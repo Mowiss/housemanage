@@ -55,7 +55,7 @@
                 </button>
             </div>
             <!-- VERSION MISE À JOUR -->
-            <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V1.08</p>
+            <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V1.09</p>
         </div>
     </div>
 
@@ -226,25 +226,25 @@
                             </div>
                             <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
                                 <!-- Tâches -->
-                                <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center shadow-sm">
+                                <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center shadow-sm relative">
                                     <i class="fa-solid fa-check-double text-blue-500 text-2xl mb-2"></i>
                                     <span class="text-2xl font-black text-slate-100" id="stat-tasks">0</span>
                                     <span class="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold mt-1">Tâches finies</span>
                                 </div>
                                 <!-- Sous-tâches -->
-                                <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center shadow-sm">
+                                <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center shadow-sm relative">
                                     <i class="fa-solid fa-list-check text-blue-400 text-2xl mb-2"></i>
                                     <span class="text-2xl font-black text-slate-100" id="stat-subtasks">0</span>
                                     <span class="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold mt-1">Étapes finies</span>
                                 </div>
-                                <!-- Dépenses fixes (MODIFIÉ AVEC $) -->
-                                <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center shadow-sm">
+                                <!-- Dépenses fixes -->
+                                <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center shadow-sm relative">
                                     <i class="fa-solid fa-dollar-sign text-emerald-500 text-2xl mb-2"></i>
                                     <span class="text-xl md:text-2xl font-black text-emerald-400" id="stat-fixed-exp">0€</span>
                                     <span class="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold mt-1">Charges fixes</span>
                                 </div>
                                 <!-- Dépenses ponctuelles -->
-                                <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center shadow-sm">
+                                <div class="bg-slate-800/80 p-4 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center text-center shadow-sm relative">
                                     <i class="fa-solid fa-cart-shopping text-amber-500 text-2xl mb-2"></i>
                                     <span class="text-xl md:text-2xl font-black text-amber-400" id="stat-ponct-exp">0€</span>
                                     <span class="text-[9px] md:text-[10px] text-slate-500 uppercase font-bold mt-1">Ponctuelles</span>
@@ -667,25 +667,52 @@
         function renderStats() {
             if (!currentUser) return;
 
-            const completedTasksCount = tasksData.filter(t => t.completed && !t.archived).length;
-            
-            const completedSubtasksCount = tasksData.filter(t => !t.archived).reduce((acc, t) => {
-                return acc + (t.subtasks ? t.subtasks.filter(s => s.completed).length : 0);
-            }, 0);
+            // 1. Initialiser les scores de tout le foyer
+            const scores = {};
+            Object.keys(membersData).forEach(uid => scores[uid] = { tasks: 0, fixed: 0, ponct: 0 });
+            if (!scores[currentUser.uid]) scores[currentUser.uid] = { tasks: 0, fixed: 0, ponct: 0 };
 
-            // Filtrage strict par l'ID de l'utilisateur connecté
-            const fixedExpTotal = expensesData.filter(e => e.isRecurring && e.payer.uid === currentUser.uid).reduce((acc, e) => acc + e.amount, 0);
-            const ponctExpTotal = expensesData.filter(e => !e.isRecurring && e.payer.uid === currentUser.uid).reduce((acc, e) => acc + e.amount, 0);
+            // 2. Calculer les scores globaux
+            tasksData.forEach(t => {
+                if (t.completed && !t.archived && t.completedBy && scores[t.completedBy.uid]) {
+                    scores[t.completedBy.uid].tasks++;
+                }
+            });
+
+            expensesData.forEach(e => {
+                const uid = e.payer.uid;
+                if (scores[uid]) {
+                    if (e.isRecurring) scores[uid].fixed += e.amount;
+                    else scores[uid].ponct += e.amount;
+                }
+            });
+
+            // 3. Trouver les maximums absolus du foyer
+            let maxTasks = 0, maxFixed = 0, maxPonct = 0;
+            Object.values(scores).forEach(s => {
+                if (s.tasks > maxTasks) maxTasks = s.tasks;
+                if (s.fixed > maxFixed) maxFixed = s.fixed;
+                if (s.ponct > maxPonct) maxPonct = s.ponct;
+            });
+
+            // 4. Isoler mes propres scores
+            const myScores = scores[currentUser.uid];
+
+            // Sous-tâches (On compte uniquement celles de MES tâches assignées ou créées)
+            const mySubtasks = tasksData.filter(t => !t.archived && (t.assigneeUid === currentUser.uid || (!t.assigneeUid && t.author?.uid === currentUser.uid)))
+                .reduce((acc, t) => acc + (t.subtasks ? t.subtasks.filter(s => s.completed).length : 0), 0);
 
             const elTasks = getEl('stat-tasks');
             const elSubtasks = getEl('stat-subtasks');
             const elFixed = getEl('stat-fixed-exp');
             const elPonct = getEl('stat-ponct-exp');
 
-            if(elTasks) elTasks.textContent = completedTasksCount;
-            if(elSubtasks) elSubtasks.textContent = completedSubtasksCount;
-            if(elFixed) elFixed.textContent = fixedExpTotal.toFixed(2) + '€';
-            if(elPonct) elPonct.textContent = ponctExpTotal.toFixed(2) + '€';
+            const trophyHTML = '<i class="fa-solid fa-trophy absolute top-2 right-2 text-yellow-400 text-xs md:text-sm drop-shadow-md" title="Meilleur score du foyer !"></i>';
+
+            if(elTasks) elTasks.innerHTML = `${myScores.tasks} ${myScores.tasks > 0 && myScores.tasks >= maxTasks ? trophyHTML : ''}`;
+            if(elSubtasks) elSubtasks.innerHTML = `${mySubtasks}`; // Pas de trophée pour les sous-tâches (pas de suivi individuel direct)
+            if(elFixed) elFixed.innerHTML = `${myScores.fixed.toFixed(2)}€ ${myScores.fixed > 0 && myScores.fixed >= maxFixed ? trophyHTML : ''}`;
+            if(elPonct) elPonct.innerHTML = `${myScores.ponct.toFixed(2)}€ ${myScores.ponct > 0 && myScores.ponct >= maxPonct ? trophyHTML : ''}`;
         }
 
         function startListening() {
@@ -1099,9 +1126,9 @@
                             currentPct += spentPct;
                         }
                         
-                        // Partie Restante (Translucide - territoire non consommé)
+                        // Partie Restante (Translucide - opacité augmentée de 33 à 80 pour meilleure visibilité)
                         if (remPct > 0) {
-                            gradientStops.push(`${u.color || '#3b82f6'}33 ${currentPct}% ${currentPct + remPct}%`);
+                            gradientStops.push(`${u.color || '#3b82f6'}80 ${currentPct}% ${currentPct + remPct}%`);
                             currentPct += remPct;
                         }
                     }

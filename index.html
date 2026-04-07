@@ -55,7 +55,7 @@
                 </button>
             </div>
             <!-- VERSION MISE À JOUR -->
-            <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V1.09</p>
+            <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V1.10</p>
         </div>
     </div>
 
@@ -169,7 +169,8 @@
                         <div id="balance-card" class="bg-gradient-to-br from-indigo-700 to-slate-900 text-white rounded-2xl p-6 shadow-xl relative border border-white/5 overflow-hidden h-full flex flex-col justify-between min-w-0">
                             <div class="flex justify-between items-center mb-6 relative z-10 w-full">
                                 <span class="text-xs md:text-sm font-bold uppercase tracking-widest opacity-70 truncate pr-2" id="current-month-label">Mois</span>
-                                <button onclick="settleAccountsManual()" class="text-xs bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full font-bold border border-white/10 transition-colors shadow-lg shrink-0">Clôturer</button>
+                                <!-- BOUTON CLÔTURER SUPPRIMÉ : C'EST 100% AUTOMATIQUE DÉSORMAIS -->
+                                <span class="text-[10px] text-slate-300 italic opacity-50 shrink-0">Clôture automatique</span>
                             </div>
                             <div id="balance-summary" class="text-center relative z-10 w-full min-w-0"></div>
                             <div id="visual-stats" class="space-y-4 relative z-10 mt-4 w-full min-w-0"></div>
@@ -499,9 +500,8 @@
         document.getElementById('dynamic-manifest').href = URL.createObjectURL(manifestBlob);
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // Modification ici : import de signInWithPopup au lieu de signInWithRedirect
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // VOS CLÉS FIREBASE DÉFINITIVES
         const firebaseConfig = {
@@ -614,7 +614,6 @@
             errorEl.classList.remove('hidden');
 
             try {
-                // Modification ici : utilisation de signInWithPopup
                 const result = await signInWithPopup(auth, provider);
                 currentUser = result.user;
                 elements.instanceGate().classList.add('hidden');
@@ -748,13 +747,42 @@
             });
         }
 
+        // --- NOUVEAU SYSTÈME DE CLÔTURE 100% AUTOMATIQUE ---
         async function checkAutoClose() {
             if (!currentUser || !appId) return;
             const metaRef = doc(db, 'artifacts', appId, 'public', 'data', 'metadata', 'settings');
             const metaSnap = await getDoc(metaRef);
-            const currentM = `${new Date().getMonth()}-${new Date().getFullYear()}`;
+            const now = new Date();
+            const currentM = `${now.getMonth()}-${now.getFullYear()}`;
+
             if (!metaSnap.exists() || metaSnap.data().lastClose !== currentM) {
-                if (expensesData.length > 0) await settleAccounts();
+                // C'est un nouveau mois, on exécute la clôture à froid via des requêtes directes
+                const expSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'expenses'));
+                const tasksSnap = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'));
+
+                let exps = expSnap.docs.map(d => ({id: d.id, ...d.data()}));
+                let tsks = tasksSnap.docs.map(d => ({id: d.id, ...d.data()}));
+
+                if (exps.length > 0) {
+                    let lastMonthDate = new Date();
+                    lastMonthDate.setMonth(now.getMonth() - 1);
+                    const label = `${["Jan", "Fév", "Mar", "Avr", "Mai", "Jui", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"][lastMonthDate.getMonth()]} ${lastMonthDate.getFullYear()}`;
+                    
+                    const total = exps.reduce((acc, e) => acc + e.amount, 0);
+                    await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'settlements'), { label, total, settledAt: Date.now(), snapshot: exps });
+                    
+                    // Archiver les tâches complétées
+                    for(const task of tsks.filter(t => t.completed && !t.archived)) {
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', task.id), { archived: true });
+                    }
+                    
+                    // Supprimer UNIQUEMENT les dépenses ponctuelles (on garde les charges fixes pour le nouveau mois)
+                    for(const exp of exps) {
+                        if (!exp.isRecurring) {
+                            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', exp.id));
+                        }
+                    }
+                }
                 await setDoc(metaRef, { lastClose: currentM });
             }
         }
@@ -1104,7 +1132,6 @@
             
             const summHTML = `<p class="text-sm md:text-base font-bold mb-6 pb-5 border-b border-slate-700 text-slate-300">Total des dépenses : <span class="text-white text-base md:text-lg ml-2 px-3 py-1 bg-slate-800 rounded-lg shadow-inner border border-slate-700">${totalS.toFixed(2)}€</span></p>`;
             
-            // --- NOUVEAU CAMEMBERT TERRITORIAL (Par Salaire) ---
             const totalIncome = userList.reduce((acc, u) => acc + (u.income || 0), 0);
             
             let gradientStops = [];
@@ -1120,13 +1147,11 @@
                         const spentPct = territoryPct * spentRatio;
                         const remPct = territoryPct - spentPct;
                         
-                        // Partie Dépensée (Pleine couleur)
                         if (spentPct > 0) {
                             gradientStops.push(`${u.color || '#3b82f6'} ${currentPct}% ${currentPct + spentPct}%`);
                             currentPct += spentPct;
                         }
                         
-                        // Partie Restante (Translucide - opacité augmentée de 33 à 80 pour meilleure visibilité)
                         if (remPct > 0) {
                             gradientStops.push(`${u.color || '#3b82f6'}80 ${currentPct}% ${currentPct + remPct}%`);
                             currentPct += remPct;
@@ -1136,7 +1161,6 @@
                     const remaining = (u.income || 0) - u.spent;
                     const overspent = remaining < 0;
                     
-                    // Légende
                     legendHTML += `
                         <div class="flex items-center justify-between text-xs mb-2 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 hover:bg-slate-800 transition-colors">
                             <div class="flex items-center gap-3">
@@ -1151,7 +1175,6 @@
                     `;
                 });
             } else if (totalS > 0) {
-                // Secours si revenus à 0
                 userList.forEach(u => {
                     const spentPct = (u.spent / totalS) * 100;
                     if (spentPct > 0) {
@@ -1286,14 +1309,6 @@
             closeExpenseEditor();
         };
         window.deleteExpense = async (id) => { if (!currentUser || !appId) return; await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', id)); };
-        window.settleAccountsManual = async () => { if(confirm("Clôturer le mois ?")) await settleAccounts(); };
-        async function settleAccounts() {
-            if (!currentUser || !appId || expensesData.length === 0) return;
-            const now = new Date(); const label = `${["Jan", "Fév", "Mar", "Avr", "Mai", "Jui", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"][now.getMonth()]} ${now.getFullYear()}`;
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'settlements'), { label, total: expensesData.reduce((acc, e) => acc + e.amount, 0), settledAt: Date.now(), snapshot: expensesData });
-            for(const task of tasksData.filter(t => t.completed && !t.archived)) await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', task.id), { archived: true });
-            for(const exp of expensesData) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', exp.id));
-        }
 
         // --- PROFILE ---
         window.saveProfile = async () => {

@@ -565,6 +565,13 @@
         
         let currentCalendarDate = new Date();
 
+        // Ajout du paramètre pour suivre le type de graphique à afficher (membres ou catégories)
+        let currentChartMode = 'members';
+        window.setChartMode = (mode) => {
+            currentChartMode = mode;
+            renderExpenses(); // On redessine le graphique avec la nouvelle logique
+        };
+
         // Palettes des Tâches
         const taskColors = {
             'white': { bg: 'bg-slate-800', border: 'border-slate-700', accent: 'bg-slate-400', hex: '#94a3b8' },
@@ -575,16 +582,16 @@
             'purple': { bg: 'bg-purple-950/40', border: 'border-purple-500/50', accent: 'bg-purple-500', hex: '#a855f7' }
         };
 
-        // Palettes des Catégories de Dépenses
+        // Palettes des Catégories de Dépenses avec hex ajoutés pour le Camembert
         const expenseCategories = {
-            'habits': { icon: '👗', label: 'Habits', color: 'text-pink-400', border: 'border-pink-500/30', bg: 'bg-pink-900/30' },
-            'carburant': { icon: '⛽', label: 'Carburant', color: 'text-orange-400', border: 'border-orange-500/30', bg: 'bg-orange-900/30' },
-            'loisir': { icon: '🎮', label: 'Loisir', color: 'text-purple-400', border: 'border-purple-500/30', bg: 'bg-purple-900/30' },
-            'courses': { icon: '🛒', label: 'Courses', color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-900/30' },
-            'restauration': { icon: '🍕', label: 'Resto', color: 'text-red-400', border: 'border-red-500/30', bg: 'bg-red-900/30' },
-            'apero': { icon: '🍸', label: 'Apéro', color: 'text-yellow-400', border: 'border-yellow-500/30', bg: 'bg-yellow-900/30' },
-            'divers': { icon: '🔍', label: 'Divers', color: 'text-slate-400', border: 'border-slate-700', bg: 'bg-slate-800' },
-            'fixe': { icon: '⚙️', label: 'Fixe', color: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-900/30' }
+            'habits': { icon: '👗', label: 'Habits', color: 'text-pink-400', border: 'border-pink-500/30', bg: 'bg-pink-900/30', hex: '#f472b6' },
+            'carburant': { icon: '⛽', label: 'Carburant', color: 'text-orange-400', border: 'border-orange-500/30', bg: 'bg-orange-900/30', hex: '#fb923c' },
+            'loisir': { icon: '🎮', label: 'Loisir', color: 'text-purple-400', border: 'border-purple-500/30', bg: 'bg-purple-900/30', hex: '#c084fc' },
+            'courses': { icon: '🛒', label: 'Courses', color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-900/30', hex: '#34d399' },
+            'restauration': { icon: '🍕', label: 'Resto', color: 'text-red-400', border: 'border-red-500/30', bg: 'bg-red-900/30', hex: '#f87171' },
+            'apero': { icon: '🍸', label: 'Apéro', color: 'text-yellow-400', border: 'border-yellow-500/30', bg: 'bg-yellow-900/30', hex: '#facc15' },
+            'divers': { icon: '🔍', label: 'Divers', color: 'text-slate-400', border: 'border-slate-700', bg: 'bg-slate-800', hex: '#94a3b8' },
+            'fixe': { icon: '⚙️', label: 'Fixe', color: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-900/30', hex: '#60a5fa' }
         };
 
         const userColorsList = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#10b981', '#0ea5e9', '#3b82f6', '#8b5cf6', '#d946ef'];
@@ -1174,84 +1181,153 @@
             
             const userList = Object.values(stats.users); 
             const totalS = stats.fixed + stats.ponct; 
+            const totalIncome = userList.reduce((acc, u) => acc + (u.income || 0), 0);
             
             const summHTML = `<p class="text-sm md:text-base font-bold mb-6 pb-5 border-b border-slate-700 text-slate-300">Total des dépenses : <span class="text-white text-base md:text-lg ml-2 px-3 py-1 bg-slate-800 rounded-lg shadow-inner border border-slate-700">${totalS.toFixed(2)}€</span></p>`;
-            
-            const totalIncome = userList.reduce((acc, u) => acc + (u.income || 0), 0);
             
             let gradientStops = [];
             let currentPct = 0;
             let legendHTML = '';
 
-            if (totalIncome > 0) {
-                userList.forEach(u => {
-                    const uIncome = u.income || 0;
-                    if (uIncome > 0) {
-                        const territoryPct = (uIncome / totalIncome) * 100;
-                        const spentRatio = Math.min(u.spent / uIncome, 1);
-                        const spentPct = territoryPct * spentRatio;
-                        const remPct = territoryPct - spentPct;
+            // --- DEBUT LOGIQUE BASULÉE SELON LE MODE ---
+            const modeToggleHTML = `
+                <div class="flex bg-slate-800 rounded-lg p-1 mb-6 border border-slate-700 w-full max-w-[250px] mx-auto text-xs relative z-20 shadow-inner">
+                    <button onclick="window.setChartMode('members')" class="flex-1 py-2 px-2 rounded-md transition-all ${currentChartMode === 'members' ? 'bg-slate-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'}">Par membre</button>
+                    <button onclick="window.setChartMode('categories')" class="flex-1 py-2 px-2 rounded-md transition-all ${currentChartMode === 'categories' ? 'bg-slate-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'}">Par catégorie</button>
+                </div>
+            `;
+
+            let chartHTML = '';
+
+            if (currentChartMode === 'members') {
+                if (totalIncome > 0) {
+                    userList.forEach(u => {
+                        const uIncome = u.income || 0;
+                        if (uIncome > 0) {
+                            const territoryPct = (uIncome / totalIncome) * 100;
+                            const spentRatio = Math.min(u.spent / uIncome, 1);
+                            const spentPct = territoryPct * spentRatio;
+                            const remPct = territoryPct - spentPct;
+                            
+                            if (spentPct > 0) {
+                                gradientStops.push(`${u.color || '#3b82f6'} ${currentPct}% ${currentPct + spentPct}%`);
+                                currentPct += spentPct;
+                            }
+                            
+                            if (remPct > 0) {
+                                gradientStops.push(`${u.color || '#3b82f6'}80 ${currentPct}% ${currentPct + remPct}%`);
+                                currentPct += remPct;
+                            }
+                        }
                         
+                        const remaining = (u.income || 0) - u.spent;
+                        const overspent = remaining < 0;
+                        
+                        legendHTML += `
+                            <div class="flex items-center justify-between text-xs mb-2 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 hover:bg-slate-800 transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-4 h-4 rounded-full shadow-sm border border-slate-600" style="background-color: ${u.color || '#3b82f6'}"></div>
+                                    <span class="font-bold text-slate-200 text-sm">${escapeHTML(u.name)}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="block font-black ${overspent ? 'text-red-400' : 'text-emerald-400'}">Reste: ${remaining.toFixed(2)}€</span>
+                                    <span class="block text-[10px] text-slate-500 font-bold uppercase mt-0.5">${u.spent.toFixed(2)}€ dépensés</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else if (totalS > 0) {
+                    userList.forEach(u => {
+                        const spentPct = (u.spent / totalS) * 100;
                         if (spentPct > 0) {
                             gradientStops.push(`${u.color || '#3b82f6'} ${currentPct}% ${currentPct + spentPct}%`);
                             currentPct += spentPct;
                         }
-                        
-                        if (remPct > 0) {
-                            gradientStops.push(`${u.color || '#3b82f6'}80 ${currentPct}% ${currentPct + remPct}%`);
-                            currentPct += remPct;
-                        }
-                    }
-                    
-                    const remaining = (u.income || 0) - u.spent;
-                    const overspent = remaining < 0;
-                    
-                    legendHTML += `
-                        <div class="flex items-center justify-between text-xs mb-2 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 hover:bg-slate-800 transition-colors">
-                            <div class="flex items-center gap-3">
-                                <div class="w-4 h-4 rounded-full shadow-sm border border-slate-600" style="background-color: ${u.color || '#3b82f6'}"></div>
-                                <span class="font-bold text-slate-200 text-sm">${escapeHTML(u.name)}</span>
-                            </div>
-                            <div class="text-right">
-                                <span class="block font-black ${overspent ? 'text-red-400' : 'text-emerald-400'}">Reste: ${remaining.toFixed(2)}€</span>
-                                <span class="block text-[10px] text-slate-500 font-bold uppercase mt-0.5">${u.spent.toFixed(2)}€ dépensés</span>
-                            </div>
-                        </div>
-                    `;
-                });
-            } else if (totalS > 0) {
-                userList.forEach(u => {
-                    const spentPct = (u.spent / totalS) * 100;
-                    if (spentPct > 0) {
-                        gradientStops.push(`${u.color || '#3b82f6'} ${currentPct}% ${currentPct + spentPct}%`);
-                        currentPct += spentPct;
-                    }
-                    legendHTML += `<div class="flex items-center justify-between text-xs mb-2 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50"><div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full" style="background-color: ${u.color || '#3b82f6'}"></div><span class="font-bold text-slate-200">${escapeHTML(u.name)}</span></div><span class="font-black text-amber-400">${u.spent.toFixed(2)}€ dépensés</span></div>`;
-                });
-            } else {
-                gradientStops.push(`transparent 0% 100%`);
-                legendHTML = '<p class="text-xs text-slate-500 italic text-center w-full">Aucun revenu paramétré ou dépense pour le moment.</p>';
-            }
+                        legendHTML += `<div class="flex items-center justify-between text-xs mb-2 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50"><div class="flex items-center gap-3"><div class="w-4 h-4 rounded-full" style="background-color: ${u.color || '#3b82f6'}"></div><span class="font-bold text-slate-200">${escapeHTML(u.name)}</span></div><span class="font-black text-amber-400">${u.spent.toFixed(2)}€ dépensés</span></div>`;
+                    });
+                } else {
+                    gradientStops.push(`transparent 0% 100%`);
+                    legendHTML = '<p class="text-xs text-slate-500 italic text-center w-full mt-4">Aucun revenu paramétré ou dépense pour le moment.</p>';
+                }
 
-            const chartHTML = `
-                <div class="flex flex-col items-center w-full">
-                    <div class="relative w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-slate-800 shadow-[0_0_25px_rgba(0,0,0,0.4)] mb-8 flex items-center justify-center transition-all" 
-                         style="background: conic-gradient(${gradientStops.join(', ')}); background-color: #1e293b;">
-                         <div class="w-28 h-28 md:w-32 md:h-32 bg-slate-900 rounded-full shadow-inner flex flex-col items-center justify-center z-10 border border-slate-800">
-                            <span class="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Reste Foyer</span>
-                            <span class="text-xl md:text-2xl font-black ${totalIncome - totalS < 0 ? 'text-red-400' : 'text-emerald-400'}">${(totalIncome - totalS).toFixed(0)}€</span>
-                         </div>
+                chartHTML = `
+                    <div class="flex flex-col items-center w-full">
+                        ${modeToggleHTML}
+                        <div class="relative w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-slate-800 shadow-[0_0_25px_rgba(0,0,0,0.4)] mb-8 flex items-center justify-center transition-all" 
+                             style="background: conic-gradient(${gradientStops.join(', ')}); background-color: #1e293b;">
+                             <div class="w-28 h-28 md:w-32 md:h-32 bg-slate-900 rounded-full shadow-inner flex flex-col items-center justify-center z-10 border border-slate-800">
+                                <span class="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Reste Foyer</span>
+                                <span class="text-xl md:text-2xl font-black ${totalIncome - totalS < 0 ? 'text-red-400' : 'text-emerald-400'}">${(totalIncome - totalS).toFixed(0)}€</span>
+                             </div>
+                        </div>
+                        <div class="w-full space-y-1 mb-4">
+                            ${legendHTML}
+                        </div>
+                        <div class="w-full mt-2 pt-4 border-t border-slate-700/50 flex justify-between text-xs">
+                            <span class="text-slate-500 font-bold uppercase tracking-wider">Budget Global</span>
+                            <span class="text-slate-300 font-black text-sm">${totalIncome.toFixed(2)}€</span>
+                        </div>
                     </div>
-                    <div class="w-full space-y-1 mb-4">
-                        ${legendHTML}
+                `;
+            } else {
+                // LOGIQUE "PAR CATÉGORIE"
+                if (totalS > 0) {
+                    const catStats = {};
+                    expensesData.forEach(exp => {
+                        const catId = exp.isRecurring ? 'fixe' : (exp.category || 'divers');
+                        if(!catStats[catId]) catStats[catId] = 0;
+                        catStats[catId] += exp.amount;
+                    });
+
+                    // Trier les catégories de la plus grosse à la plus petite dépense
+                    const sortedCats = Object.keys(catStats).sort((a,b) => catStats[b] - catStats[a]);
+
+                    sortedCats.forEach(catId => {
+                        const amount = catStats[catId];
+                        const catData = expenseCategories[catId] || expenseCategories['divers'];
+                        const spentPct = (amount / totalS) * 100;
+                        
+                        if (spentPct > 0) {
+                            gradientStops.push(`${catData.hex} ${currentPct}% ${currentPct + spentPct}%`);
+                            currentPct += spentPct;
+                        }
+                        
+                        legendHTML += `
+                            <div class="flex items-center justify-between text-xs mb-2 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 hover:bg-slate-800 transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-base md:text-lg">${catData.icon}</span>
+                                    <span class="font-bold text-slate-200 text-sm">${catData.label}</span>
+                                </div>
+                                <div class="text-right">
+                                    <span class="block font-black ${catData.color}">${amount.toFixed(2)}€</span>
+                                    <span class="block text-[10px] text-slate-500 font-bold uppercase mt-0.5">${spentPct.toFixed(1)}% du total</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    gradientStops.push(`transparent 0% 100%`);
+                    legendHTML = '<p class="text-xs text-slate-500 italic text-center w-full mt-4">Aucune dépense pour le moment.</p>';
+                }
+
+                chartHTML = `
+                    <div class="flex flex-col items-center w-full">
+                        ${modeToggleHTML}
+                        <div class="relative w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-slate-800 shadow-[0_0_25px_rgba(0,0,0,0.4)] mb-8 flex items-center justify-center transition-all" 
+                             style="background: conic-gradient(${gradientStops.join(', ')}); background-color: #1e293b;">
+                             <div class="w-28 h-28 md:w-32 md:h-32 bg-slate-900 rounded-full shadow-inner flex flex-col items-center justify-center z-10 border border-slate-800">
+                                <span class="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Total Foyer</span>
+                                <span class="text-xl md:text-2xl font-black text-white">${totalS.toFixed(0)}€</span>
+                             </div>
+                        </div>
+                        <div class="w-full space-y-1 mb-4">
+                            ${legendHTML}
+                        </div>
                     </div>
-                    <div class="w-full mt-2 pt-4 border-t border-slate-700/50 flex justify-between text-xs">
-                        <span class="text-slate-500 font-bold uppercase tracking-wider">Budget Global</span>
-                        <span class="text-slate-300 font-black text-sm">${totalIncome.toFixed(2)}€</span>
-                    </div>
-                </div>
-            `;
-            
+                `;
+            }
+            // --- FIN LOGIQUE BASULÉE ---
+
             elements.balanceSummary().innerHTML = summHTML; 
             elements.visualStats().innerHTML = chartHTML; 
             getEl('current-month-label').textContent = `${["Janv", "Févr", "Mars", "Avril", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"][new Date().getMonth()]} ${new Date().getFullYear()}`;

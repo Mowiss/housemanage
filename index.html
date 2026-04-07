@@ -157,11 +157,14 @@
                             <div class="p-4 flex justify-between items-center border-b border-slate-700 shrink-0 w-full bg-slate-800/80">
                                 <h2 class="text-[10px] md:text-xs font-black uppercase text-slate-500 tracking-widest truncate pr-2">Vue Financière</h2>
                                 <div class="flex gap-1 bg-slate-900/80 p-1 rounded-lg border border-slate-700/50">
-                                    <button onclick="switchFinanceTab('chart')" id="fin-tab-chart" class="text-[10px] md:text-xs font-bold px-3 py-1.5 rounded-md bg-slate-700 text-white shadow-sm transition-all flex items-center gap-2">
+                                    <button onclick="switchFinanceTab('chart')" id="fin-tab-chart" class="text-[10px] md:text-xs font-bold px-3 py-1.5 rounded-md bg-slate-700 text-white shadow-sm transition-all flex items-center gap-1 md:gap-2">
                                         <i class="fa-solid fa-chart-area"></i> <span class="hidden md:inline">Histo</span>
                                     </button>
-                                    <button onclick="switchFinanceTab('forecast')" id="fin-tab-forecast" class="text-[10px] md:text-xs font-bold px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-300 transition-all flex items-center gap-2">
+                                    <button onclick="switchFinanceTab('forecast')" id="fin-tab-forecast" class="text-[10px] md:text-xs font-bold px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-300 transition-all flex items-center gap-1 md:gap-2">
                                         <i class="fa-solid fa-calculator"></i> <span class="hidden md:inline">Prévi</span>
+                                    </button>
+                                    <button onclick="switchFinanceTab('satellites')" id="fin-tab-satellites" class="text-[10px] md:text-xs font-bold px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-300 transition-all flex items-center gap-1 md:gap-2">
+                                        <i class="fa-solid fa-piggy-bank"></i> <span class="hidden md:inline">Épargne</span>
                                     </button>
                                 </div>
                             </div>
@@ -212,6 +215,25 @@
                                         <span class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Reste à vivre (Simulé)</span>
                                     </div>
                                     <span id="forecast-remaining" class="text-2xl font-black text-white">0€</span>
+                                </div>
+                            </div>
+
+                            <!-- VUE 3 : COMPTES SATELLITES -->
+                            <div id="finance-satellites-container" class="hidden p-5 bg-slate-900/50 flex-1 flex-col w-full min-w-0 gap-4">
+                                <div class="flex justify-between items-center w-full shrink-0">
+                                    <h2 class="text-[10px] font-black uppercase text-slate-600 tracking-widest">Comptes d'épargne</h2>
+                                    <button onclick="openSatelliteEditor()" class="text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                                        <i class="fa-solid fa-plus"></i> Nouveau
+                                    </button>
+                                </div>
+                                
+                                <div class="bg-slate-800/50 border border-slate-700/50 rounded-xl p-4 flex justify-between items-center shrink-0">
+                                    <span class="text-xs font-bold text-slate-400">Total Épargne Foyer</span>
+                                    <span id="total-satellites-amount" class="text-xl font-black text-emerald-400">0€</span>
+                                </div>
+
+                                <div id="satellites-list" class="space-y-3 overflow-y-auto flex-1 custom-scrollbar min-h-[60px] pb-2">
+                                    <!-- Liste générée dynamiquement -->
                                 </div>
                             </div>
                         </div>
@@ -516,6 +538,40 @@
         </div>
     </div>
 
+    <!-- MODAL COMPTE SATELLITE -->
+    <div id="satellite-modal" class="fixed inset-0 bg-slate-950/80 hidden items-center justify-center z-[500] px-4 backdrop-blur-sm">
+        <div class="bg-slate-800 rounded-2xl shadow-xl w-full max-w-md flex flex-col border border-slate-700 max-h-[90vh] overflow-y-auto">
+            <div class="p-5 border-b border-slate-700 flex justify-between items-center sticky top-0 bg-slate-800 z-10">
+                <h2 id="satellite-modal-title" class="text-lg font-bold text-blue-400">Compte Épargne</h2>
+                <button onclick="closeSatelliteEditor()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-5 flex-1">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Nom du compte (ex: Livret A, PEL...)</label>
+                    <input type="text" id="satellite-name" placeholder="Nom du compte" class="w-full rounded-xl bg-slate-700 border border-slate-600 p-4 outline-none text-white focus:border-blue-500 font-bold">
+                </div>
+                
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Solde Actuel (€)</label>
+                    <input type="number" id="satellite-balance" placeholder="0.00" step="0.01" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-4 font-black text-xl outline-none text-emerald-400 focus:border-blue-500 text-center">
+                </div>
+
+                <div class="pt-4 border-t border-slate-700">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Titulaires du compte</label>
+                    <p class="text-[9px] text-slate-400 mb-3 italic">Sélectionnez qui possède ce compte (plusieurs possibles pour un compte joint).</p>
+                    <div id="satellite-owners-picker" class="flex flex-wrap gap-3"></div>
+                </div>
+            </div>
+            <div class="p-5 flex justify-between items-center border-t border-slate-700 bg-slate-800/50">
+                <button id="satellite-delete-btn" onclick="deleteSatelliteFromEditor()" class="text-red-400 font-bold px-4 hidden hover:text-red-300"><i class="fa-solid fa-trash text-lg"></i></button>
+                <div class="flex gap-3 ml-auto w-full md:w-auto">
+                    <button onclick="closeSatelliteEditor()" class="px-6 py-3 rounded-xl text-slate-400 font-bold hover:bg-slate-700 transition-colors flex-1 md:flex-none">Annuler</button>
+                    <button onclick="saveSatellite()" class="px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold text-white shadow-lg transition-colors flex-1 md:flex-none">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL PROFIL INITIAL -->
     <div id="profile-modal" class="fixed inset-0 bg-slate-950/95 hidden items-center justify-center z-[600] px-4 backdrop-blur-xl">
         <div class="bg-slate-800 rounded-2xl p-8 md:p-10 w-full max-w-md border border-slate-700 shadow-2xl">
@@ -601,6 +657,7 @@
         let eventsData = [];
         let expensesData = [];
         let settlementsData = [];
+        let satellitesData = [];
         let membersData = {}; 
         let currentUser = null;
         let localProfile = null;
@@ -613,6 +670,9 @@
         let currentExpenseEditingId = null;
         let currentExpenseCategory = 'divers';
         let currentExpensePayerUid = null;
+
+        let currentSatelliteEditingId = null;
+        let currentSatelliteOwners = [];
 
         let expandedTasks = new Set();
 
@@ -828,6 +888,10 @@
                 renderFinanceArchives(); 
                 renderFinanceChart(); 
             });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'satellites'), snap => { 
+                satellitesData = snap.docs.map(d => ({id: d.id, ...d.data()})); 
+                renderSatellites();
+            });
         }
 
         async function checkAutoClose() {
@@ -893,37 +957,40 @@
         window.switchFinanceTab = (tab) => {
             const chartCont = getEl('finance-chart-container');
             const forecastCont = getEl('finance-forecast-container');
+            const satellitesCont = getEl('finance-satellites-container');
+            
             const btnChart = getEl('fin-tab-chart');
             const btnForecast = getEl('fin-tab-forecast');
+            const btnSatellites = getEl('fin-tab-satellites');
             
-            if (!chartCont || !forecastCont) return;
+            if (!chartCont || !forecastCont || !satellitesCont) return;
+
+            // Masquer tout et réinitialiser les boutons
+            [chartCont, forecastCont, satellitesCont].forEach(c => c.classList.add('hidden'));
+            [btnChart, btnForecast, btnSatellites].forEach(b => {
+                b.classList.remove('bg-slate-700', 'text-white', 'shadow-sm');
+                b.classList.add('text-slate-500', 'hover:text-slate-300');
+            });
 
             if(tab === 'chart') {
                 chartCont.classList.remove('hidden');
-                forecastCont.classList.add('hidden');
-                
                 btnChart.classList.add('bg-slate-700', 'text-white', 'shadow-sm');
                 btnChart.classList.remove('text-slate-500', 'hover:text-slate-300');
-                
-                btnForecast.classList.remove('bg-slate-700', 'text-white', 'shadow-sm');
-                btnForecast.classList.add('text-slate-500', 'hover:text-slate-300');
-            } else {
+            } else if(tab === 'forecast') {
                 forecastCont.classList.remove('hidden');
-                chartCont.classList.add('hidden');
-                
                 btnForecast.classList.add('bg-slate-700', 'text-white', 'shadow-sm');
                 btnForecast.classList.remove('text-slate-500', 'hover:text-slate-300');
                 
-                btnChart.classList.remove('bg-slate-700', 'text-white', 'shadow-sm');
-                btnChart.classList.add('text-slate-500', 'hover:text-slate-300');
-                
-                // Initialiser le bac à sable avec les charges fixes actuelles la première fois
                 if(!forecastInitialized) {
                     forecastItems = [{ id: 'base_fixed', label: 'Charges fixes réelles', amount: currentFixedExpenses }];
                     forecastInitialized = true;
                 }
-                
                 if(window.updateForecast) window.updateForecast();
+            } else if(tab === 'satellites') {
+                satellitesCont.classList.remove('hidden');
+                btnSatellites.classList.add('bg-slate-700', 'text-white', 'shadow-sm');
+                btnSatellites.classList.remove('text-slate-500', 'hover:text-slate-300');
+                renderSatellites();
             }
         };
 
@@ -1693,6 +1760,125 @@
             if (!currentUser || !appId || !currentExpenseEditingId) return;
             await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'expenses', currentExpenseEditingId));
             closeExpenseEditor();
+        };
+
+        // --- ACTIONS API SATELLITES (ÉPARGNE) ---
+        window.renderSatellites = () => {
+            const list = getEl('satellites-list');
+            const totalEl = getEl('total-satellites-amount');
+            if (!list || !totalEl) return;
+
+            let total = 0;
+            
+            if (satellitesData.length === 0) {
+                list.innerHTML = '<p class="text-xs text-slate-500 italic text-center py-4 w-full">Aucun compte satellite enregistré.</p>';
+                totalEl.textContent = '0€';
+                return;
+            }
+
+            let html = '';
+            satellitesData.sort((a, b) => b.balance - a.balance).forEach(sat => {
+                total += sat.balance;
+                
+                // Afficher les avatars des titulaires
+                let avatarsHtml = '';
+                if (sat.owners && sat.owners.length > 0) {
+                    sat.owners.forEach(uid => {
+                        const m = membersData[uid];
+                        if (m) {
+                            const avatarContent = m.avatar && m.avatar.startsWith('http') ? `<img src="${m.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">` : (m.avatar || '👤');
+                            avatarsHtml += `<div class="w-6 h-6 rounded-full bg-slate-700 flex items-center justify-center text-[10px] overflow-hidden border border-slate-600 shadow-sm shrink-0" style="border-color: ${m.color||'#3b82f6'};" title="${escapeHTML(m.name)}">${avatarContent}</div>`;
+                        }
+                    });
+                } else {
+                    avatarsHtml = '<span class="text-[9px] text-slate-500 italic">Non assigné</span>';
+                }
+
+                html += `
+                    <div onclick="openSatelliteEditor('${sat.id}')" class="bg-slate-800 p-4 rounded-xl border border-slate-700/50 flex justify-between items-center shadow-sm hover:border-slate-500 cursor-pointer transition-colors w-full min-w-0 group">
+                        <div class="flex-1 min-w-0 flex flex-col gap-1 pr-3">
+                            <span class="font-bold text-slate-200 text-sm md:text-base truncate group-hover:text-blue-400 transition-colors">${escapeHTML(sat.name)}</span>
+                            <div class="flex items-center gap-1 mt-1 flex-wrap">
+                                ${avatarsHtml}
+                            </div>
+                        </div>
+                        <span class="font-black text-emerald-400 text-lg md:text-xl shrink-0">${sat.balance.toFixed(2)}€</span>
+                    </div>
+                `;
+            });
+
+            list.innerHTML = html;
+            totalEl.textContent = total.toFixed(2) + '€';
+        };
+
+        window.openSatelliteEditor = (id = null) => {
+            currentSatelliteEditingId = id;
+            const sat = id ? satellitesData.find(x => x.id === id) : null;
+            
+            getEl('satellite-modal-title').textContent = id ? "Modifier Compte" : "Nouveau Compte";
+            getEl('satellite-name').value = sat ? sat.name : '';
+            getEl('satellite-balance').value = sat ? sat.balance : '';
+            
+            // Par défaut, l'utilisateur courant est titulaire s'il s'agit d'un nouveau compte
+            currentSatelliteOwners = sat && sat.owners ? [...sat.owners] : (currentUser ? [currentUser.uid] : []);
+            
+            getEl('satellite-delete-btn').classList.toggle('hidden', !id);
+            
+            renderSatelliteOwnersPicker();
+            getEl('satellite-modal').classList.replace('hidden', 'flex');
+        };
+
+        window.closeSatelliteEditor = () => getEl('satellite-modal').classList.replace('flex', 'hidden');
+
+        window.renderSatelliteOwnersPicker = () => {
+            const container = getEl('satellite-owners-picker');
+            if(!container) return;
+            
+            let html = '';
+            Object.values(membersData).forEach(m => {
+                const isSelected = currentSatelliteOwners.includes(m.uid);
+                const avatarContent = m.avatar && m.avatar.startsWith('http') ? `<img src="${m.avatar}" class="w-full h-full object-cover rounded-full" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">` : (m.avatar || '👤');
+                
+                html += `<button type="button" onclick="toggleSatelliteOwner('${m.uid}')" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 flex items-center justify-center text-sm md:text-base transition-all ${isSelected ? 'border-white scale-110 shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'border-transparent opacity-50 hover:opacity-100'}" style="${isSelected && m.color ? `background-color: ${m.color}40; border-color: ${m.color};` : 'background-color: #334155;'}">${avatarContent}</button>`;
+            });
+            container.innerHTML = html;
+        };
+
+        window.toggleSatelliteOwner = (uid) => {
+            if (currentSatelliteOwners.includes(uid)) {
+                currentSatelliteOwners = currentSatelliteOwners.filter(id => id !== uid);
+            } else {
+                currentSatelliteOwners.push(uid);
+            }
+            renderSatelliteOwnersPicker();
+        };
+
+        window.saveSatellite = async () => {
+            if (!currentUser || !appId) return;
+            const name = getEl('satellite-name').value.trim(); 
+            const balance = parseFloat(getEl('satellite-balance').value);
+            
+            if(!name || isNaN(balance)) return;
+            
+            const data = { 
+                name, 
+                balance,
+                owners: currentSatelliteOwners,
+                updatedAt: Date.now()
+            };
+
+            if (currentSatelliteEditingId) {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'satellites', currentSatelliteEditingId), data);
+            } else {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'satellites'), { ...data, createdAt: Date.now() });
+            }
+            closeSatelliteEditor();
+        };
+
+        window.deleteSatelliteFromEditor = async () => {
+            if (!currentUser || !appId || !currentSatelliteEditingId) return;
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'satellites', currentSatelliteEditingId));
+            closeSatelliteEditor();
         };
 
         window.saveProfile = async () => {

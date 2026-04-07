@@ -602,6 +602,12 @@
             if (auth.currentUser) {
                 currentUser = auth.currentUser;
                 elements.instanceGate().classList.add('hidden');
+                elements.mainApp().classList.replace('hidden', 'md:flex');
+                getEl('current-instance-id').textContent = appId;
+                await startAppFlow();
+                return;
+            }
+            
             errorEl.textContent = "Authentification sécurisée en cours...";
             errorEl.classList.remove('text-red-500');
             errorEl.classList.add('text-blue-400');

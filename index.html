@@ -172,21 +172,29 @@
                                 <div class="w-full h-32 md:h-40 min-w-0" id="finance-chart"></div>
                             </div>
 
-                            <!-- VUE 2 : PRÉVISIONNEL -->
+                            <!-- VUE 2 : PRÉVISIONNEL (BAC À SABLE) -->
                             <div id="finance-forecast-container" class="hidden p-5 bg-slate-900/50 flex-1 flex-col w-full min-w-0 gap-4">
-                                <h2 class="text-[10px] font-black uppercase text-slate-600 tracking-widest text-center w-full">Prévisionnel du mois</h2>
+                                <h2 class="text-[10px] font-black uppercase text-slate-600 tracking-widest text-center w-full">Simulateur (Bac à sable)</h2>
                                 
-                                <div class="space-y-3 flex-1 mt-2">
-                                    <div class="flex justify-between items-center text-xs md:text-sm">
+                                <div class="space-y-3 flex-1 mt-2 flex flex-col">
+                                    <div class="flex justify-between items-center text-xs md:text-sm bg-slate-800/50 p-2 rounded-lg border border-slate-700/50 shrink-0">
                                         <span class="text-slate-400 font-bold">Revenus Foyer</span>
                                         <span id="forecast-income" class="font-black text-emerald-400">0€</span>
                                     </div>
-                                    <div class="flex justify-between items-center text-xs md:text-sm">
-                                        <span class="text-slate-400 font-bold">Charges Fixes</span>
-                                        <span id="forecast-fixed" class="font-black text-blue-400">0€</span>
+                                    
+                                    <div class="flex-1 flex flex-col gap-2 min-h-0">
+                                        <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest shrink-0 mt-1">Dépenses Simulées</span>
+                                        <div id="forecast-items-list" class="space-y-2 overflow-y-auto flex-1 pr-1 custom-scrollbar min-h-[60px]">
+                                            <!-- Liste dynamique générée en JS -->
+                                        </div>
+                                        <div class="flex gap-2 shrink-0 pt-1">
+                                            <input type="text" id="forecast-new-label" placeholder="Ex: Crédit auto" class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-blue-500 font-bold">
+                                            <input type="number" id="forecast-new-amount" placeholder="€" class="w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-2 text-xs text-center text-blue-400 font-black outline-none focus:border-blue-500">
+                                            <button onclick="addForecastItem()" class="bg-blue-600 hover:bg-blue-500 text-white rounded-lg px-3 py-2 transition-colors"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
                                     </div>
                                     
-                                    <div class="border-t border-slate-700/50 pt-4 mt-2">
+                                    <div class="border-t border-slate-700/50 pt-4 shrink-0">
                                         <label class="flex justify-between text-[10px] md:text-xs font-bold text-slate-500 uppercase mb-3">
                                             <span>Option d'épargne</span>
                                             <span id="forecast-savings-val" class="font-black text-amber-400 bg-amber-900/30 px-2 py-0.5 rounded">0€ (10%)</span>
@@ -199,10 +207,9 @@
                                     </div>
                                 </div>
                                 
-                                <div class="mt-auto pt-4 border-t border-slate-700 flex justify-between items-end">
+                                <div class="mt-auto pt-4 border-t border-slate-700 flex justify-between items-end shrink-0">
                                     <div class="flex flex-col">
-                                        <span class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Reste à vivre</span>
-                                        <span class="text-[8px] text-slate-600 italic">Pour vos loisirs, courses...</span>
+                                        <span class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Reste à vivre (Simulé)</span>
                                     </div>
                                     <span id="forecast-remaining" class="text-2xl font-black text-white">0€</span>
                                 </div>
@@ -617,6 +624,8 @@
         // Variables globales pour le prévisionnel
         let currentTotalIncome = 0;
         let currentFixedExpenses = 0;
+        let forecastItems = [];
+        let forecastInitialized = false;
 
         // Ajout du paramètre pour suivre le type de graphique à afficher (membres ou catégories)
         let currentChartMode = 'members';
@@ -908,25 +917,73 @@
                 btnChart.classList.remove('bg-slate-700', 'text-white', 'shadow-sm');
                 btnChart.classList.add('text-slate-500', 'hover:text-slate-300');
                 
+                // Initialiser le bac à sable avec les charges fixes actuelles la première fois
+                if(!forecastInitialized) {
+                    forecastItems = [{ id: 'base_fixed', label: 'Charges fixes réelles', amount: currentFixedExpenses }];
+                    forecastInitialized = true;
+                }
+                
                 if(window.updateForecast) window.updateForecast();
             }
         };
 
+        window.renderForecastList = () => {
+            const listEl = getEl('forecast-items-list');
+            if(!listEl) return;
+            
+            if (forecastItems.length === 0) {
+                listEl.innerHTML = '<p class="text-[10px] text-slate-500 italic text-center py-2">Aucune dépense simulée.</p>';
+                return;
+            }
+            
+            listEl.innerHTML = forecastItems.map(item => `
+                <div class="flex justify-between items-center bg-slate-800 p-2 rounded-lg border border-slate-700/50 text-xs shadow-sm">
+                    <span class="font-bold text-slate-300 truncate pr-2">${escapeHTML(item.label)}</span>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <span class="font-black text-red-400">-${item.amount.toFixed(0)}€</span>
+                        <button onclick="removeForecastItem('${item.id}')" class="text-slate-500 hover:text-red-400 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        };
+
+        window.addForecastItem = () => {
+            const labelInput = getEl('forecast-new-label');
+            const amountInput = getEl('forecast-new-amount');
+            const label = labelInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+            
+            if(!label || isNaN(amount) || amount <= 0) return;
+            
+            forecastItems.push({ id: Date.now().toString(), label, amount });
+            labelInput.value = '';
+            amountInput.value = '';
+            
+            updateForecast();
+        };
+
+        window.removeForecastItem = (id) => {
+            forecastItems = forecastItems.filter(item => item.id !== id);
+            updateForecast();
+        };
+
         window.updateForecast = () => {
             const incomeEl = getEl('forecast-income');
-            const fixedEl = getEl('forecast-fixed');
             const savingsValEl = getEl('forecast-savings-val');
             const remainingEl = getEl('forecast-remaining');
             const slider = getEl('forecast-savings-slider');
             
             if(!incomeEl || !slider) return;
             
+            renderForecastList();
+            
             const pct = parseInt(slider.value) || 0;
             const savingsAmt = (currentTotalIncome * pct) / 100;
-            const remaining = currentTotalIncome - currentFixedExpenses - savingsAmt;
+            const simulatedExpensesTotal = forecastItems.reduce((acc, item) => acc + item.amount, 0);
+            
+            const remaining = currentTotalIncome - simulatedExpensesTotal - savingsAmt;
             
             incomeEl.textContent = currentTotalIncome.toFixed(0) + '€';
-            fixedEl.textContent = currentFixedExpenses.toFixed(0) + '€';
             savingsValEl.textContent = savingsAmt.toFixed(0) + '€ (' + pct + '%)';
             remainingEl.textContent = remaining.toFixed(0) + '€';
             remainingEl.className = `text-2xl font-black ${remaining < 0 ? 'text-red-400' : 'text-white'}`;

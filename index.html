@@ -1545,22 +1545,32 @@
                     const isCollapsed = collapsedWeekGroups.has(week);
 
                     let marqueeContent = '';
+                    let itemCountForSpeed = 0; // <-- NOUVEAU : On compte les éléments
+                    
                     Object.keys(group.users).forEach(uid => {
                         const uAmt = group.users[uid];
                         const uProf = stats.users[uid] || { avatar: '👤' };
                         const avatarContent = uProf.avatar.startsWith('http') ? `<img src="${uProf.avatar}" class="w-4 h-4 rounded-full inline-block align-middle mr-1 border border-slate-600" referrerpolicy="no-referrer">` : `<span class="mr-1">${uProf.avatar}</span>`;
                         marqueeContent += `<span class="mx-3 flex items-center font-bold text-slate-200 shrink-0">${avatarContent}${uAmt.toFixed(0)}€</span>`;
+                        itemCountForSpeed++; // <-- NOUVEAU
                     });
+                    
                     Object.keys(group.categories).forEach(cat => {
                         const cAmt = group.categories[cat];
                         const cIcon = expenseCategories[cat]?.icon || '🔍';
                         const cColor = expenseCategories[cat]?.color || 'text-slate-400';
                         marqueeContent += `<span class="mx-3 font-black ${cColor} shrink-0">${cIcon} ${cAmt.toFixed(0)}€</span>`;
+                        itemCountForSpeed++; // <-- NOUVEAU
                     });
+                    
                     marqueeContent += `<span class="mx-3 font-black text-amber-400 uppercase tracking-widest border-l border-slate-600 pl-3 shrink-0">TOTAL ${group.total.toFixed(0)}€</span>`;
+                    itemCountForSpeed++; // <-- NOUVEAU pour le total
                     marqueeContent += `<span class="mx-6 text-slate-600 shrink-0">|</span>`;
 
-                    const tickerInner = `<div class="animate-marquee flex items-center">${marqueeContent}${marqueeContent}</div>`;
+                    // <-- NOUVEAU : Vitesse constante (~4.5 secondes par élément, avec un minimum de 15 secondes)
+                    const dynamicDuration = Math.max(15, itemCountForSpeed * 4.5);
+
+                    const tickerInner = `<div class="animate-marquee flex items-center" style="animation-duration: ${dynamicDuration}s">${marqueeContent}${marqueeContent}</div>`;
 
                     return `
                     <div class="mb-4">

@@ -34,6 +34,11 @@
         
         .slide-up { animation: slideUp 0.5s ease-out forwards; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        @keyframes marquee { 0% { transform: translateX(0%); } 100% { transform: translateX(-50%); } }
+        .animate-marquee { display: flex; width: max-content; animation: marquee 20s linear infinite; }
+        .marquee-container:hover .animate-marquee { animation-play-state: paused; }
+        .mask-image-edges { -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent); mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent); }
     </style>
 </head>
 <body class="bg-slate-900 min-h-screen text-slate-200 font-sans selection:bg-blue-500/30 relative">
@@ -1441,7 +1446,7 @@
             }
 
             const groupedFixed = {};
-            const groupedPonct = { 'S1': { total: 0, items: [] }, 'S2': { total: 0, items: [] }, 'S3': { total: 0, items: [] }, 'S4': { total: 0, items: [] } };
+            const groupedPonct = { 'S1': { total: 0, items: [], users: {}, categories: {} }, 'S2': { total: 0, items: [], users: {}, categories: {} }, 'S3': { total: 0, items: [], users: {}, categories: {} }, 'S4': { total: 0, items: [], users: {}, categories: {} } };
 
             expensesData.forEach(exp => {
                 const uId = exp.payer.uid;
@@ -1492,6 +1497,10 @@
                     const week = getExpenseWeek(exp.date);
                     groupedPonct[week].total += exp.amount;
                     groupedPonct[week].items.push(liHTML);
+                    if(!groupedPonct[week].users[uId]) groupedPonct[week].users[uId] = 0;
+                    groupedPonct[week].users[uId] += exp.amount;
+                    if(!groupedPonct[week].categories[catId]) groupedPonct[week].categories[catId] = 0;
+                    groupedPonct[week].categories[catId] += exp.amount;
                 }
                 stats.users[uId].spent += exp.amount;
             });
@@ -1535,16 +1544,37 @@
                     if (group.items.length === 0) return '';
                     const isCollapsed = collapsedWeekGroups.has(week);
 
+                    let marqueeContent = '';
+                    Object.keys(group.users).forEach(uid => {
+                        const uAmt = group.users[uid];
+                        const uProf = stats.users[uid] || { avatar: '👤' };
+                        const avatarContent = uProf.avatar.startsWith('http') ? `<img src="${uProf.avatar}" class="w-4 h-4 rounded-full inline-block align-middle mr-1 border border-slate-600" referrerpolicy="no-referrer">` : `<span class="mr-1">${uProf.avatar}</span>`;
+                        marqueeContent += `<span class="mx-3 flex items-center font-bold text-slate-200 shrink-0">${avatarContent}${uAmt.toFixed(0)}€</span>`;
+                    });
+                    Object.keys(group.categories).forEach(cat => {
+                        const cAmt = group.categories[cat];
+                        const cIcon = expenseCategories[cat]?.icon || '🔍';
+                        const cColor = expenseCategories[cat]?.color || 'text-slate-400';
+                        marqueeContent += `<span class="mx-3 font-black ${cColor} shrink-0">${cIcon} ${cAmt.toFixed(0)}€</span>`;
+                    });
+                    marqueeContent += `<span class="mx-3 font-black text-amber-400 uppercase tracking-widest border-l border-slate-600 pl-3 shrink-0">TOTAL ${group.total.toFixed(0)}€</span>`;
+                    marqueeContent += `<span class="mx-6 text-slate-600 shrink-0">|</span>`;
+
+                    const tickerInner = `<div class="animate-marquee flex items-center">${marqueeContent}${marqueeContent}</div>`;
+
                     return `
                     <div class="mb-4">
-                        <div onclick="toggleWeekGroup('${week}')" class="bg-slate-700/50 p-3 rounded-xl border border-slate-600 flex justify-between items-center cursor-pointer hover:bg-slate-700 transition-colors shadow-sm">
-                            <div class="flex items-center gap-3">
+                        <div onclick="toggleWeekGroup('${week}')" class="bg-slate-700/50 p-2 md:p-3 rounded-xl border border-slate-600 flex justify-between items-center cursor-pointer hover:bg-slate-700 transition-colors shadow-sm overflow-hidden">
+                            <div class="flex items-center gap-2 shrink-0 z-10 pr-2">
                                 <span class="bg-amber-500/20 text-amber-400 w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs border border-amber-500/30 shrink-0">${week}</span>
-                                <span class="font-bold text-slate-200 text-sm truncate">Semaine ${week.replace('S', '')}</span>
                             </div>
-                            <div class="flex items-center gap-3">
-                                <span class="font-black text-amber-400">${group.total.toFixed(2)}€</span>
-                                <div class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 shrink-0">
+                            
+                            <div class="flex-1 overflow-hidden relative marquee-container text-[10px] md:text-xs mask-image-edges h-8 flex items-center">
+                                ${tickerInner}
+                            </div>
+
+                            <div class="flex items-center gap-3 shrink-0 z-10 pl-2">
+                                <div class="w-6 h-6 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 shrink-0 shadow-inner">
                                     <i class="fa-solid fa-chevron-${isCollapsed ? 'down' : 'up'} transition-transform"></i>
                                 </div>
                             </div>

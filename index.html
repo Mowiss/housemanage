@@ -75,19 +75,23 @@
                 </div>
                 <h2 class="hidden lg:block text-slate-100 font-black tracking-widest uppercase text-sm text-center">Notre Foyer</h2>
             </div>
-            <button onclick="switchTab('tasks')" id="tab-tasks-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-blue-400 w-1/4 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
+            <button onclick="switchTab('tasks')" id="tab-tasks-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-blue-400 flex-1 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
                 <i class="fa-solid fa-check-double text-2xl lg:text-xl w-8 text-center shrink-0"></i>
                 <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Tâches</span>
             </button>
-            <button onclick="switchTab('agenda')" id="tab-agenda-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 w-1/4 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
+            <button onclick="switchTab('groceries')" id="tab-groceries-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 flex-1 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
+                <i class="fa-solid fa-cart-shopping text-2xl lg:text-xl w-8 text-center shrink-0"></i>
+                <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Courses</span>
+            </button>
+            <button onclick="switchTab('agenda')" id="tab-agenda-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 flex-1 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
                 <i class="fa-solid fa-calendar-days text-2xl lg:text-xl w-8 text-center shrink-0"></i>
                 <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Agenda</span>
             </button>
-            <button onclick="switchTab('accounts')" id="tab-accounts-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 w-1/4 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
+            <button onclick="switchTab('accounts')" id="tab-accounts-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 flex-1 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
                 <i class="fa-solid fa-wallet text-2xl lg:text-xl w-8 text-center shrink-0"></i>
                 <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Comptes</span>
             </button>
-            <button onclick="switchTab('profile')" id="tab-profile-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 w-1/4 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
+            <button onclick="switchTab('profile')" id="tab-profile-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 flex-1 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
                 <i class="fa-solid fa-user-gear text-2xl lg:text-xl w-8 text-center shrink-0"></i>
                 <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Profil</span>
             </button>
@@ -128,6 +132,24 @@
                             </div>
                             <div id="archived-tasks-list" class="columns-1 md:columns-2 gap-4 lg:gap-6 opacity-60 w-full hover:opacity-100 transition-opacity min-w-0"></div>
                         </div>
+                    </div>
+                </section>
+
+                <!-- SECTION COURSES -->
+                <section id="section-groceries" class="hidden space-y-6 w-full min-w-0">
+                    <div class="bg-slate-800 rounded-2xl shadow-xl p-3 md:p-5 border border-slate-700 w-full flex gap-2 md:gap-3">
+                        <input type="text" id="new-grocery-input" placeholder="Ajouter un article (ex: Beurre, Lait...)" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 md:py-4 text-white outline-none focus:border-emerald-500 font-bold" onkeypress="if(event.key === 'Enter') addGrocery()">
+                        <button onclick="addGrocery()" class="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl px-5 md:px-8 transition-colors font-black shadow-lg"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+
+                    <div class="bg-slate-800 rounded-2xl shadow-xl border border-slate-700 overflow-hidden w-full">
+                        <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/80">
+                            <h2 class="text-[10px] md:text-xs font-black uppercase text-slate-500 tracking-widest flex items-center gap-2"><i class="fa-solid fa-basket-shopping text-emerald-500"></i> Liste en cours</h2>
+                            <button onclick="clearCompletedGroceries()" class="text-[10px] bg-red-500/10 text-red-400 hover:bg-red-500/20 px-3 py-1.5 rounded-lg font-bold transition-colors shadow-sm"><i class="fa-solid fa-trash-can"></i> Nettoyer</button>
+                        </div>
+                        <ul id="groceries-list" class="divide-y divide-slate-700/50 max-h-[60vh] overflow-y-auto custom-scrollbar bg-slate-900/30">
+                            <!-- Dynamique -->
+                        </ul>
                     </div>
                 </section>
 
@@ -693,6 +715,7 @@
         const elements = {
             todoList: () => getEl('todo-list'),
             archivedTasksList: () => getEl('archived-tasks-list'),
+            groceriesList: () => getEl('groceries-list'),
             agendaContainer: () => getEl('agenda-container'),
             recurringList: () => getEl('recurring-expenses-list'),
             ponctuelleList: () => getEl('ponctuelle-expenses-list'),
@@ -710,6 +733,7 @@
         let expensesData = [];
         let settlementsData = [];
         let satellitesData = [];
+        let groceriesData = [];
         let membersData = {}; 
         let currentUser = null;
         let localProfile = null;
@@ -969,6 +993,10 @@
                 satellitesData = snap.docs.map(d => ({id: d.id, ...d.data()})); 
                 renderSatellites();
             });
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'groceries'), snap => { 
+                groceriesData = snap.docs.map(d => ({id: d.id, ...d.data()})); 
+                renderGroceries();
+            });
         }
 
         async function checkAutoClose() {
@@ -1008,12 +1036,15 @@
         }
 
         window.switchTab = (tab) => {
-            ['tasks', 'agenda', 'accounts', 'profile'].forEach(s => {
+            ['tasks', 'groceries', 'agenda', 'accounts', 'profile'].forEach(s => {
                 const sec = getEl(`section-${s}`); const btn = getEl(`tab-${s}-btn`);
                 if(sec) sec.style.display = tab === s ? 'block' : 'none';
                 if(btn) {
-                    btn.classList.toggle('text-blue-400', tab === s && s !== 'accounts' && s !== 'agenda');
-                    btn.classList.toggle('bg-slate-700/30', tab === s && s !== 'accounts' && s !== 'agenda');
+                    btn.classList.toggle('text-blue-400', tab === s && s === 'tasks');
+                    btn.classList.toggle('bg-slate-700/30', tab === s && s === 'tasks');
+
+                    btn.classList.toggle('text-emerald-400', tab === s && s === 'groceries');
+                    btn.classList.toggle('bg-slate-700/30', tab === s && s === 'groceries');
                     
                     btn.classList.toggle('text-emerald-500', tab === s && s === 'accounts');
                     btn.classList.toggle('bg-slate-700/30', tab === s && s === 'accounts');
@@ -1024,8 +1055,8 @@
                     btn.classList.toggle('text-slate-400', tab !== s);
                 }
             });
-            const titles = { 'tasks':'Nos Tâches', 'agenda':'Calendrier', 'accounts':'Comptes', 'profile':'Mon Profil' };
-            const icons = { 'tasks':'fa-clipboard-list text-blue-500', 'agenda':'fa-calendar-days text-violet-500', 'accounts':'fa-wallet text-emerald-500', 'profile':'fa-user-gear text-slate-400' };
+            const titles = { 'tasks':'Nos Tâches', 'groceries':'Liste de Courses', 'agenda':'Calendrier', 'accounts':'Comptes', 'profile':'Mon Profil' };
+            const icons = { 'tasks':'fa-clipboard-list text-blue-500', 'groceries':'fa-cart-shopping text-emerald-400', 'agenda':'fa-calendar-days text-violet-500', 'accounts':'fa-wallet text-emerald-500', 'profile':'fa-user-gear text-slate-400' };
             getEl('main-title').innerHTML = `<i class="fa-solid ${icons[tab]}"></i> ${titles[tab]}`;
             
             if(tab === 'agenda') renderAgenda(); 
@@ -2019,6 +2050,78 @@
 
         window.deleteTaskFromEditor = async () => { if (!currentUser || !appId || !currentEditingId) return; await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', currentEditingId)); closeEditor(); };
         
+        // --- ACTIONS API COURSES ---
+        window.addGrocery = async () => {
+            if (!currentUser || !appId) return;
+            const input = getEl('new-grocery-input');
+            const text = input.value.trim();
+            if (!text) return;
+            
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'groceries'), {
+                text: text,
+                completed: false,
+                createdAt: Date.now(),
+                authorUid: currentUser.uid
+            });
+            input.value = '';
+        };
+
+        window.toggleGrocery = async (id, currentStatus) => {
+            if (!currentUser || !appId) return;
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'groceries', id), {
+                completed: !currentStatus
+            });
+        };
+
+        window.deleteGrocery = async (id) => {
+            if (!currentUser || !appId) return;
+            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'groceries', id));
+        };
+
+        window.clearCompletedGroceries = async () => {
+            if (!currentUser || !appId) return;
+            const completedItems = groceriesData.filter(g => g.completed);
+            if (completedItems.length === 0) return;
+            
+            for (const item of completedItems) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'groceries', item.id));
+            }
+        };
+
+        function renderGroceries() {
+            const list = elements.groceriesList();
+            if (!list) return;
+
+            if (groceriesData.length === 0) {
+                list.innerHTML = '<li class="p-8 text-center text-slate-500 text-sm italic w-full">Votre liste de courses est vide.</li>';
+                return;
+            }
+
+            // Trier : non cochés d'abord, puis cochés. Ensuite tri chronologique inverse.
+            const sortedGroceries = [...groceriesData].sort((a, b) => {
+                if (a.completed === b.completed) return b.createdAt - a.createdAt;
+                return a.completed ? 1 : -1;
+            });
+
+            list.innerHTML = sortedGroceries.map(item => {
+                const author = membersData[item.authorUid];
+                const authorColor = author ? author.color : '#3b82f6';
+                
+                return `
+                <li class="p-3 md:p-4 flex items-center justify-between gap-3 transition-colors hover:bg-slate-800/50 w-full min-w-0 group ${item.completed ? 'opacity-50' : ''}">
+                    <div class="flex items-center gap-3 md:gap-4 flex-1 min-w-0 cursor-pointer" onclick="toggleGrocery('${item.id}', ${item.completed})">
+                        <div class="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${item.completed ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500 group-hover:border-slate-300'}" style="${!item.completed && authorColor ? `border-color: ${authorColor}80;` : ''}">
+                            ${item.completed ? '<i class="fa-solid fa-check text-[10px] md:text-sm text-white"></i>' : ''}
+                        </div>
+                        <span class="font-bold text-sm md:text-base truncate flex-1 min-w-0 ${item.completed ? 'line-through text-slate-500' : 'text-slate-200'}">${escapeHTML(item.text)}</span>
+                    </div>
+                    <button onclick="deleteGrocery('${item.id}')" class="text-slate-600 hover:text-red-400 p-2 transition-colors shrink-0">
+                        <i class="fa-solid fa-xmark text-lg md:text-xl"></i>
+                    </button>
+                </li>`;
+            }).join('');
+        }
+
         // --- ACTIONS API DÉPENSES ---
         window.openExpenseEditor = (id = null) => {
             currentExpenseEditingId = id;

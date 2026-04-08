@@ -55,8 +55,7 @@
                     Continuer
                 </button>
             </div>
-            <!-- VERSION MISE À JOUR -->
-            <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V1.13</p>
+            <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V1.14</p>
         </div>
     </div>
 
@@ -738,11 +737,11 @@
             return 'S4';
         }
 
-        // Ajout du paramètre pour suivre le type de graphique à afficher (membres ou catégories)
+        // Ajout du paramètre pour suivre le type de graphique à afficher (membres, catégories, moyennes)
         let currentChartMode = 'members';
         window.setChartMode = (mode) => {
             currentChartMode = mode;
-            renderExpenses(); // On redessine le graphique avec la nouvelle logique
+            renderExpenses(); 
         };
 
         // Palettes des Tâches
@@ -755,7 +754,7 @@
             'purple': { bg: 'bg-purple-950/40', border: 'border-purple-500/50', accent: 'bg-purple-500', hex: '#a855f7' }
         };
 
-        // Palettes des Catégories de Dépenses avec hex ajoutés pour le Camembert
+        // Palettes des Catégories de Dépenses
         const expenseCategories = {
             'habits': { icon: '👗', label: 'Habits', color: 'text-pink-400', border: 'border-pink-500/30', bg: 'bg-pink-900/30', hex: '#f472b6' },
             'carburant': { icon: '⛽', label: 'Carburant', color: 'text-orange-400', border: 'border-orange-500/30', bg: 'bg-orange-900/30', hex: '#fb923c' },
@@ -938,7 +937,8 @@
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'settlements'), snap => { 
                 settlementsData = snap.docs.map(d => ({id: d.id, ...d.data()})); 
                 renderFinanceArchives(); 
-                renderFinanceChart(); 
+                renderFinanceChart();
+                renderExpenses(); // Re-render for averages if new month closed
             });
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'satellites'), snap => { 
                 satellitesData = snap.docs.map(d => ({id: d.id, ...d.data()})); 
@@ -1396,6 +1396,38 @@
             }
         }
 
+        // Importation des moyennes dans le prévisionnel
+        window.importAveragesToForecast = () => {
+            if(!window.__currentAveragesForImport || window.__currentAveragesForImport.length === 0) {
+                alert("Aucune moyenne disponible à importer.");
+                return;
+            }
+
+            switchFinanceTab('forecast');
+
+            if(!forecastInitialized) {
+                forecastItems = [{ id: 'base_fixed', label: 'Charges fixes réelles', amount: currentFixedExpenses }];
+                forecastInitialized = true;
+            }
+
+            window.__currentAveragesForImport.forEach(item => {
+                const catData = expenseCategories[item.catId] || expenseCategories['divers'];
+                const existingIndex = forecastItems.findIndex(f => f.id === `avg_${item.catId}`);
+
+                if(existingIndex >= 0) {
+                    forecastItems[existingIndex].amount = item.avgAmt; 
+                } else {
+                    forecastItems.push({
+                        id: `avg_${item.catId}`,
+                        label: `Moyenne : ${catData.label}`,
+                        amount: item.avgAmt
+                    });
+                }
+            });
+
+            updateForecast();
+        };
+
         // --- EXPENSES RENDERER ---
         function renderExpenses() {
             const rec = elements.recurringList(); const pon = elements.ponctuelleList(); if(!rec || !pon) return;
@@ -1538,16 +1570,15 @@
             let gradientStops = [];
             let currentPct = 0;
             let legendHTML = '';
+            let chartHTML = '';
 
-            // --- DEBUT LOGIQUE BASULÉE SELON LE MODE ---
             const modeToggleHTML = `
-                <div class="flex bg-slate-800 rounded-lg p-1 mb-6 border border-slate-700 w-full max-w-[250px] mx-auto text-xs relative z-20 shadow-inner">
-                    <button onclick="window.setChartMode('members')" class="flex-1 py-2 px-2 rounded-md transition-all ${currentChartMode === 'members' ? 'bg-slate-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'}">Par membre</button>
-                    <button onclick="window.setChartMode('categories')" class="flex-1 py-2 px-2 rounded-md transition-all ${currentChartMode === 'categories' ? 'bg-slate-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'}">Par catégorie</button>
+                <div class="flex bg-slate-800 rounded-lg p-1 mb-6 border border-slate-700 w-full max-w-[320px] mx-auto text-[10px] md:text-xs relative z-20 shadow-inner">
+                    <button onclick="window.setChartMode('members')" class="flex-1 py-2 px-1 rounded-md transition-all ${currentChartMode === 'members' ? 'bg-slate-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'}">Membres</button>
+                    <button onclick="window.setChartMode('categories')" class="flex-1 py-2 px-1 rounded-md transition-all ${currentChartMode === 'categories' ? 'bg-slate-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'}">Catégories</button>
+                    <button onclick="window.setChartMode('averages')" class="flex-1 py-2 px-1 rounded-md transition-all ${currentChartMode === 'averages' ? 'bg-slate-600 text-white font-bold shadow' : 'text-slate-400 hover:text-slate-200'}">Moyennes</button>
                 </div>
             `;
-
-            let chartHTML = '';
 
             if (currentChartMode === 'members') {
                 if (totalIncome > 0) {
@@ -1619,8 +1650,7 @@
                         </div>
                     </div>
                 `;
-            } else {
-                // LOGIQUE "PAR CATÉGORIE"
+            } else if (currentChartMode === 'categories') {
                 if (totalS > 0) {
                     const catStats = {};
                     expensesData.forEach(exp => {
@@ -1639,7 +1669,6 @@
                         catStats[catId].users[payerUid] += exp.amount;
                     });
 
-                    // Trier les catégories de la plus grosse à la plus petite dépense
                     const sortedCats = Object.keys(catStats).sort((a,b) => catStats[b].total - catStats[a].total);
 
                     sortedCats.forEach(catId => {
@@ -1652,7 +1681,6 @@
                             currentPct += spentPct;
                         }
                         
-                        // Jauge de répartition par membre avec ordre constant (tri alphabétique)
                         let gaugeHTML = '';
                         const sortedUids = Object.keys(catStats[catId].users).sort((uidA, uidB) => {
                             const nameA = (stats.users[uidA]?.name || 'Z').toLowerCase();
@@ -1706,8 +1734,121 @@
                         </div>
                     </div>
                 `;
+            } else if (currentChartMode === 'averages') {
+                // LOGIQUE "MOYENNES MENSUELLES HISTORIQUES"
+                const historyStats = {};
+                let monthsCount = settlementsData.length;
+
+                if (monthsCount > 0) {
+                    settlementsData.forEach(settlement => {
+                        if(settlement.snapshot) {
+                            settlement.snapshot.forEach(exp => {
+                                const catId = exp.isRecurring ? 'fixe' : (exp.category || 'divers');
+                                if(!historyStats[catId]) historyStats[catId] = 0;
+                                historyStats[catId] += exp.amount;
+                            });
+                        }
+                    });
+                }
+
+                const currentStats = {};
+                expensesData.forEach(exp => {
+                    const catId = exp.isRecurring ? 'fixe' : (exp.category || 'divers');
+                    if(!currentStats[catId]) currentStats[catId] = 0;
+                    currentStats[catId] += exp.amount;
+                });
+
+                const averagesData = [];
+                let totalAverage = 0;
+
+                const allCats = new Set([...Object.keys(historyStats), ...Object.keys(currentStats)]);
+
+                allCats.forEach(catId => {
+                    const histTotal = historyStats[catId] || 0;
+                    const avgAmt = monthsCount > 0 ? (histTotal / monthsCount) : 0;
+                    const currAmt = currentStats[catId] || 0;
+
+                    totalAverage += avgAmt;
+
+                    let trendIcon = '<i class="fa-solid fa-minus"></i>';
+                    let trendColor = 'text-slate-600';
+                    
+                    if (monthsCount > 0 && avgAmt > 0) {
+                        // Tolérance de 10% pour la flèche rouge ou verte
+                        if (currAmt > avgAmt * 1.1) { trendIcon = '<i class="fa-solid fa-arrow-trend-up"></i>'; trendColor = 'text-red-400'; }
+                        else if (currAmt < avgAmt * 0.9) { trendIcon = '<i class="fa-solid fa-arrow-trend-down"></i>'; trendColor = 'text-emerald-400'; }
+                        else { trendIcon = '<i class="fa-solid fa-arrow-right"></i>'; trendColor = 'text-amber-400'; }
+                    }
+
+                    averagesData.push({ catId, avgAmt, currAmt, trendIcon, trendColor });
+                });
+
+                window.__currentAveragesForImport = averagesData.filter(d => d.avgAmt > 0 && d.catId !== 'fixe');
+
+                averagesData.sort((a, b) => b.avgAmt - a.avgAmt);
+
+                if (totalAverage > 0 || totalS > 0) {
+                    const pieTotal = totalAverage > 0 ? totalAverage : totalS;
+
+                    averagesData.forEach(item => {
+                        const catData = expenseCategories[item.catId] || expenseCategories['divers'];
+                        const displayAmt = totalAverage > 0 ? item.avgAmt : item.currAmt;
+                        const spentPct = (displayAmt / pieTotal) * 100;
+
+                        if (spentPct > 0) {
+                            gradientStops.push(`${catData.hex} ${currentPct}% ${currentPct + spentPct}%`);
+                            currentPct += spentPct;
+                        }
+
+                        legendHTML += `
+                            <div class="flex items-center justify-between text-xs mb-2 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 hover:bg-slate-800 transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-base md:text-lg">${catData.icon}</span>
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-slate-200 text-sm">${catData.label}</span>
+                                        <span class="text-[9px] text-slate-500 uppercase mt-0.5">Ce mois : ${item.currAmt.toFixed(0)}€</span>
+                                    </div>
+                                </div>
+                                <div class="text-right flex items-center gap-3">
+                                    <div class="flex flex-col items-end">
+                                        <span class="block font-black ${catData.color}">~${item.avgAmt.toFixed(0)}€/m</span>
+                                        <span class="block text-[9px] text-slate-500 font-bold uppercase mt-0.5">Moyenne</span>
+                                    </div>
+                                    <div class="w-6 h-6 rounded-full bg-slate-800 flex items-center justify-center shadow-inner ${item.trendColor}" title="Tendance par rapport à la moyenne">
+                                        ${item.trendIcon}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    gradientStops.push(`transparent 0% 100%`);
+                    legendHTML = '<p class="text-xs text-slate-500 italic text-center w-full mt-4">Aucune donnée historique pour calculer une moyenne.</p>';
+                }
+
+                const importBtnHTML = totalAverage > 0 ? `
+                    <button onclick="window.importAveragesToForecast()" class="w-full mt-4 bg-amber-600/10 hover:bg-amber-600/30 border border-amber-500/50 text-amber-400 py-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Injecter dans le Prévisionnel
+                    </button>
+                ` : '';
+
+                chartHTML = `
+                    <div class="flex flex-col items-center w-full">
+                        ${modeToggleHTML}
+                        <div class="relative w-40 h-40 md:w-48 md:h-48 rounded-full border-4 border-slate-800 shadow-[0_0_25px_rgba(0,0,0,0.4)] mb-8 flex items-center justify-center transition-all"
+                             style="background: conic-gradient(${gradientStops.join(', ')}); background-color: #1e293b;">
+                             <div class="w-28 h-28 md:w-32 md:h-32 bg-slate-900 rounded-full shadow-inner flex flex-col items-center justify-center z-10 border border-slate-800">
+                                <span class="text-[8px] md:text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1 text-center leading-tight">Moyenne<br>Mensuelle</span>
+                                <span class="text-xl md:text-2xl font-black text-white">${totalAverage.toFixed(0)}€</span>
+                             </div>
+                        </div>
+                        <div class="w-full space-y-1 mb-2">
+                            ${legendHTML}
+                        </div>
+                        ${importBtnHTML}
+                    </div>
+                `;
             }
-            // --- FIN LOGIQUE BASULÉE ---
 
             elements.balanceSummary().innerHTML = summHTML; 
             elements.visualStats().innerHTML = chartHTML; 
@@ -2159,7 +2300,7 @@
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'members', memberToDeleteUid));
                 
                 if (memberToDeleteUid === currentUser.uid) {
-                    window.location.reload(); // Si on s'exclut soi-même, on recharge l'application
+                    window.location.reload(); 
                 } else {
                     closeConfirmModal();
                     btn.innerHTML = 'Oui, exclure';
@@ -2188,7 +2329,6 @@
                 if (navigator.share) {
                     await navigator.share(shareData);
                 } else {
-                    // Fallback si l'appareil ne supporte pas le menu natif (ex: PC de bureau)
                     await navigator.clipboard.writeText(`${shareData.text}\nLien : ${shareData.url}`);
                     btn.innerHTML = '<i class="fa-solid fa-check"></i> Copié !';
                     btn.classList.replace('bg-blue-600', 'bg-emerald-600');

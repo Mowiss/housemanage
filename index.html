@@ -374,6 +374,11 @@
                             </button>
                         </div>
 
+                        <!-- BOUTON INSTALLATION PWA -->
+                        <button id="install-pwa-btn" class="hidden w-full mt-4 bg-indigo-600 hover:bg-indigo-500 py-4 md:py-5 rounded-xl font-black shadow-lg text-white transition-all text-sm md:text-base min-w-0 truncate flex items-center justify-center gap-3">
+                            <i class="fa-solid fa-download"></i> Installer l'Application
+                        </button>
+
                         <!-- ZONE DE DANGER -->
                         <div class="mt-8 pt-8 border-t border-red-500/30 w-full">
                             <h3 class="text-sm font-black uppercase text-red-500 tracking-widest mb-4 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> Zone de Danger</h3>
@@ -474,6 +479,16 @@
                         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2">Priorité (Couleur)</label>
                         <div id="color-picker" class="flex flex-wrap gap-2 pt-1"></div>
                     </div>
+                </div>
+
+                <div class="border-t border-slate-700 pt-5">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-2"><i class="fa-solid fa-repeat"></i> Récurrence</label>
+                    <select id="edit-recurrence" class="w-full rounded-xl border border-slate-600 bg-slate-700 p-4 text-sm text-slate-100 outline-none appearance-none focus:border-blue-500 cursor-pointer">
+                        <option value="none">Une seule fois</option>
+                        <option value="daily">Tous les jours</option>
+                        <option value="weekly">Toutes les semaines</option>
+                        <option value="monthly">Tous les mois</option>
+                    </select>
                 </div>
 
                 <div class="border-t border-slate-700 pt-5">
@@ -651,7 +666,7 @@
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // VOS CLÉS FIREBASE DÉFINITIVES
         const firebaseConfig = {
@@ -666,7 +681,12 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
-        const db = getFirestore(app);
+        
+        // Initialisation de Firestore AVEC le cache local (Persistance hors-ligne)
+        const db = initializeFirestore(app, {
+            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+        });
+        
         let appId = null;
 
         const getEl = (id) => document.getElementById(id);
@@ -1373,7 +1393,7 @@
                                 <span class="${task.completed ? 'line-through text-slate-500' : 'font-bold text-slate-100'} break-words leading-tight text-base md:text-lg flex-1 min-w-0">${escapeHTML(task.text)}</span>
                                 ${hasDetails ? `<i class="fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-slate-400 text-base px-2 shrink-0 mt-0.5"></i>` : ''}
                             </div>
-                            ${task.dueDate ? `<p class="text-xs font-black mt-3 ${isOverdue ? 'text-red-400' : 'text-slate-400'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ''}
+                            ${task.dueDate ? `<p class="text-xs font-black mt-3 ${isOverdue ? 'text-red-400' : 'text-slate-400'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()} ${task.recurrence && task.recurrence !== 'none' ? '<i class="fa-solid fa-repeat ml-2 text-[10px]" title="Tâche récurrente"></i>' : ''}</p>` : ''}
                             ${detailsHTML}
                         </div>
                         <div class="flex items-center gap-2 shrink-0 pt-1 -mr-1">
@@ -1952,6 +1972,7 @@
                 text: title, 
                 description: getEl('edit-desc').value.trim(), 
                 dueDate: getEl('edit-due-date').value, 
+                recurrence: getEl('edit-recurrence').value,
                 assigneeUid: currentEditingAssignee, 
                 color: currentSelectedColor, 
                 subtasks: currentEditingSubtasks 
@@ -1960,7 +1981,42 @@
             else await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), { ...data, author: localProfile, completed: false, archived: false, createdAt: Date.now() });
             closeEditor();
         };
-        window.toggleTask = async (id, status) => { if (!currentUser || !appId) return; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', id), { completed: status, completedBy: status ? localProfile : null }); };
+
+        window.toggleTask = async (id, status) => { 
+            if (!currentUser || !appId) return; 
+            
+            const task = tasksData.find(t => t.id === id);
+            if (!task) return;
+
+            // Mise à jour de la tâche actuelle
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', id), { completed: status, completedBy: status ? localProfile : null }); 
+            
+            // Logique de récurrence (Clonage de la tâche pour la prochaine échéance si elle est cochée)
+            if (status === true && task.recurrence && task.recurrence !== 'none') {
+                let baseDate = task.dueDate ? new Date(task.dueDate) : new Date();
+                let nextDate = new Date(baseDate);
+
+                if (task.recurrence === 'daily') nextDate.setDate(nextDate.getDate() + 1);
+                else if (task.recurrence === 'weekly') nextDate.setDate(nextDate.getDate() + 7);
+                else if (task.recurrence === 'monthly') nextDate.setMonth(nextDate.getMonth() + 1);
+
+                const nextTask = { 
+                    text: task.text, 
+                    description: task.description || '', 
+                    dueDate: nextDate.toISOString().split('T')[0], 
+                    recurrence: task.recurrence,
+                    assigneeUid: task.assigneeUid || null, 
+                    color: task.color || 'white', 
+                    subtasks: (task.subtasks || []).map(s => ({...s, completed: false})), // On décoche toutes les étapes pour le futur
+                    author: localProfile, 
+                    completed: false, 
+                    archived: false, 
+                    createdAt: Date.now() 
+                };
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'tasks'), nextTask);
+            }
+        };
+
         window.deleteTaskFromEditor = async () => { if (!currentUser || !appId || !currentEditingId) return; await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'tasks', currentEditingId)); closeEditor(); };
         
         // --- ACTIONS API DÉPENSES ---
@@ -2229,6 +2285,7 @@
             const t = id ? tasksData.find(x => x.id === id) : null;
             getEl('modal-title').textContent = id ? "Modifier" : "Nouvelle Tâche";
             getEl('edit-title').value = t ? t.text : ''; getEl('edit-desc').value = t ? t.description : ''; getEl('edit-due-date').value = t ? t.dueDate : '';
+            getEl('edit-recurrence').value = t && t.recurrence ? t.recurrence : 'none';
             if(t) { 
                 currentEditingSubtasks = [...(t.subtasks || [])]; 
                 currentSelectedColor = t.color || 'white'; 
@@ -2381,6 +2438,39 @@
                 console.error('Partage annulé ou échoué', err);
             }
         };
+
+        // --- GESTION DE L'INSTALLATION PWA ---
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Empêche l'affichage automatique de la mini-bannière par le navigateur
+            e.preventDefault();
+            // Sauvegarde l'événement pour le déclencher via notre bouton
+            deferredPrompt = e;
+            // Rend notre bouton d'installation visible
+            const installBtn = getEl('install-pwa-btn');
+            if(installBtn) installBtn.classList.remove('hidden');
+        });
+
+        getEl('install-pwa-btn')?.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            
+            // Affiche la véritable fenêtre système d'installation
+            deferredPrompt.prompt();
+            
+            // Attend la réponse de l'utilisateur (Accepté ou Refusé)
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`L'utilisateur a ${outcome} l'installation.`);
+            
+            // L'événement ne peut être utilisé qu'une fois
+            deferredPrompt = null;
+            getEl('install-pwa-btn').classList.add('hidden');
+        });
+
+        // Masquer le bouton si l'application est installée avec succès
+        window.addEventListener('appinstalled', () => {
+            getEl('install-pwa-btn')?.classList.add('hidden');
+            console.log('PWA installée avec succès !');
+        });
 
     </script>
 </body>

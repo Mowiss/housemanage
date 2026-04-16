@@ -225,8 +225,14 @@
                             
                             <!-- VUE 1 : HISTORIQUE -->
                             <div id="finance-chart-container" class="p-5 bg-slate-900/50 flex-1 flex-col justify-end w-full min-w-0">
-                                <h2 id="finance-chart-title" class="text-[10px] font-black uppercase text-slate-600 mb-2 tracking-widest text-center truncate w-full">Historique (6 mois)</h2>
-                                <div class="w-full h-48 md:h-56 min-w-0 mt-4" id="finance-chart"></div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <h2 id="finance-chart-title" class="text-[10px] font-black uppercase text-slate-600 tracking-widest truncate">Historique (6 mois)</h2>
+                                    <div class="flex bg-slate-800 rounded-lg p-1 border border-slate-700/50 text-[9px] font-bold shrink-0">
+                                        <button onclick="setHistoryViewMode('cumulative')" id="btn-hist-cumul" class="px-2 py-1 rounded bg-slate-600 text-white shadow-sm transition-all">Cumul</button>
+                                        <button onclick="setHistoryViewMode('individual')" id="btn-hist-indiv" class="px-2 py-1 rounded text-slate-400 hover:text-white transition-all">Indiv</button>
+                                    </div>
+                                </div>
+                                <div class="w-full h-48 md:h-56 min-w-0 mt-2" id="finance-chart"></div>
                                 <div class="flex justify-center items-center gap-2 mt-4 pt-4 border-t border-slate-700/50">
                                     <button onclick="setChartTimeframe('day')" id="btn-tf-day" class="px-3 py-1 text-[9px] md:text-[10px] font-bold rounded-md bg-blue-600 text-white transition-colors shadow-sm">Jour</button>
                                     <button onclick="setChartTimeframe('month')" id="btn-tf-month" class="px-3 py-1 text-[9px] md:text-[10px] font-bold rounded-md bg-slate-800 text-slate-400 hover:text-white transition-colors">Mois</button>
@@ -299,7 +305,13 @@
 
                             <!-- VUE 4 : QUOTIDIEN -->
                             <div id="finance-daily-container" class="hidden p-5 bg-slate-900/50 flex-1 flex-col w-full min-w-0 gap-4 overflow-y-auto custom-scrollbar">
-                                <h2 class="text-[10px] font-black uppercase text-slate-600 tracking-widest text-center w-full shrink-0">Budget Quotidien Variable</h2>
+                                <div class="flex flex-col md:flex-row justify-between items-center w-full shrink-0 gap-3 border-b border-slate-700/50 pb-3">
+                                    <h2 class="text-[10px] font-black uppercase text-slate-600 tracking-widest text-center md:text-left">Budget Quotidien Variable</h2>
+                                    <div class="flex bg-slate-800 rounded-lg p-1 border border-slate-700/50 text-[9px] font-bold">
+                                        <button onclick="setDailyViewMode('individual')" id="btn-daily-indiv" class="px-3 py-1.5 rounded bg-slate-600 text-white shadow-sm transition-all">Individuel</button>
+                                        <button onclick="setDailyViewMode('cumulative')" id="btn-daily-cumul" class="px-3 py-1.5 rounded text-slate-400 hover:text-white transition-all">Cumulé</button>
+                                    </div>
+                                </div>
                                 <div id="daily-view-list" class="space-y-4 flex-1 pb-2">
                                     <!-- Liste générée dynamiquement -->
                                 </div>
@@ -859,6 +871,15 @@
         let expandedWeekGroups = new Set();
 
         let currentChartTimeframe = 'day';
+        let currentDailyViewMode = 'individual';
+        let currentHistoryViewMode = 'cumulative';
+
+        window.setHistoryViewMode = (mode) => {
+            currentHistoryViewMode = mode;
+            getEl('btn-hist-indiv').className = mode === 'individual' ? 'px-2 py-1 rounded bg-slate-600 text-white shadow-sm transition-all' : 'px-2 py-1 rounded text-slate-400 hover:text-white transition-all';
+            getEl('btn-hist-cumul').className = mode === 'cumulative' ? 'px-2 py-1 rounded bg-slate-600 text-white shadow-sm transition-all' : 'px-2 py-1 rounded text-slate-400 hover:text-white transition-all';
+            renderFinanceChart();
+        };
 
         window.toggleFixedGroup = (uid) => { 
             expandedFixedGroups.has(uid) ? expandedFixedGroups.delete(uid) : expandedFixedGroups.add(uid); 
@@ -904,7 +925,7 @@
             'courses': { icon: '🛒', label: 'Courses', color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-900/30', hex: '#34d399' },
             'restauration': { icon: '🍕', label: 'Resto', color: 'text-red-400', border: 'border-red-500/30', bg: 'bg-red-900/30', hex: '#f87171' },
             'apero': { icon: '🍸', label: 'Apéro', color: 'text-yellow-400', border: 'border-yellow-500/30', bg: 'bg-yellow-900/30', hex: '#facc15' },
-            'structure': { icon: '🏡', label: 'Structure', color: 'text-cyan-400', border: 'border-cyan-500/30', bg: 'bg-cyan-900/30', hex: '#22d3ee' },
+            'enfant': { icon: '🧸', label: 'Enfant', color: 'text-sky-400', border: 'border-sky-500/30', bg: 'bg-sky-900/30', hex: '#38bdf8' },
             'divers': { icon: '🔍', label: 'Divers', color: 'text-slate-400', border: 'border-slate-700', bg: 'bg-slate-800', hex: '#94a3b8' },
             'fixe': { icon: '⚙️', label: 'Fixe', color: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-900/30', hex: '#60a5fa' }
         };
@@ -1194,6 +1215,11 @@
                     forecastItems = [{ id: 'base_fixed', label: 'Charges fixes réelles', amount: currentFixedExpenses }];
                     forecastInitialized = true;
                 }
+                
+                // Récupération de la mémoire du % d'épargne
+                const savedPct = localStorage.getItem('savedSavingsPct');
+                if(savedPct) getEl('forecast-savings-slider').value = savedPct;
+
                 if(window.updateForecast) window.updateForecast();
             } else if(tab === 'satellites') {
                 satellitesCont.classList.remove('hidden');
@@ -1212,6 +1238,13 @@
 
         window.updateDailySavings = (uid, val) => {
             dailySavingsConfig[uid] = parseInt(val);
+            renderDailyView();
+        };
+
+        window.setDailyViewMode = (mode) => {
+            currentDailyViewMode = mode;
+            getEl('btn-daily-indiv').className = mode === 'individual' ? 'px-3 py-1.5 rounded bg-slate-600 text-white shadow-sm transition-all' : 'px-3 py-1.5 rounded text-slate-400 hover:text-white transition-all';
+            getEl('btn-daily-cumul').className = mode === 'cumulative' ? 'px-3 py-1.5 rounded bg-slate-600 text-white shadow-sm transition-all' : 'px-3 py-1.5 rounded text-slate-400 hover:text-white transition-all';
             renderDailyView();
         };
 
@@ -1245,62 +1278,127 @@
             });
 
             let html = '';
-            Object.keys(userStats).forEach(uid => {
-                const stat = userStats[uid];
-                const totalIncome = stat.income + (stat.includeVar ? stat.extraIncome : 0);
-                
-                if (totalIncome <= 0) return;
+            
+            if (currentDailyViewMode === 'individual') {
+                Object.keys(userStats).forEach(uid => {
+                    const stat = userStats[uid];
+                    const totalIncome = stat.income + (stat.includeVar ? stat.extraIncome : 0);
+                    
+                    if (totalIncome <= 0) return;
 
-                if (dailySavingsConfig[uid] === undefined) dailySavingsConfig[uid] = 10;
-                const savingsPct = dailySavingsConfig[uid];
-                const savingsAmt = (totalIncome * savingsPct) / 100;
+                    if (dailySavingsConfig[uid] === undefined) dailySavingsConfig[uid] = 10;
+                    const savingsPct = dailySavingsConfig[uid];
+                    const savingsAmt = (totalIncome * savingsPct) / 100;
 
-                const budgetVariableRestant = totalIncome - stat.fixed - savingsAmt;
-                const dailyBudget = Math.max(0, budgetVariableRestant / daysInMonth);
-                const dailySpent = stat.variable / daysPassed;
+                    const budgetVariableRestant = totalIncome - stat.fixed - savingsAmt;
+                    const dailyBudget = Math.max(0, budgetVariableRestant / daysInMonth);
+                    const dailySpent = stat.variable / daysPassed;
 
-                const avatarContent = stat.avatar && stat.avatar.startsWith('http') ? `<img src="${stat.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">` : (stat.avatar || '👤');
+                    const avatarContent = stat.avatar && stat.avatar.startsWith('http') ? `<img src="${stat.avatar}" class="w-full h-full object-cover" referrerpolicy="no-referrer" onerror="this.outerHTML='👤'">` : (stat.avatar || '👤');
 
-                const isOverBudget = dailySpent > dailyBudget;
-                const progressPct = dailyBudget > 0 ? Math.min(100, (dailySpent / dailyBudget) * 100) : 100;
-                
-                html += `
-                <div class="bg-slate-800 border border-slate-700/50 rounded-xl p-4 shadow-sm relative overflow-hidden group">
-                    <div class="flex items-center gap-3 mb-3 border-b border-slate-700 pb-2">
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs overflow-hidden border-2 bg-slate-700 shrink-0" style="border-color: ${stat.color||'#3b82f6'};">${avatarContent}</div>
-                        <span class="font-bold text-slate-200 flex-1 truncate">${escapeHTML(stat.name)}</span>
-                        <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Jour ${daysPassed}/${daysInMonth}</span>
-                    </div>
-
-                    <div class="flex justify-between items-end mb-1">
-                        <div class="flex flex-col">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Moyenne (Variable)</span>
-                            <span class="text-lg font-black ${isOverBudget ? 'text-red-400' : 'text-white'}">${dailySpent.toFixed(1)}€<span class="text-xs text-slate-500 font-normal">/j</span></span>
+                    const isOverBudget = dailySpent > dailyBudget;
+                    const progressPct = dailyBudget > 0 ? Math.min(100, (dailySpent / dailyBudget) * 100) : 100;
+                    
+                    html += `
+                    <div class="bg-slate-800 border border-slate-700/50 rounded-xl p-4 shadow-sm relative overflow-hidden group">
+                        <div class="flex items-center gap-3 mb-3 border-b border-slate-700 pb-2">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs overflow-hidden border-2 bg-slate-700 shrink-0" style="border-color: ${stat.color||'#3b82f6'};">${avatarContent}</div>
+                            <span class="font-bold text-slate-200 flex-1 truncate">${escapeHTML(stat.name)}</span>
+                            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Jour ${daysPassed}/${daysInMonth}</span>
                         </div>
-                        <div class="flex flex-col text-right">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">Budget Max</span>
-                            <span class="text-lg font-black text-emerald-400">${dailyBudget.toFixed(1)}€<span class="text-xs text-emerald-700 font-normal">/j</span></span>
+
+                        <div class="flex justify-between items-end mb-1">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Moyenne (Variable)</span>
+                                <span class="text-lg font-black ${isOverBudget ? 'text-red-400' : 'text-white'}">${dailySpent.toFixed(1)}€<span class="text-xs text-slate-500 font-normal">/j</span></span>
+                            </div>
+                            <div class="flex flex-col text-right">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Budget Max</span>
+                                <span class="text-lg font-black text-emerald-400">${dailyBudget.toFixed(1)}€<span class="text-xs text-emerald-700 font-normal">/j</span></span>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden my-3 border border-slate-700/50">
-                        <div class="h-full rounded-full transition-all duration-500 ${isOverBudget ? 'bg-red-500' : 'bg-emerald-500'}" style="width: ${progressPct}%"></div>
-                    </div>
+                        <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden my-3 border border-slate-700/50">
+                            <div class="h-full rounded-full transition-all duration-500 ${isOverBudget ? 'bg-red-500' : 'bg-emerald-500'}" style="width: ${progressPct}%"></div>
+                        </div>
 
-                    <div class="mt-4 pt-3 border-t border-slate-700/30">
-                        <label class="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-2">
-                            <span>Objectif d'épargne <span id="savings-pct-val-${uid}" class="text-amber-400">${savingsPct}%</span></span>
-                            <span class="font-black text-amber-400">Cible : ${savingsAmt.toFixed(0)}€</span>
-                        </label>
-                        <input type="range" min="0" max="50" value="${savingsPct}" step="1" class="w-full accent-amber-500" 
-                               oninput="document.getElementById('savings-pct-val-${uid}').textContent = this.value + '%'" 
-                               onchange="updateDailySavings('${uid}', this.value)">
-                    </div>
-                </div>`;
-            });
+                        <div class="mt-4 pt-3 border-t border-slate-700/30">
+                            <label class="flex justify-between text-[10px] font-bold text-slate-500 uppercase mb-2">
+                                <span>Objectif d'épargne <span id="savings-pct-val-${uid}" class="text-amber-400">${savingsPct}%</span></span>
+                                <span class="font-black text-amber-400">Cible : ${savingsAmt.toFixed(0)}€</span>
+                            </label>
+                            <input type="range" min="0" max="50" value="${savingsPct}" step="1" class="w-full accent-amber-500" 
+                                   oninput="document.getElementById('savings-pct-val-${uid}').textContent = this.value + '%'" 
+                                   onchange="updateDailySavings('${uid}', this.value)">
+                        </div>
+                    </div>`;
+                });
+                
+                if (html === '') {
+                    html = '<p class="text-xs text-slate-500 italic text-center py-4">Aucun revenu configuré pour les membres du foyer.</p>';
+                }
+            } else {
+                // LOGIQUE CUMULÉE (FOYER)
+                let aggIncome = 0;
+                let aggFixed = 0;
+                let aggVariable = 0;
+                let aggSavingsAmt = 0;
 
-            if (html === '') {
-                html = '<p class="text-xs text-slate-500 italic text-center py-4">Aucun revenu configuré pour les membres du foyer.</p>';
+                Object.keys(userStats).forEach(uid => {
+                    const stat = userStats[uid];
+                    const totalInc = stat.income + (stat.includeVar ? stat.extraIncome : 0);
+                    if (totalInc > 0) {
+                        aggIncome += totalInc;
+                        aggFixed += stat.fixed;
+                        aggVariable += stat.variable;
+                        const pct = dailySavingsConfig[uid] !== undefined ? dailySavingsConfig[uid] : 10;
+                        aggSavingsAmt += (totalInc * pct) / 100;
+                    }
+                });
+
+                if (aggIncome <= 0) {
+                    html = '<p class="text-xs text-slate-500 italic text-center py-4">Aucun revenu configuré pour le foyer.</p>';
+                } else {
+                    const budgetRestant = aggIncome - aggFixed - aggSavingsAmt;
+                    const dailyBudget = Math.max(0, budgetRestant / daysInMonth);
+                    const dailySpent = aggVariable / daysPassed;
+                    const isOverBudget = dailySpent > dailyBudget;
+                    const progressPct = dailyBudget > 0 ? Math.min(100, (dailySpent / dailyBudget) * 100) : 100;
+
+                    const overallSavingsPct = ((aggSavingsAmt / aggIncome) * 100).toFixed(1);
+
+                    html = `
+                    <div class="bg-slate-800 border border-slate-700/50 rounded-xl p-4 shadow-sm relative overflow-hidden group">
+                        <div class="flex items-center gap-3 mb-3 border-b border-slate-700 pb-2">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-lg overflow-hidden border-2 bg-slate-700 border-blue-400 shrink-0">🏡</div>
+                            <span class="font-bold text-blue-400 flex-1 truncate uppercase tracking-widest">Foyer Global</span>
+                            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Jour ${daysPassed}/${daysInMonth}</span>
+                        </div>
+
+                        <div class="flex justify-between items-end mb-1">
+                            <div class="flex flex-col">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Moyenne (Variable)</span>
+                                <span class="text-lg font-black ${isOverBudget ? 'text-red-400' : 'text-white'}">${dailySpent.toFixed(1)}€<span class="text-xs text-slate-500 font-normal">/j</span></span>
+                            </div>
+                            <div class="flex flex-col text-right">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase">Budget Max</span>
+                                <span class="text-lg font-black text-emerald-400">${dailyBudget.toFixed(1)}€<span class="text-xs text-emerald-700 font-normal">/j</span></span>
+                            </div>
+                        </div>
+
+                        <div class="w-full h-2 bg-slate-900 rounded-full overflow-hidden my-3 border border-slate-700/50">
+                            <div class="h-full rounded-full transition-all duration-500 ${isOverBudget ? 'bg-red-500' : 'bg-emerald-500'}" style="width: ${progressPct}%"></div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-slate-700/30">
+                            <label class="flex justify-between text-[10px] font-bold text-slate-500 uppercase">
+                                <span>Épargne Moyenne Pondérée <span class="text-amber-400">${overallSavingsPct}%</span></span>
+                                <span class="font-black text-amber-400">Cible : ${aggSavingsAmt.toFixed(0)}€</span>
+                            </label>
+                            <p class="text-[8px] text-slate-500 mt-2 italic text-center border border-slate-700 bg-slate-900/50 rounded p-1">Le pourcentage est calculé automatiquement d'après vos réglages individuels respectifs.</p>
+                        </div>
+                    </div>`;
+                }
             }
 
             listEl.innerHTML = html;
@@ -1357,6 +1455,8 @@
             renderForecastList();
             
             const pct = parseInt(slider.value) || 0;
+            localStorage.setItem('savedSavingsPct', pct); // Sauvegarde locale de la préférence
+            
             const savingsAmt = (currentTotalIncome * pct) / 100;
             const simulatedExpensesTotal = forecastItems.reduce((acc, item) => acc + item.amount, 0);
             
@@ -2277,201 +2377,248 @@
             const titleEl = getEl('finance-chart-title');
             if(!chart || !titleEl) return;
 
-            let dataToChart = [];
+            const isCumul = currentHistoryViewMode === 'cumulative';
+            const entities = isCumul ? ['foyer'] : Object.keys(membersData);
+
             const now = new Date();
             const monthNames = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jui", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 
-            // Base income is fixed for the historical chart based on current users
-            const totalBaseIncome = Object.values(membersData).reduce((acc, m) => acc + (m.income || 0), 0);
+            // 1. Préparer les revenus de base
+            const baseIncomes = {};
+            Object.values(membersData).forEach(m => baseIncomes[m.uid] = m.income || 0);
+            baseIncomes['foyer'] = Object.values(baseIncomes).reduce((a,b)=>a+b, 0);
 
-            // 1. Agréger les archives passées
-            let monthlyDataMap = new Map();
+            // 2. Map des historiques par YYYY-M
+            const histMap = new Map();
             settlementsData.forEach(s => {
                 const parts = s.label.split(' ');
                 let mIndex = monthNames.findIndex(m => m.startsWith(parts[0].substring(0,3)));
                 let y = parseInt(parts[1]);
                 if(mIndex === -1) mIndex = new Date(s.settledAt).getMonth();
                 if(isNaN(y)) y = new Date(s.settledAt).getFullYear();
-                
-                let extraIncomeIncluded = 0;
-                if (s.snapshot) {
-                    s.snapshot.filter(e => e.isIncome).forEach(e => {
-                        const profile = membersData[e.payer?.uid];
-                        if (!profile || profile.includeVariableIncome !== false) {
-                            extraIncomeIncluded += e.amount;
-                        }
-                    });
-                }
-
-                let inc = totalBaseIncome + extraIncomeIncluded;
-                let rem = inc - s.total;
-                
-                let key = `${y}-${mIndex}`;
-                monthlyDataMap.set(key, { year: y, month: mIndex, total: s.total, income: inc, remaining: rem, label: `${monthNames[mIndex]}` });
+                histMap.set(`${y}-${mIndex}`, s.snapshot || []);
             });
+            histMap.set(`${now.getFullYear()}-${now.getMonth()}`, expensesData);
 
-            // 2. Ajouter le mois en cours (Données Live)
-            const currentExpenses = expensesData.filter(e => !e.isIncome).reduce((sum, e) => sum + e.amount, 0);
-            
-            let currentExtraIncomeIncluded = 0;
-            expensesData.filter(e => e.isIncome).forEach(e => {
-                const profile = membersData[e.payer?.uid];
-                if (!profile || profile.includeVariableIncome !== false) {
-                    currentExtraIncomeIncluded += e.amount;
-                }
-            });
+            // 3. Générer les lignes (courbes)
+            let chartLines = [];
 
-            const currentInc = totalBaseIncome + currentExtraIncomeIncluded;
-            let currKey = `${now.getFullYear()}-${now.getMonth()}`;
-            
-            monthlyDataMap.set(currKey, { 
-                year: now.getFullYear(), 
-                month: now.getMonth(), 
-                total: currentExpenses, 
-                income: currentInc, 
-                remaining: currentInc - currentExpenses, 
-                label: `${monthNames[now.getMonth()]}` 
-            });
+            entities.forEach(entityId => {
+                let memberObj = entityId === 'foyer' ? null : membersData[entityId];
+                let name = entityId === 'foyer' ? 'Foyer' : memberObj.name;
+                let color = entityId === 'foyer' ? '' : (memberObj.color || '#3b82f6'); 
+                let dataPts = [];
 
-            let monthlyData = Array.from(monthlyDataMap.values()).sort((a,b) => {
-                if(a.year !== b.year) return a.year - b.year;
-                return a.month - b.month;
-            });
+                let allMonths = Array.from(histMap.keys()).map(k => {
+                    const [y, m] = k.split('-');
+                    return { year: parseInt(y), month: parseInt(m), key: k };
+                }).sort((a,b) => a.year !== b.year ? a.year - b.year : a.month - b.month);
 
-            // 3. Découper selon la vue demandée
-            if (currentChartTimeframe === 'day') {
-                titleEl.textContent = "Reste à vivre (14 derniers jours)";
-                const days = [];
-                for(let i=13; i>=0; i--) {
-                    let d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-                    days.push({ date: d, label: `${d.getDate()}/${d.getMonth()+1}`, remaining: 0 });
-                }
+                if (currentChartTimeframe === 'day') {
+                    titleEl.textContent = "Reste à vivre (14 derniers jours)";
+                    for(let i=13; i>=0; i--) {
+                        let d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+                        const mKey = `${d.getFullYear()}-${d.getMonth()}`;
+                        const exps = histMap.get(mKey) || [];
 
-                days.forEach(dayObj => {
-                    const d = dayObj.date;
-                    const mKey = `${d.getFullYear()}-${d.getMonth()}`;
-                    const monthData = monthlyDataMap.get(mKey);
-                    
-                    if (!monthData) {
-                        dayObj.remaining = 0;
-                        return;
-                    }
-
-                    let expsToCheck = [];
-                    if (mKey === `${now.getFullYear()}-${now.getMonth()}`) {
-                        expsToCheck = expensesData;
-                    } else {
-                        const s = settlementsData.find(settle => {
-                            const parts = settle.label.split(' ');
-                            let mIndex = monthNames.findIndex(m => m.startsWith(parts[0].substring(0,3)));
-                            let y = parseInt(parts[1]);
-                            return mIndex === d.getMonth() && y === d.getFullYear();
-                        });
-                        if (s && s.snapshot) expsToCheck = s.snapshot;
-                    }
-
-                    const fixedExp = expsToCheck.filter(e => !e.isIncome && e.isRecurring).reduce((sum, e) => sum + e.amount, 0);
-                    
-                    let variableUpToDay = 0;
-                    expsToCheck.filter(e => !e.isIncome && !e.isRecurring).forEach(exp => {
-                        if (exp.date) {
-                            const expDate = new Date(exp.date);
-                            if (expDate.getDate() <= d.getDate()) {
-                                variableUpToDay += exp.amount;
+                        let totalInc = baseIncomes[entityId];
+                        exps.filter(e => e.isIncome).forEach(e => {
+                            const pUid = e.payer?.uid;
+                            if (entityId === 'foyer') {
+                                const pObj = membersData[pUid];
+                                if (!pObj || pObj.includeVariableIncome !== false) totalInc += e.amount;
+                            } else if (entityId === pUid && memberObj.includeVariableIncome !== false) {
+                                totalInc += e.amount;
                             }
-                        } else {
-                            variableUpToDay += exp.amount;
-                        }
+                        });
+
+                        let fixedExp = 0;
+                        let varExp = 0;
+                        exps.filter(e => !e.isIncome).forEach(e => {
+                            const pUid = e.payer?.uid;
+                            if (entityId === 'foyer' || entityId === pUid) {
+                                if (e.isRecurring) {
+                                    fixedExp += e.amount; 
+                                } else {
+                                    const expDate = e.date ? new Date(e.date).getDate() : 1;
+                                    if (expDate <= d.getDate()) {
+                                        varExp += e.amount;
+                                    }
+                                }
+                            }
+                        });
+
+                        let remaining = totalInc - fixedExp - varExp;
+                        dataPts.push({ label: `${d.getDate()}/${d.getMonth()+1}`, remaining });
+                    }
+                } else {
+                    let monthlyData = allMonths.map(mObj => {
+                        const exps = histMap.get(mObj.key) || [];
+                        let totalInc = baseIncomes[entityId];
+                        let totalExp = 0;
+
+                        exps.forEach(e => {
+                            const pUid = e.payer?.uid;
+                            const applies = entityId === 'foyer' || entityId === pUid;
+                            if (applies) {
+                                if (e.isIncome) {
+                                    const pObj = membersData[pUid];
+                                    if (!pObj || pObj.includeVariableIncome !== false) totalInc += e.amount;
+                                } else {
+                                    totalExp += e.amount;
+                                }
+                            }
+                        });
+
+                        return { year: mObj.year, month: mObj.month, remaining: totalInc - totalExp, label: `${monthNames[mObj.month]}` };
                     });
 
-                    dayObj.remaining = monthData.income - fixedExp - variableUpToDay;
-                });
-                dataToChart = days;
+                    if (currentChartTimeframe === 'month') {
+                        titleEl.textContent = "Budget Restant (6 derniers mois)";
+                        dataPts = monthlyData.slice(-6);
+                    } else if (currentChartTimeframe === 'semester') {
+                        titleEl.textContent = "Budget Restant (Par Semestre)";
+                        let semMap = new Map();
+                        monthlyData.forEach(m => {
+                            let sem = m.month < 6 ? 'S1' : 'S2';
+                            let key = `${m.year}-${sem}`;
+                            if(!semMap.has(key)) semMap.set(key, { label: `${sem} ${m.year.toString().slice(2)}`, remaining: 0, sortKey: m.year + (m.month < 6 ? 0 : 0.5) });
+                            semMap.get(key).remaining += m.remaining;
+                        });
+                        dataPts = Array.from(semMap.values()).sort((a,b) => a.sortKey - b.sortKey).slice(-6);
+                    } else if (currentChartTimeframe === 'year') {
+                        titleEl.textContent = "Budget Restant (Par An)";
+                        let yrMap = new Map();
+                        monthlyData.forEach(m => {
+                            let key = m.year.toString();
+                            if(!yrMap.has(key)) yrMap.set(key, { label: key, remaining: 0, sortKey: m.year });
+                            yrMap.get(key).remaining += m.remaining;
+                        });
+                        dataPts = Array.from(yrMap.values()).sort((a,b) => a.sortKey - b.sortKey).slice(-5);
+                    }
+                }
 
-            } else if (currentChartTimeframe === 'month') {
-                titleEl.textContent = "Budget Restant (6 derniers mois)";
-                dataToChart = monthlyData.slice(-6);
-
-            } else if (currentChartTimeframe === 'semester') {
-                titleEl.textContent = "Budget Restant (Par Semestre)";
-                let semMap = new Map();
-                monthlyData.forEach(m => {
-                    let sem = m.month < 6 ? 'S1' : 'S2';
-                    let key = `${m.year}-${sem}`;
-                    if(!semMap.has(key)) semMap.set(key, { label: `${sem} ${m.year.toString().slice(2)}`, remaining: 0, sortKey: m.year + (m.month < 6 ? 0 : 0.5) });
-                    semMap.get(key).remaining += m.remaining;
-                });
-                dataToChart = Array.from(semMap.values()).sort((a,b) => a.sortKey - b.sortKey).slice(-6);
-
-            } else if (currentChartTimeframe === 'year') {
-                titleEl.textContent = "Budget Restant (Par An)";
-                let yrMap = new Map();
-                monthlyData.forEach(m => {
-                    let key = m.year.toString();
-                    if(!yrMap.has(key)) yrMap.set(key, { label: key, remaining: 0, sortKey: m.year });
-                    yrMap.get(key).remaining += m.remaining;
-                });
-                dataToChart = Array.from(yrMap.values()).sort((a,b) => a.sortKey - b.sortKey).slice(-5);
-            }
-
-            if(dataToChart.length === 0) { 
-                chart.innerHTML = '<p class="text-xs text-slate-500 w-full h-full flex items-center justify-center italic">Données insuffisantes</p>'; 
-                return; 
-            }
-            
-            // Calculer l'échelle en incluant les valeurs négatives éventuelles
-            const maxVal = Math.max(...dataToChart.map(s => s.remaining), 10);
-            const minVal = Math.min(0, ...dataToChart.map(s => s.remaining));
-            const range = maxVal - minVal || 1;
-            
-            let pts = [];
-            let labels = '';
-            const step = 100 / Math.max(1, dataToChart.length - 1);
-            
-            // Ligne rouge pour le zéro si le budget tombe dans le négatif
-            let zeroLineY = 35 - (((0 - minVal) / range) * 30);
-            let zeroLineHtml = minVal < 0 ? `<line x1="0" y1="${zeroLineY}" x2="100" y2="${zeroLineY}" stroke="#ef4444" stroke-width="0.5" stroke-dasharray="2 2" />` : '';
-
-            // Déterminer la couleur du thème (Rouge si la dernière valeur est en déficit)
-            const currentBalance = dataToChart[dataToChart.length - 1].remaining;
-            const themeColor = currentBalance < 0 ? '#ef4444' : '#10b981';
-
-            dataToChart.forEach((s, i) => {
-                const isLast = i === dataToChart.length - 1;
-                const x = i * step;
-                const y = 35 - (((s.remaining - minVal) / range) * 30); 
-                pts.push(`${x},${y}`);
-                
-                // Textes
-                labels += `<text x="${x}" y="44" font-size="${isLast ? '4.5' : '3.5'}" font-weight="bold" fill="${isLast ? '#cbd5e1' : '#64748b'}" text-anchor="${i===0?'start':isLast?'end':'middle'}">${s.label}</text>`;
-                const valColor = s.remaining >= 0 ? '#34d399' : '#ef4444';
-                labels += `<text x="${x}" y="${y-3}" font-size="${isLast ? '5' : '3.5'}" font-weight="bold" fill="${valColor}" text-anchor="${i===0?'start':isLast?'end':'middle'}">${Math.round(s.remaining)}</text>`;
-                
-                // Nœuds (points)
-                if (isLast) {
-                    labels += `<circle cx="${x}" cy="${y}" r="1.5" fill="${themeColor}" />`;
-                    labels += `<circle cx="${x}" cy="${y}" r="3" fill="${themeColor}" opacity="0.3" class="animate-pulse" />`;
-                } else {
-                    labels += `<circle cx="${x}" cy="${y}" r="0.6" fill="${valColor}" />`;
+                if (dataPts.length > 0) {
+                    if (entityId === 'foyer') {
+                        color = dataPts[dataPts.length - 1].remaining < 0 ? '#ef4444' : '#10b981';
+                    }
+                    chartLines.push({ id: entityId, name, color, data: dataPts });
                 }
             });
 
-            const pathArea = `M 0,35 L ${pts.join(' ')} L 100,35 Z`;
-            const pathLine = `M ${pts.join(' ')}`;
+            if (chartLines.length === 0 || chartLines[0].data.length === 0) {
+                chart.innerHTML = '<p class="text-xs text-slate-500 w-full h-full flex items-center justify-center italic">Données insuffisantes</p>';
+                return;
+            }
+
+            // 4. Échelle Y dynamique
+            let maxVal = -Infinity;
+            let minVal = Infinity;
+            chartLines.forEach(line => {
+                line.data.forEach(pt => {
+                    if (pt.remaining > maxVal) maxVal = pt.remaining;
+                    if (pt.remaining < minVal) minVal = pt.remaining;
+                });
+            });
+            if (maxVal === -Infinity) maxVal = 10;
+            if (minVal > 0) minVal = 0;
+            const range = (maxVal - minVal) || 1;
+
+            // 5. Construire le SVG
+            let svgContent = '';
+            let zeroLineY = 35 - (((0 - minVal) / range) * 30);
+            if (minVal < 0) {
+                svgContent += `<line x1="0" y1="${zeroLineY}" x2="100" y2="${zeroLineY}" stroke="#ef4444" stroke-width="0.5" stroke-dasharray="2 2" />`;
+            }
+
+            const step = 100 / Math.max(1, chartLines[0].data.length - 1);
+            const isDayView = currentChartTimeframe === 'day';
+
+            // Axe X (Dates)
+            let labelsHtml = '';
+            chartLines[0].data.forEach((s, i) => {
+                const isLast = i === chartLines[0].data.length - 1;
+                const x = i * step;
+
+                if (isDayView) {
+                     labelsHtml += `<text x="${x}" y="45" font-size="3" font-weight="bold" fill="#64748b" transform="rotate(-45 ${x} 45)">${s.label}</text>`;
+                } else {
+                     labelsHtml += `<text x="${x}" y="44" font-size="${isLast ? '4.5' : '3.5'}" font-weight="bold" fill="${isLast ? '#cbd5e1' : '#64748b'}" text-anchor="${i===0?'start':isLast?'end':'middle'}">${s.label}</text>`;
+                }
+            });
+            svgContent += labelsHtml;
+
+            // Courbes et valeurs
+            chartLines.forEach((line, lineIndex) => {
+                let pts = [];
+                let lineHtml = '';
+                
+                line.data.forEach((s, i) => {
+                    const isLast = i === line.data.length - 1;
+                    const x = i * step;
+                    const y = 35 - (((s.remaining - minVal) / range) * 30);
+                    pts.push(`${x},${y}`);
+
+                    const valColor = s.remaining >= 0 ? (line.id === 'foyer' ? '#34d399' : line.color) : '#ef4444';
+
+                    // Éviter la surcharge de texte en mode "Jour"
+                    let showValue = true;
+                    if (isDayView) {
+                        showValue = i === 0 || i === line.data.length - 1 || i % 3 === 0;
+                    }
+
+                    if (showValue) {
+                        let yOffset = y - 3;
+                        if (!isCumul && chartLines.length > 1) {
+                             yOffset = y - 1 - (lineIndex * 4); // Décalage pour éviter les superpositions entre utilisateurs
+                        }
+                        if (isDayView) {
+                             lineHtml += `<text x="${x}" y="${yOffset}" font-size="3" font-weight="bold" fill="${valColor}" transform="rotate(-35 ${x} ${yOffset})">${Math.round(s.remaining)}</text>`;
+                        } else {
+                             lineHtml += `<text x="${x}" y="${yOffset}" font-size="${isLast ? '5' : '3.5'}" font-weight="bold" fill="${valColor}" text-anchor="${i===0?'start':isLast?'end':'middle'}">${Math.round(s.remaining)}</text>`;
+                        }
+                    }
+
+                    if (isLast) {
+                        lineHtml += `<circle cx="${x}" cy="${y}" r="1.5" fill="${line.color}" />`;
+                        lineHtml += `<circle cx="${x}" cy="${y}" r="3" fill="${line.color}" opacity="0.3" class="animate-pulse" />`;
+                    } else {
+                        lineHtml += `<circle cx="${x}" cy="${y}" r="0.6" fill="${valColor}" />`;
+                    }
+                });
+
+                const pathLine = `M ${pts.join(' ')}`;
+                lineHtml += `<path d="${pathLine}" fill="none" stroke="${line.color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="chart-bar-anim drop-shadow-md" />`;
+
+                if (isCumul) {
+                    const pathArea = `M 0,35 L ${pts.join(' ')} L 100,35 Z`;
+                    lineHtml = `
+                        <defs>
+                            <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stop-color="${line.color}" stop-opacity="0.3"/>
+                                <stop offset="100%" stop-color="${line.color}" stop-opacity="0"/>
+                            </linearGradient>
+                        </defs>
+                        <path d="${pathArea}" fill="url(#chartGrad)" class="chart-bar-anim" />
+                    ` + lineHtml;
+                }
+
+                svgContent += lineHtml;
+            });
+
+            // Légende dynamique pour la vue individuelle
+            let legendHtml = '';
+            if (!isCumul) {
+                legendHtml = `<div class="flex flex-wrap justify-center gap-3 mt-4 px-2">` +
+                    chartLines.map(l => `<div class="flex items-center gap-1 text-[10px] text-slate-300 font-bold"><div class="w-3 h-3 rounded-full shadow-inner" style="background-color:${l.color}"></div> ${escapeHTML(l.name)}</div>`).join('') +
+                    `</div>`;
+            }
 
             chart.innerHTML = `
-            <svg viewBox="0 -8 100 56" class="w-full h-full overflow-visible drop-shadow-lg">
-                <defs>
-                    <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="${themeColor}" stop-opacity="0.3"/>
-                        <stop offset="100%" stop-color="${themeColor}" stop-opacity="0"/>
-                    </linearGradient>
-                </defs>
-                ${zeroLineHtml}
-                <path d="${pathArea}" fill="url(#chartGrad)" class="chart-bar-anim" />
-                <path d="${pathLine}" fill="none" stroke="${themeColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="chart-bar-anim drop-shadow-md" />
-                ${labels}
+            <svg viewBox="0 -10 100 65" class="w-full h-full overflow-visible drop-shadow-lg">
+                ${svgContent}
             </svg>
+            ${legendHtml}
             `;
         }
 
@@ -2494,20 +2641,26 @@
                 reportTitle = `Rapport Mensuel en cours : ${monthNames[new Date().getMonth()]} ${new Date().getFullYear()}`;
             }
 
-            if(sourceExpenses.length === 0) {
-                alert("Aucune donnée à exporter pour cette période.");
+            // Exclure les rentrées d'argent pour le graphique PDF qui se concentre sur les dépenses
+            const expensesOnly = sourceExpenses.filter(e => !e.isIncome);
+
+            if(expensesOnly.length === 0) {
+                alert("Aucune dépense à exporter pour cette période.");
                 return;
             }
 
-            // 1. Organiser les données : Par Utilisateur -> (Rentrées, Fixes, Variables(Semaine->Catégorie))
+            // 1. Organiser les données : Par Utilisateur -> Par Semaine -> Par Catégorie
             const printData = {};
-            const dailyTotals = {}; // uid -> array de 31 jours cumulés pour le graphique SVG (Dépenses uniquement)
-            let maxDailyTotal = 10;
+            const dailyTotals = {}; // uid -> array de 31 jours cumulés pour le graphique
+            let maxDailyTotal = 10; // Pour l'échelle Y du SVG
 
-            sourceExpenses.forEach(exp => {
+            expensesOnly.forEach(exp => {
                 const uid = exp.payer?.uid || 'unknown';
                 const memberObj = membersData[uid] || exp.payer;
                 const name = memberObj?.name || 'Inconnu';
+                const catId = exp.isRecurring ? 'fixe' : (exp.category || 'divers');
+                const catLabel = expenseCategories[catId]?.label || 'Divers';
+                const week = exp.isRecurring ? 'S1 (Fixe)' : getExpenseWeek(exp.date);
                 const dayOfMonth = (!exp.isRecurring && exp.date) ? new Date(exp.date).getDate() : 1;
 
                 if(!printData[uid]) {
@@ -2520,36 +2673,39 @@
                     dailyTotals[uid] = new Array(31).fill(0);
                 }
 
-                if (exp.isIncome) {
+                printData[uid].totalSpent += exp.amount;
+
+                if (exp.isRecurring) {
+                    printData[uid].fixed.push({ text: exp.text, amount: exp.amount, categoryLabel: catLabel });
+                } else {
+                    if(!printData[uid].variables[week]) printData[uid].variables[week] = { total: 0, categories: {} };
+                    
+                    printData[uid].variables[week].total += exp.amount;
+                    if(!printData[uid].variables[week].categories[catLabel]) {
+                        printData[uid].variables[week].categories[catLabel] = { total: 0, items: [] };
+                    }
+                    
+                    printData[uid].variables[week].categories[catLabel].total += exp.amount;
+                    printData[uid].variables[week].categories[catLabel].items.push({ text: exp.text, amount: exp.amount, date: exp.date });
+                }
+
+                // Ajouter à la dépense quotidienne pour le graphique
+                dailyTotals[uid][dayOfMonth - 1] += exp.amount;
+            });
+
+            // Extraire aussi les revenus pour l'en-tête (indépendamment des dépenses)
+            sourceExpenses.filter(e => e.isIncome).forEach(exp => {
+                const uid = exp.payer?.uid || 'unknown';
+                if(printData[uid]) {
                     printData[uid].incomes.push({ text: exp.text, amount: exp.amount, date: exp.date, isIncluded: printData[uid].includeVariableIncome });
                     if (printData[uid].includeVariableIncome) {
                         printData[uid].totalIncome += exp.amount;
                     }
-                } else if (exp.isRecurring) {
-                    const catLabel = expenseCategories[exp.category || 'fixe']?.label || 'Fixe';
-                    printData[uid].fixed.push({ text: exp.text, amount: exp.amount, categoryLabel: catLabel });
-                    printData[uid].totalSpent += exp.amount;
-                    dailyTotals[uid][dayOfMonth - 1] += exp.amount; // Ajout au graph cumulatif
-                } else {
-                    const week = getExpenseWeek(exp.date);
-                    const catLabel = expenseCategories[exp.category || 'divers']?.label || 'Divers';
-                    
-                    if(!printData[uid].variables[week]) printData[uid].variables[week] = { total: 0, categories: {} };
-                    printData[uid].variables[week].total += exp.amount;
-                    
-                    if(!printData[uid].variables[week].categories[catLabel]) {
-                        printData[uid].variables[week].categories[catLabel] = { total: 0, items: [] };
-                    }
-                    printData[uid].variables[week].categories[catLabel].total += exp.amount;
-                    printData[uid].variables[week].categories[catLabel].items.push({ text: exp.text, amount: exp.amount, date: exp.date });
-                    
-                    printData[uid].totalSpent += exp.amount;
-                    dailyTotals[uid][dayOfMonth - 1] += exp.amount; // Ajout au graph cumulatif
                 }
             });
 
-            // Rendre le cumulatif pour le graphique (Uniquement les dépenses)
-            const strokeDashArrays = ["", "4 2", "1 2", "4 1 2 1"]; 
+            // Rendre le cumulatif pour le graphique
+            const strokeDashArrays = ["", "4 2", "1 2", "4 1 2 1"]; // Différents motifs de ligne N&B pour distinguer les utilisateurs
             let chartPaths = '';
             let chartLabels = '';
             let userIndex = 0;
@@ -2565,6 +2721,7 @@
                 
                 const dashStyle = strokeDashArrays[userIndex % strokeDashArrays.length];
                 
+                // SVG est dessiné de haut en bas, il faut inverser Y plus tard
                 printData[uid]._pts = pts;
                 printData[uid]._dash = dashStyle;
                 printData[uid]._finalAmt = cumulative;
@@ -2574,15 +2731,18 @@
             Object.keys(printData).forEach(uid => {
                 const pts = printData[uid]._pts.map(p => {
                     const [x, y] = p.split(',');
-                    const invertedY = 100 - ((parseFloat(y) / maxDailyTotal) * 90); 
+                    const invertedY = 100 - ((parseFloat(y) / maxDailyTotal) * 90); // Laisser 10% de marge en haut
                     return `${x},${invertedY}`;
                 });
 
                 chartPaths += `<path d="M 0,100 L ${pts.join(' ')}" fill="none" stroke="black" stroke-width="0.5" stroke-dasharray="${printData[uid]._dash}" />`;
+                
+                // Placer le nom de l'utilisateur à la fin de sa courbe
                 const lastPt = pts[30].split(',');
                 chartLabels += `<text x="98" y="${parseFloat(lastPt[1]) - 2}" font-size="3" text-anchor="end" fill="black" font-weight="bold">${printData[uid].name} (${printData[uid]._finalAmt.toFixed(0)}€)</text>`;
             });
 
+            // Générer la grille de fond du graphique (Jours)
             let gridHtml = '';
             for(let i=0; i<=30; i+=5) {
                 const x = i * (100/30);
@@ -2602,7 +2762,6 @@
             `;
 
             // 2. Construire le HTML
-            // Le PDF calcule et affiche dynamiquement le budget pris en compte (Fixe + Variables si l'option est cochée)
             const incomesHTML = Object.values(membersData).map(m => {
                 let budget = m.income || 0;
                 let extraText = '';
@@ -2706,9 +2865,33 @@
 
             html += `</div>`;
 
+            // Ajout du relevé des comptes satellites (épargne) au PDF
+            if (satellitesData && satellitesData.length > 0) {
+                let satHtml = `<div class="mt-8 border border-black p-4 break-inside-avoid">
+                    <h3 class="font-black text-lg uppercase border-b border-gray-400 pb-2 mb-3">Comptes d'épargne (Satellites)</h3>
+                    <ul class="text-sm list-none space-y-2">`;
+                let totalSat = 0;
+                
+                satellitesData.sort((a, b) => b.balance - a.balance).forEach(sat => {
+                    satHtml += `<li class="flex justify-between border-b border-dashed border-gray-300 pb-1">
+                        <span class="font-bold">${escapeHTML(sat.name)}</span> 
+                        <span class="font-bold">${sat.balance.toFixed(2)}€</span>
+                    </li>`;
+                    totalSat += sat.balance;
+                });
+                
+                satHtml += `<li class="flex justify-between pt-2 text-lg font-black mt-2 border-t border-black">
+                    <span>TOTAL ÉPARGNE</span> 
+                    <span>${totalSat.toFixed(2)}€</span>
+                </li>`;
+                satHtml += `</ul></div>`;
+                html += satHtml;
+            }
+
             // 3. Injecter et imprimer
             printRoot.innerHTML = html;
             
+            // Un léger délai permet au navigateur de faire le rendu du SVG avant d'ouvrir la boîte de dialogue
             setTimeout(() => {
                 window.print();
             }, 300);

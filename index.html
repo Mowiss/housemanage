@@ -1220,7 +1220,7 @@ function renderTasks() {
                         <span class="${task.completed?'line-through text-slate-500':'font-bold text-slate-100'} break-words leading-tight text-base md:text-lg flex-1 min-w-0">${escapeHTML(task.text)}</span>
                         ${hasDet?`<i class="fa-solid fa-chevron-${isExp?'up':'down'} text-slate-400 text-base px-2 shrink-0 mt-0.5"></i>`:''}
                     </div>
-                    ${task.dueDate?`<p class="text-xs font-black mt-3 ${isOdue?'text-red-400':'text-slate-400'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>`:''}
+                    ${task.dueDate?`<p class="text-xs font-black mt-3 ${isOdue?'text-red-400':'text-slate-400'} uppercase flex items-center gap-2"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}<button onclick="event.stopPropagation();App.addToCalendar('${task.id}')" class="text-[9px] bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/30 font-bold transition-colors normal-case tracking-normal" title="Ajouter à Google Calendar">+ Calendar</button></p>`:''}
                     ${detHTML}
                 </div>
                 <div class="flex flex-col items-end gap-2 shrink-0 pt-1 -mr-1">
@@ -2161,7 +2161,25 @@ function renderSatellites() {
     }).join('');
 }
 
-// ─── ACCORDÉONS ───────────────────────────────────────────────────────────────
+// ─── GOOGLE CALENDAR ──────────────────────────────────────────────────────────
+function addToCalendar(taskId) {
+    const task = state.tasksData.find(t => t.id === taskId);
+    if (!task || !task.dueDate) return;
+
+    // Formater la date au format Google Calendar (YYYYMMDD)
+    const date = task.dueDate.replace(/-/g, '');
+
+    // Construire le titre avec le nom du foyer
+    const title = encodeURIComponent(`🏡 ${task.text}`);
+    const details = encodeURIComponent(task.description || `Tâche du foyer ${state.visibleCode}`);
+
+    // URL Google Calendar pré-remplie (événement sur toute la journée)
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${date}/${date}&details=${details}`;
+
+    window.open(url, '_blank');
+}
+
+
 function toggleFixedGroup(uid)  { state.expandedFixedGroups.has(uid)?state.expandedFixedGroups.delete(uid):state.expandedFixedGroups.add(uid); renderExpenses(); }
 function toggleWeekGroup(week)  { state.expandedWeekGroups.has(week)?state.expandedWeekGroups.delete(week):state.expandedWeekGroups.add(week); renderExpenses(); }
 function toggleAccountArchive() { $('active-accounts-view')?.classList.toggle('hidden'); $('archived-accounts-view')?.classList.toggle('hidden'); }
@@ -2220,6 +2238,7 @@ window.App = {
     addSubtaskToEditor, removeSubtaskFromEditor,
     addSubSubtaskToEditor, removeSubSubtaskFromEditor,
     selectColor, selectAssignee, renderEditorSubtasks,
+    addToCalendar,
     // Dépenses
     openExpenseEditor, closeExpenseEditor, saveExpense, deleteExpenseFromEditor,
     setTransactionType, toggleExpenseCategoryVisibility,

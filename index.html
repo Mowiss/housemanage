@@ -77,10 +77,6 @@
             <i class="fa-solid fa-cart-shopping text-2xl lg:text-xl w-8 text-center shrink-0"></i>
             <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Courses</span>
         </button>
-        <button onclick="App.switchTab('common')" id="tab-common-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 flex-1 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
-            <i class="fa-solid fa-vault text-2xl lg:text-xl w-8 text-center shrink-0"></i>
-            <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Pot Commun</span>
-        </button>
         <button onclick="App.switchTab('accounts')" id="tab-accounts-btn" class="flex flex-col lg:flex-row items-center lg:justify-start gap-1 lg:gap-4 text-slate-400 flex-1 md:w-full md:p-4 lg:px-8 hover:bg-slate-700/50 rounded-xl transition-colors">
             <i class="fa-solid fa-wallet text-2xl lg:text-xl w-8 text-center shrink-0"></i>
             <span class="text-xs font-bold uppercase truncate w-full text-center lg:text-left mt-1 lg:mt-0 md:hidden lg:block">Comptes</span>
@@ -129,29 +125,7 @@
                 </div>
             </section>
 
-            <!-- SECTION POT COMMUN -->
-            <section id="section-common" class="hidden space-y-6 w-full min-w-0">
-                <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700 shadow-xl overflow-hidden relative">
-                    <div class="absolute -right-10 -top-10 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
-                    <div class="flex justify-between items-center relative z-10">
-                        <div>
-                            <h2 class="text-lg md:text-xl font-black text-amber-500"><i class="fa-solid fa-vault mr-2"></i> Compte Commun</h2>
-                            <p class="text-[10px] md:text-xs text-slate-400 mt-1">Mutualisez vos dépenses et simplifiez les calculs.</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer shrink-0">
-                            <input type="checkbox" id="toggle-common-pot" class="sr-only peer" onchange="App.toggleCommonPot(this.checked)">
-                            <div class="w-14 h-7 bg-slate-900 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-amber-500 border border-slate-700 shadow-inner"></div>
-                        </label>
-                    </div>
-                    <div id="common-pot-settings" class="mt-8 border-t border-slate-700 pt-6 hidden relative z-10">
-                        <h3 class="text-xs md:text-sm font-bold text-slate-300 mb-4 uppercase tracking-widest">Virements mensuels automatiques</h3>
-                        <div id="common-pot-members-list" class="space-y-4"></div>
-                        <button onclick="App.saveCommonPotTransfers()" class="mt-6 w-full bg-amber-600 hover:bg-amber-500 text-white font-black py-4 rounded-xl transition-all shadow-lg text-sm md:text-base active:scale-95 flex items-center justify-center gap-3">
-                            <i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder les virements
-                        </button>
-                    </div>
-                </div>
-            </section>
+
 
             <!-- SECTION COMPTES -->
             <section id="section-accounts" class="hidden space-y-6 w-full min-w-0">
@@ -170,6 +144,9 @@
                                 </button>
                                 <button onclick="App.switchFinanceTab('forecast')" id="fin-tab-forecast" title="Prévisionnel" class="p-2 rounded-md text-slate-500 hover:text-slate-300 transition-all flex items-center justify-center shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/></svg>
+                                </button>
+                                <button onclick="App.switchFinanceTab('common')" id="fin-tab-common" title="Compte Commun" class="p-2 rounded-md text-slate-500 hover:text-slate-300 transition-all flex items-center justify-center shrink-0">
+                                    <i class="fa-solid fa-vault text-sm"></i>
                                 </button>
                                 <button onclick="App.switchFinanceTab('satellites')" id="fin-tab-satellites" title="Épargne" class="p-2 rounded-md text-slate-500 hover:text-slate-300 transition-all flex items-center justify-center shrink-0">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="3"/></svg>
@@ -226,6 +203,27 @@
                             <div class="mt-auto pt-4 border-t border-slate-700 flex justify-between items-end shrink-0">
                                 <span class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Reste à vivre (Simulé)</span>
                                 <span id="forecast-remaining" class="text-2xl font-black text-white">0€</span>
+                            </div>
+                        </div>
+                        <!-- VUE COMPTE COMMUN -->
+                        <div id="finance-common-container" class="hidden p-5 bg-slate-900/50 flex-1 flex-col w-full min-w-0 gap-4 overflow-y-auto">
+                            <div class="flex justify-between items-center w-full shrink-0">
+                                <h2 class="text-[10px] font-black uppercase text-slate-600 tracking-widest">Compte Commun</h2>
+                                <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                                    <input type="checkbox" id="toggle-common-pot" class="sr-only peer" onchange="App.toggleCommonPot(this.checked)">
+                                    <div class="w-12 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500 border border-slate-600 shadow-inner"></div>
+                                </label>
+                            </div>
+                            <p class="text-[10px] text-slate-500 italic -mt-2 shrink-0">Mutualisez vos dépenses et simplifiez les calculs.</p>
+                            <div id="common-pot-settings" class="hidden flex-1 flex flex-col gap-4">
+                                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest shrink-0">Virements mensuels automatiques</h3>
+                                <div id="common-pot-members-list" class="space-y-3 flex-1 overflow-y-auto min-h-[60px]"></div>
+                                <button onclick="App.saveCommonPotTransfers()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-black py-3 rounded-xl transition-all shadow-lg text-xs active:scale-95 flex items-center justify-center gap-2 shrink-0">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Sauvegarder
+                                </button>
+                            </div>
+                            <div id="common-pot-empty" class="flex-1 flex items-center justify-center">
+                                <p class="text-xs text-slate-600 italic text-center">Activez le compte commun<br>avec le bouton ci-dessus.</p>
                             </div>
                         </div>
                         <!-- VUE SATELLITES -->
@@ -298,15 +296,29 @@
             <!-- SECTION PROFIL -->
             <section id="section-profile" class="hidden space-y-6 w-full min-w-0">
                 <div class="bg-slate-800 rounded-2xl p-6 md:p-10 border border-slate-700 shadow-xl w-full min-w-0">
-                    <div class="bg-blue-900/20 border border-blue-500/30 rounded-2xl p-4 flex justify-between items-center mb-8 w-full min-w-0">
-                        <div class="min-w-0 flex-1 pr-2">
-                            <p class="text-[8px] md:text-[10px] uppercase font-black text-blue-500 mb-1">Code Foyer Actuel</p>
-                            <div class="flex items-center gap-3">
+                    <div class="bg-blue-900/20 border border-blue-500/30 rounded-2xl p-4 mb-8 w-full min-w-0">
+                        <div class="flex justify-between items-center w-full">
+                            <div class="min-w-0 flex-1 pr-2">
+                                <p class="text-[8px] md:text-[10px] uppercase font-black text-blue-500 mb-1">Code Foyer Actuel</p>
                                 <p class="font-black text-white tracking-widest truncate text-lg md:text-2xl" id="current-instance-id">...</p>
-                                <button onclick="App.shareInstanceCode()" id="share-code-btn" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] md:text-xs px-3 py-1.5 rounded-lg font-bold shadow-sm transition-all flex items-center gap-2 shrink-0"><i class="fa-solid fa-share-nodes"></i> Inviter</button>
                             </div>
+                            <button onclick="window.location.reload()" class="bg-slate-700 p-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-600 transition-colors shrink-0"><i class="fa-solid fa-right-from-bracket"></i></button>
                         </div>
-                        <button onclick="window.location.reload()" class="bg-slate-700 p-3 rounded-lg text-slate-400 hover:text-white hover:bg-slate-600 transition-colors shrink-0"><i class="fa-solid fa-right-from-bracket"></i></button>
+                        <div class="flex gap-2 mt-3 flex-wrap">
+                            <button onclick="App.shareInstanceCode()" id="share-code-btn" class="bg-blue-600 hover:bg-blue-500 text-white text-[10px] md:text-xs px-3 py-2 rounded-lg font-bold shadow-sm transition-all flex items-center gap-2"><i class="fa-solid fa-share-nodes"></i> Inviter</button>
+                            <button onclick="App.generateNewCode()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] md:text-xs px-3 py-2 rounded-lg font-bold shadow-sm transition-all flex items-center gap-2 border border-slate-600"><i class="fa-solid fa-shuffle"></i> Générer</button>
+                            <button onclick="App.openChangeCode()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px] md:text-xs px-3 py-2 rounded-lg font-bold shadow-sm transition-all flex items-center gap-2 border border-slate-600"><i class="fa-solid fa-pen"></i> Modifier</button>
+                        </div>
+                        <!-- Zone de saisie du nouveau code (cachée par défaut) -->
+                        <div id="change-code-form" class="hidden mt-4 pt-4 border-t border-blue-500/20">
+                            <p class="text-[10px] text-slate-400 mb-3">Nouveau code foyer (min. 6 caractères) :</p>
+                            <div class="flex gap-2">
+                                <input type="text" id="new-code-input" placeholder="Ex: MONFOYER-2025" class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm font-black text-blue-400 uppercase outline-none focus:border-blue-500 tracking-widest">
+                                <button onclick="App.confirmChangeCode()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold text-xs transition-colors">OK</button>
+                                <button onclick="App.closeChangeCode()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-2 rounded-lg font-bold text-xs transition-colors">✕</button>
+                            </div>
+                            <p id="change-code-error" class="text-red-400 text-[10px] font-bold mt-2 hidden"></p>
+                        </div>
                     </div>
                     <div class="bg-slate-900/50 rounded-2xl border border-slate-700/50 shadow-inner overflow-hidden mb-8 w-full min-w-0">
                         <div class="p-4 border-b border-slate-700/50"><h2 class="text-[10px] md:text-xs font-black uppercase text-slate-500 tracking-widest">Mes Statistiques (Mois en cours)</h2></div>
@@ -677,31 +689,63 @@ function memberRef(uid)  { return doc(db, 'artifacts', state.appId, 'public', 'd
 onAuthStateChanged(auth, async user => {
     if (user) {
         state.currentUser = user;
-        state.appId = localStorage.getItem('savedInstanceCode');
-        if (state.appId) {
+        state.visibleCode = localStorage.getItem('savedInstanceCode');
+        if (state.visibleCode) {
             $('instance-gate').classList.add('hidden');
             const mainApp = $('main-app');
             mainApp.classList.remove('hidden');
-            mainApp.classList.add('flex'); // Fix bug mobile V2.2 : classList.replace('hidden','md:flex') échouait silencieusement
-            $('current-instance-id').textContent = state.appId;
+            mainApp.classList.add('flex');
             await startAppFlow();
         }
     }
 });
 
+// ─── GÉNÉRATION D'UN ID INTERNE ROBUSTE ──────────────────────────────────────
+function generateInternalId() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    return Array.from({length: 20}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+function generateFriendlyCode() {
+    const adjectives = ['BLEU','VERT','DOUX','VRAI','BEAU','FORT','VITE','LONG','CHER','GRAND'];
+    const nouns      = ['NUIT','JOUR','LUNE','ETOILE','FOYER','NEST','HOME','BASE','CLAN','COEUR'];
+    const num        = Math.floor(Math.random() * 900) + 100;
+    return `${adjectives[Math.floor(Math.random()*adjectives.length)]}-${nouns[Math.floor(Math.random()*nouns.length)]}-${num}`;
+}
+
+/**
+ * Résout un code lisible → internalId Firestore.
+ * - Si le code n'a pas encore d'entrée dans /foyer-codes/, on la crée (migration transparente).
+ * - L'internalId est l'ancien code lui-même pour les foyers existants (aucune migration des données).
+ */
+async function resolveOrCreateInternalId(visibleCode) {
+    const codeRef = doc(db, 'foyer-codes', visibleCode);
+    const codeSnap = await getDoc(codeRef);
+    if (codeSnap.exists()) {
+        return codeSnap.data().internalId;
+    }
+    // Première fois : on crée l'entrée en utilisant le code visible comme internalId
+    // → les données Firestore existantes sous /artifacts/MACHERIE05/... restent intactes
+    const internalId = visibleCode; // compatibilité ascendante totale
+    await setDoc(codeRef, { internalId, createdAt: Date.now() });
+    return internalId;
+}
+
 async function connectToInstance() {
     const input = $('instance-code-input').value.trim().toUpperCase();
     const errEl = $('login-error');
     if (!input || input.length < 4) { errEl.textContent = 'Code invalide (min. 4 caractères).'; errEl.classList.remove('hidden'); return; }
-    state.appId = input;
-    localStorage.setItem('savedInstanceCode', state.appId);
+
+    // On stocke le code visible (pour l'affichage) ET on résoudra l'internalId après auth
+    state.visibleCode = input;
+    localStorage.setItem('savedInstanceCode', input);
+
     if (auth.currentUser) {
         state.currentUser = auth.currentUser;
         $('instance-gate').classList.add('hidden');
         const mainApp = $('main-app');
         mainApp.classList.remove('hidden');
         mainApp.classList.add('flex');
-        $('current-instance-id').textContent = state.appId;
         await startAppFlow();
         return;
     }
@@ -713,7 +757,6 @@ async function connectToInstance() {
         const mainApp = $('main-app');
         mainApp.classList.remove('hidden');
         mainApp.classList.add('flex');
-        $('current-instance-id').textContent = state.appId;
         await startAppFlow();
     } catch(err) {
         console.error(err);
@@ -722,16 +765,30 @@ async function connectToInstance() {
 }
 
 async function startAppFlow() {
-    if (!state.currentUser || !state.appId) return;
+    if (!state.currentUser) return;
     if (state.currentUser.photoURL && !availableAvatars.includes(state.currentUser.photoURL))
         availableAvatars.unshift(state.currentUser.photoURL);
+
+    // Résolution code visible → internalId (migration transparente au premier passage)
+    const visibleCode = state.visibleCode || localStorage.getItem('savedInstanceCode');
+    if (!visibleCode) { window.location.reload(); return; }
+    state.visibleCode = visibleCode;
+
+    $('connection-status').textContent = 'Résolution du foyer…';
+    const internalId = await resolveOrCreateInternalId(visibleCode);
+    state.appId = internalId; // c'est l'internalId qui sert de chemin Firestore
+
+    // Afficher le code lisible dans l'UI (pas l'internalId)
+    const displayEl = $('current-instance-id');
+    if (displayEl) displayEl.textContent = visibleCode;
+
     const profileRef = doc(db, 'artifacts', state.appId, 'users', state.currentUser.uid, 'profile', 'data');
     const profileSnap = await getDoc(profileRef);
     if (profileSnap.exists()) {
         state.localProfile = profileSnap.data();
         if (!state.localProfile.color) state.localProfile.color = userColorsList[Math.floor(Math.random() * userColorsList.length)];
         setDoc(memberRef(state.currentUser.uid), state.localProfile);
-        $('connection-status').textContent = `INST : ${state.appId}`;
+        $('connection-status').textContent = `FOYER : ${visibleCode}`;
         syncProfileUI();
         startListening();
         checkAutoClose();
@@ -750,6 +807,74 @@ async function startAppFlow() {
     }
 }
 
+// ─── CHANGEMENT DE CODE FOYER ─────────────────────────────────────────────────
+function openChangeCode() {
+    $('change-code-form').classList.remove('hidden');
+    $('new-code-input').value = '';
+    $('change-code-error').classList.add('hidden');
+    $('new-code-input').focus();
+}
+
+function closeChangeCode() {
+    $('change-code-form').classList.add('hidden');
+}
+
+function generateNewCode() {
+    const newCode = generateFriendlyCode();
+    $('new-code-input').value = newCode;
+    $('change-code-form').classList.remove('hidden');
+    $('change-code-error').classList.add('hidden');
+}
+
+async function confirmChangeCode() {
+    const newCode = $('new-code-input').value.trim().toUpperCase();
+    const errEl = $('change-code-error');
+    if (newCode.length < 6) { errEl.textContent = 'Le code doit faire au moins 6 caractères.'; errEl.classList.remove('hidden'); return; }
+    if (newCode === state.visibleCode) { errEl.textContent = 'C\'est déjà ton code actuel.'; errEl.classList.remove('hidden'); return; }
+
+    errEl.classList.add('hidden');
+    const btn = document.querySelector('[onclick="App.confirmChangeCode()"]');
+    if (btn) { btn.textContent = '…'; btn.disabled = true; }
+
+    try {
+        // Vérifier que le nouveau code n'est pas déjà pris
+        const newCodeRef = doc(db, 'foyer-codes', newCode);
+        const newCodeSnap = await getDoc(newCodeRef);
+        if (newCodeSnap.exists()) {
+            errEl.textContent = 'Ce code est déjà utilisé par un autre foyer. Choisis-en un autre.';
+            errEl.classList.remove('hidden');
+            if (btn) { btn.textContent = 'OK'; btn.disabled = false; }
+            return;
+        }
+
+        // Créer la nouvelle entrée pointant vers le même internalId
+        await setDoc(newCodeRef, { internalId: state.appId, createdAt: Date.now() });
+
+        // Mettre à jour le localStorage avec le nouveau code visible
+        state.visibleCode = newCode;
+        localStorage.setItem('savedInstanceCode', newCode);
+
+        // Mettre à jour l'affichage
+        const displayEl = $('current-instance-id');
+        if (displayEl) displayEl.textContent = newCode;
+        $('connection-status').textContent = `FOYER : ${newCode}`;
+
+        closeChangeCode();
+
+        // Confirmation visuelle
+        const instEl = $('current-instance-id');
+        if (instEl) { instEl.classList.add('text-emerald-400'); setTimeout(() => instEl.classList.remove('text-emerald-400'), 3000); }
+
+        alert(`✅ Code changé en : ${newCode}\n\nTu peux maintenant l'envoyer à ta compagne via le bouton "Inviter".\nL'ancien code ne fonctionnera plus à la prochaine connexion.`);
+
+    } catch(err) {
+        console.error(err);
+        errEl.textContent = 'Erreur lors du changement. Réessaie.';
+        errEl.classList.remove('hidden');
+        if (btn) { btn.textContent = 'OK'; btn.disabled = false; }
+    }
+}
+
 function startListening() {
     if (!state.currentUser || !state.appId) return;
 
@@ -758,8 +883,15 @@ function startListening() {
         state.commonPotActive = state.appSettings.commonPotActive || false;
         const toggle = $('toggle-common-pot');
         if (toggle) toggle.checked = state.commonPotActive;
-        const potSettings = $('common-pot-settings');
-        if (potSettings) { potSettings.classList.toggle('hidden', !state.commonPotActive); if (state.commonPotActive) renderCommonPotMembers(); }
+        // Rafraîchir la vue Compte commun si elle est ouverte dans le panneau financier
+        const finCommon = $('finance-common-container');
+        if (finCommon && !finCommon.classList.contains('hidden')) {
+            const potSettings=$('common-pot-settings');
+            const potEmpty=$('common-pot-empty');
+            if(potSettings)potSettings.classList.toggle('hidden',!state.commonPotActive);
+            if(potEmpty)potEmpty.classList.toggle('hidden',state.commonPotActive);
+            if(state.commonPotActive)renderCommonPotMembers();
+        }
         if (state.commonPotActive)
             state.membersData[COMMON_POT_ID] = { uid:COMMON_POT_ID, name:'Compte Commun', avatar:'🏦', color:'#f59e0b', isVirtual:true, includeVariableIncome:true };
         else
@@ -800,7 +932,7 @@ async function checkAutoClose() {
             const total = exps.filter(e => !e.isIncome && !e.isTransfer && e.payer?.uid !== COMMON_POT_ID).reduce((a,e) => a+e.amount, 0);
             await addDoc(colRef('settlements'), { label, total, settledAt:Date.now(), snapshot:exps });
             await Promise.all([
-                ...tsks.filter(t => t.completed || t.archived).map(t => deleteDoc(docRef('tasks', t.id))),
+                ...tsks.filter(t => t.archived).map(t => deleteDoc(docRef('tasks', t.id))),
                 ...exps.filter(e => !e.isRecurring).map(e => deleteDoc(docRef('expenses', e.id)))
             ]);
         }
@@ -952,19 +1084,19 @@ function renderStats() {
 
 // ─── NAVIGATION ───────────────────────────────────────────────────────────────
 function switchTab(tab) {
-    ['tasks','groceries','common','accounts','profile'].forEach(s => {
+    ['tasks','groceries','accounts','profile'].forEach(s => {
         const sec = $(`section-${s}`); const btn = $(`tab-${s}-btn`);
         if (sec) sec.style.display = tab===s ? 'block' : 'none';
         if (btn) {
             btn.className = btn.className.replace(/text-(blue|emerald|amber|slate)-\d+/g,'text-slate-400').replace(/bg-slate-700\/30/g,'');
             if (tab===s) {
-                const colorMap = { tasks:'text-blue-400', groceries:'text-emerald-400', common:'text-amber-500', accounts:'text-emerald-500', profile:'text-slate-400' };
+                const colorMap = { tasks:'text-blue-400', groceries:'text-emerald-400', accounts:'text-emerald-500', profile:'text-slate-400' };
                 btn.classList.remove('text-slate-400'); btn.classList.add(colorMap[s], 'bg-slate-700/30');
             }
         }
     });
-    const titles = { tasks:'Nos Tâches', groceries:'Liste de Courses', common:'Pot Commun', accounts:'Comptes', profile:'Mon Profil' };
-    const icons  = { tasks:'fa-clipboard-list text-blue-500', groceries:'fa-cart-shopping text-emerald-400', common:'fa-vault text-amber-500', accounts:'fa-wallet text-emerald-500', profile:'fa-user-gear text-slate-400' };
+    const titles = { tasks:'Nos Tâches', groceries:'Liste de Courses', accounts:'Comptes', profile:'Mon Profil' };
+    const icons  = { tasks:'fa-clipboard-list text-blue-500', groceries:'fa-cart-shopping text-emerald-400', accounts:'fa-wallet text-emerald-500', profile:'fa-user-gear text-slate-400' };
     $('main-title').innerHTML = `<i class="fa-solid ${icons[tab]} shrink-0"></i> <span>${titles[tab]}</span>`;
 }
 
@@ -972,12 +1104,21 @@ function switchTab(tab) {
 function renderTasks() {
     const list = $('todo-list'); if (!list) return;
     list.innerHTML = '';
+    const now = Date.now();
     const tasks = state.tasksData.filter(t => !t.archived).sort((a,b) => a.completed===b.completed ? b.createdAt-a.createdAt : a.completed?1:-1);
     if (!tasks.length) {
         list.innerHTML = '<div class="text-slate-500 text-center py-8 text-sm italic bg-slate-800/30 rounded-xl border border-slate-700 border-dashed w-full break-inside-avoid inline-block min-w-0">La liste est vide...</div>';
         return;
     }
-    tasks.forEach(task => {
+
+    // Supprimer côté Firebase les tâches terminées depuis plus de 24h
+    tasks.filter(t => t.completed && t.completedAt && (now - t.completedAt) > 86400000)
+         .forEach(t => deleteDoc(docRef('tasks', t.id)));
+
+    const activeTasks    = tasks.filter(t => !t.completed);
+    const completedTasks = tasks.filter(t => t.completed && !(t.completedAt && (now - t.completedAt) > 86400000));
+
+    const renderTask = task => {
         const color  = taskColors[task.color] || taskColors['white'];
         const isOdue = task.dueDate && new Date(task.dueDate) < new Date(new Date().setHours(0,0,0,0)) && !task.completed;
         const isExp  = state.expandedTasks.has(task.id);
@@ -1006,6 +1147,14 @@ function renderTasks() {
             const m = state.membersData[task.assigneeUid];
             assigneeHTML = `<div class="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center text-xs shrink-0 overflow-hidden shadow-sm bg-slate-800" style="border-color:${m.color||'#3b82f6'};" title="Assigné à ${escapeHTML(m.name)}">${avatarHTML(m.avatar)}</div>`;
         }
+
+        // Badge "expire dans X" pour tâches terminées
+        let expireBadge = '';
+        if (task.completed && task.completedAt) {
+            const hoursLeft = Math.ceil((86400000 - (now - task.completedAt)) / 3600000);
+            expireBadge = `<span class="text-[8px] font-bold text-slate-500 bg-slate-700/50 px-2 py-0.5 rounded-full border border-slate-700 shrink-0">⏱ ${hoursLeft}h</span>`;
+        }
+
         const el = document.createElement('div');
         el.className = `${color.bg} p-4 md:p-5 rounded-xl shadow-lg border ${color.border} ${isOdue?'overdue-glow':''} group relative pl-5 overflow-hidden transition-all hover:border-slate-500 break-inside-avoid inline-block w-full mb-4 lg:mb-6 min-w-0 box-border ${task.completed?'opacity-60 hover:opacity-100':''}`;
         el.innerHTML = `
@@ -1024,13 +1173,33 @@ function renderTasks() {
                     ${task.dueDate?`<p class="text-xs font-black mt-3 ${isOdue?'text-red-400':'text-slate-400'} uppercase"><i class="fa-regular fa-calendar"></i> ${new Date(task.dueDate).toLocaleDateString()}</p>`:''}
                     ${detHTML}
                 </div>
-                <div class="flex items-center gap-2 shrink-0 pt-1 -mr-1">
-                    ${assigneeHTML}
-                    <button onclick="event.stopPropagation();App.openEditor('${task.id}')" class="p-2 text-slate-400 hover:text-blue-400 transition-colors shrink-0"><i class="fa-solid fa-pen text-base"></i></button>
+                <div class="flex flex-col items-end gap-2 shrink-0 pt-1 -mr-1">
+                    ${expireBadge}
+                    <div class="flex items-center gap-2">
+                        ${assigneeHTML}
+                        <button onclick="event.stopPropagation();App.openEditor('${task.id}')" class="p-2 text-slate-400 hover:text-blue-400 transition-colors shrink-0"><i class="fa-solid fa-pen text-base"></i></button>
+                    </div>
                 </div>
             </div>`;
         list.appendChild(el);
-    });
+    };
+
+    // Tâches actives
+    if (activeTasks.length) activeTasks.forEach(renderTask);
+    else list.innerHTML += '<div class="text-slate-500 text-center py-6 text-sm italic bg-slate-800/30 rounded-xl border border-slate-700 border-dashed w-full break-inside-avoid inline-block min-w-0 mb-4">Toutes les tâches sont terminées 🎉</div>';
+
+    // Séparateur si des tâches terminées existent
+    if (completedTasks.length) {
+        const sep = document.createElement('div');
+        sep.className = 'break-inside-avoid inline-block w-full mb-4';
+        sep.innerHTML = `<div class="flex items-center gap-3 my-2">
+            <div class="flex-1 h-px bg-slate-700"></div>
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 shrink-0 flex items-center gap-1.5"><i class="fa-solid fa-check-double text-green-500/70"></i> Terminées (supprimées dans 24h)</span>
+            <div class="flex-1 h-px bg-slate-700"></div>
+        </div>`;
+        list.appendChild(sep);
+        completedTasks.forEach(renderTask);
+    }
 }
 
 function openEditor(id = null) {
@@ -1070,7 +1239,12 @@ async function deleteTaskFromEditor() {
 async function toggleTask(id, completed) {
     if (!state.appId) return;
     const data = { completed };
-    if (completed) data.completedBy = { uid:state.currentUser.uid, name:state.localProfile?.name||'' };
+    if (completed) {
+        data.completedBy = { uid:state.currentUser.uid, name:state.localProfile?.name||'' };
+        data.completedAt = Date.now(); // nécessaire pour le décompte 24h
+    } else {
+        data.completedAt = null;
+    }
     await updateDoc(docRef('tasks', id), data);
 }
 
@@ -1705,8 +1879,8 @@ function renderFinanceChart() {
 
 // ─── PRÉVISIONNEL ─────────────────────────────────────────────────────────────
 function switchFinanceTab(tab) {
-    const tabs={chart:'finance-chart-container',daily:'finance-daily-container',forecast:'finance-forecast-container',satellites:'finance-satellites-container'};
-    const btns={chart:'fin-tab-chart',daily:'fin-tab-daily',forecast:'fin-tab-forecast',satellites:'fin-tab-satellites'};
+    const tabs={chart:'finance-chart-container',daily:'finance-daily-container',forecast:'finance-forecast-container',common:'finance-common-container',satellites:'finance-satellites-container'};
+    const btns={chart:'fin-tab-chart',daily:'fin-tab-daily',forecast:'fin-tab-forecast',common:'fin-tab-common',satellites:'fin-tab-satellites'};
     Object.values(tabs).forEach(id=>{const el=$(id);if(el)el.classList.add('hidden');});
     Object.values(btns).forEach(id=>{const b=$(id);if(b){b.classList.remove('bg-slate-700','text-white','shadow-sm');b.classList.add('text-slate-500','hover:text-slate-300');}});
     const cont=$(tabs[tab]); const btn=$(btns[tab]);
@@ -1715,6 +1889,16 @@ function switchFinanceTab(tab) {
     if(tab==='forecast'){if(!state.forecastInitialized){state.forecastItems=[{id:'base_fixed',label:'Charges fixes réelles',amount:state.currentFixedExpenses}];state.forecastInitialized=true;}const saved=localStorage.getItem('savedSavingsPct');if(saved)$('forecast-savings-slider').value=saved;updateForecast();}
     if(tab==='satellites')renderSatellites();
     if(tab==='daily')renderDailyView();
+    if(tab==='common'){
+        // Sync toggle avec état réel
+        const toggle=$('toggle-common-pot');
+        if(toggle)toggle.checked=state.commonPotActive;
+        const potSettings=$('common-pot-settings');
+        const potEmpty=$('common-pot-empty');
+        if(potSettings){potSettings.classList.toggle('hidden',!state.commonPotActive);}
+        if(potEmpty){potEmpty.classList.toggle('hidden',state.commonPotActive);}
+        if(state.commonPotActive)renderCommonPotMembers();
+    }
 }
 
 function updateForecast() {
@@ -1809,6 +1993,12 @@ function toggleCommonPot(isActive) {
     if(!state.currentUser||!state.appId)return;
     setDoc(doc(db,'artifacts',state.appId,'public','data','metadata','settings'),{commonPotActive:isActive},{merge:true});
     if(!isActive) state.expensesData.filter(e=>e.isTransfer&&e.isRecurring).forEach(exp=>deleteDoc(docRef('expenses',exp.id)));
+    // Rafraîchir la vue intégrée si elle est ouverte
+    const potSettings=$('common-pot-settings');
+    const potEmpty=$('common-pot-empty');
+    if(potSettings){potSettings.classList.toggle('hidden',!isActive);}
+    if(potEmpty){potEmpty.classList.toggle('hidden',isActive);}
+    if(isActive)renderCommonPotMembers();
 }
 
 function renderCommonPotMembers() {
@@ -2009,8 +2199,9 @@ window.App = {
     confirmDeleteMember, closeConfirmModal,
     // Export & partage
     copyReportToClipboard, shareInstanceCode,
-    // Auth
-    connectToInstance,
+    // Auth & code foyer
+    connectToInstance, openChangeCode, closeChangeCode,
+    generateNewCode, confirmChangeCode,
 };
 
 </script>

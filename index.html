@@ -896,6 +896,10 @@ async function confirmChangeCode() {
         // Créer la nouvelle entrée pointant vers le même internalId
         await setDoc(newCodeRef, { internalId: state.appId, createdAt: Date.now() });
 
+        // Supprimer l'ancien code pour qu'il ne soit plus valide
+        const oldCodeRef = doc(db, 'foyer-codes', state.visibleCode);
+        await deleteDoc(oldCodeRef);
+
         // Mettre à jour le localStorage avec le nouveau code visible
         state.visibleCode = newCode;
         localStorage.setItem('savedInstanceCode', newCode);

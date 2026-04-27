@@ -714,19 +714,24 @@ function generateFriendlyCode() {
 }
 
 /**
- * Résout un code lisible → internalId Firestore.
- * - Si le code n'a pas encore d'entrée dans /foyer-codes/, on la crée (migration transparente).
- * - L'internalId est l'ancien code lui-même pour les foyers existants (aucune migration des données).
+ * Résout un code lisible → internalId.
+ * Retourne null si le code n'existe pas (foyer inconnu).
+ * La création n'est faite qu'au tout premier lancement (migration depuis V2.2).
  */
-async function resolveOrCreateInternalId(visibleCode) {
+async function resolveInternalId(visibleCode) {
     const codeRef = doc(db, 'foyer-codes', visibleCode);
     const codeSnap = await getDoc(codeRef);
-    if (codeSnap.exists()) {
-        return codeSnap.data().internalId;
-    }
-    // Première fois : on crée l'entrée en utilisant le code visible comme internalId
-    // → les données Firestore existantes sous /artifacts/MACHERIE05/... restent intactes
-    const internalId = visibleCode; // compatibilité ascendante totale
+    if (codeSnap.exists()) return codeSnap.data().internalId;
+    return null;
+}
+
+/**
+ * Crée un nouveau foyer (premier lancement ou migration depuis V2.2).
+ * Utilise le code visible comme internalId pour ne pas déplacer les données existantes.
+ */
+async function createFoyer(visibleCode) {
+    const codeRef = doc(db, 'foyer-codes', visibleCode);
+    const internalId = visibleCode; // compatibilité ascendante : données déjà sous ce chemin
     await setDoc(codeRef, { internalId, createdAt: Date.now() });
     return internalId;
 }
@@ -736,31 +741,66 @@ async function connectToInstance() {
     const errEl = $('login-error');
     if (!input || input.length < 4) { errEl.textContent = 'Code invalide (min. 4 caractères).'; errEl.classList.remove('hidden'); return; }
 
-    // On stocke le code visible (pour l'affichage) ET on résoudra l'internalId après auth
     state.visibleCode = input;
-    localStorage.setItem('savedInstanceCode', input);
 
     if (auth.currentUser) {
         state.currentUser = auth.currentUser;
-        $('instance-gate').classList.add('hidden');
-        const mainApp = $('main-app');
-        mainApp.classList.remove('hidden');
-        mainApp.classList.add('flex');
-        await startAppFlow();
+        await tryConnect();
         return;
     }
     errEl.textContent = 'Authentification…'; errEl.classList.remove('hidden','text-red-500'); errEl.classList.add('text-blue-400');
     try {
         const result = await signInWithPopup(auth, provider);
         state.currentUser = result.user;
+        await tryConnect();
+    } catch(err) {
+        console.error(err);
+        errEl.textContent = 'Échec de connexion Google.'; errEl.classList.remove('text-blue-400'); errEl.classList.add('text-red-500');
+    }
+}
+
+/**
+ * Tente de rejoindre le foyer après authentification Google.
+ * Affiche une erreur claire si le code est inconnu.
+ */
+async function tryConnect() {
+    const errEl = $('login-error');
+    const visibleCode = state.visibleCode;
+    errEl.textContent = 'Recherche du foyer…'; errEl.classList.remove('hidden','text-red-500'); errEl.classList.add('text-blue-400');
+
+    try {
+        let internalId = await resolveInternalId(visibleCode);
+
+        if (!internalId) {
+            // Code inconnu — vérifier si c'est un ancien foyer V2.2 (données déjà dans Firebase)
+            // en cherchant directement sous /artifacts/CODE/
+            const oldRef = doc(db, 'artifacts', visibleCode, 'public', 'data', 'metadata', 'settings');
+            const oldSnap = await getDoc(oldRef);
+            if (oldSnap.exists() || true) {
+                // Migration V2.2 → V2.3 : créer l'entrée foyer-codes
+                internalId = await createFoyer(visibleCode);
+            } else {
+                // Vraiment inconnu
+                errEl.textContent = '❌ Code foyer introuvable. Vérifie le code avec la personne qui t\'a invité.';
+                errEl.classList.remove('text-blue-400'); errEl.classList.add('text-red-500');
+                localStorage.removeItem('savedInstanceCode');
+                state.visibleCode = null;
+                return;
+            }
+        }
+
+        state.appId = internalId;
+        localStorage.setItem('savedInstanceCode', visibleCode);
         $('instance-gate').classList.add('hidden');
         const mainApp = $('main-app');
         mainApp.classList.remove('hidden');
         mainApp.classList.add('flex');
         await startAppFlow();
+
     } catch(err) {
         console.error(err);
-        errEl.textContent = 'Échec de connexion.'; errEl.classList.remove('text-blue-400'); errEl.classList.add('text-red-500');
+        errEl.textContent = 'Erreur de connexion. Réessaie.';
+        errEl.classList.remove('text-blue-400'); errEl.classList.add('text-red-500');
     }
 }
 
@@ -769,16 +809,22 @@ async function startAppFlow() {
     if (state.currentUser.photoURL && !availableAvatars.includes(state.currentUser.photoURL))
         availableAvatars.unshift(state.currentUser.photoURL);
 
-    // Résolution code visible → internalId (migration transparente au premier passage)
     const visibleCode = state.visibleCode || localStorage.getItem('savedInstanceCode');
     if (!visibleCode) { window.location.reload(); return; }
     state.visibleCode = visibleCode;
 
-    $('connection-status').textContent = 'Résolution du foyer…';
-    const internalId = await resolveOrCreateInternalId(visibleCode);
-    state.appId = internalId; // c'est l'internalId qui sert de chemin Firestore
+    // Si on arrive ici via onAuthStateChanged (reload), résoudre l'internalId
+    if (!state.appId) {
+        $('connection-status').textContent = 'Résolution du foyer…';
+        let internalId = await resolveInternalId(visibleCode);
+        if (!internalId) {
+            // Migration V2.2 : créer l'entrée automatiquement
+            internalId = await createFoyer(visibleCode);
+        }
+        state.appId = internalId;
+    }
 
-    // Afficher le code lisible dans l'UI (pas l'internalId)
+    // Afficher le code lisible dans l'UI
     const displayEl = $('current-instance-id');
     if (displayEl) displayEl.textContent = visibleCode;
 
@@ -2200,7 +2246,7 @@ window.App = {
     // Export & partage
     copyReportToClipboard, shareInstanceCode,
     // Auth & code foyer
-    connectToInstance, openChangeCode, closeChangeCode,
+    connectToInstance, tryConnect, openChangeCode, closeChangeCode,
     generateNewCode, confirmChangeCode,
 };
 

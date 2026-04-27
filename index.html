@@ -2003,10 +2003,20 @@ function setDailyViewMode(mode) {
     renderDailyView();
 }
 
-function updateDailySavings(uid, val) { state.dailySavingsConfig[uid]=parseInt(val); renderDailyView(); }
+function updateDailySavings(uid, val) {
+    state.dailySavingsConfig[uid] = parseInt(val);
+    // Persistance localStorage
+    localStorage.setItem('dailySavingsConfig', JSON.stringify(state.dailySavingsConfig));
+    renderDailyView();
+}
 
 function renderDailyView() {
     const listEl=$('daily-view-list');if(!listEl)return;
+    // Restaurer la config épargne depuis localStorage si state vide
+    if (!Object.keys(state.dailySavingsConfig).length) {
+        const saved = localStorage.getItem('dailySavingsConfig');
+        if (saved) try { state.dailySavingsConfig = JSON.parse(saved); } catch(e) {}
+    }
     const now=new Date(),daysPassed=Math.max(1,now.getDate()),daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
     const uStats={};
     Object.values(state.membersData).forEach(m=>{uStats[m.uid]={name:m.name,income:m.income||0,extraIncome:0,fixed:0,variable:0,avatar:m.avatar,color:m.color,includeVar:m.includeVariableIncome!==false,isVirtual:m.isVirtual};});

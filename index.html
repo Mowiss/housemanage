@@ -772,21 +772,12 @@ async function tryConnect() {
         let internalId = await resolveInternalId(visibleCode);
 
         if (!internalId) {
-            // Code inconnu — vérifier si c'est un ancien foyer V2.2 (données déjà dans Firebase)
-            // en cherchant directement sous /artifacts/CODE/
-            const oldRef = doc(db, 'artifacts', visibleCode, 'public', 'data', 'metadata', 'settings');
-            const oldSnap = await getDoc(oldRef);
-            if (oldSnap.exists() || true) {
-                // Migration V2.2 → V2.3 : créer l'entrée foyer-codes
-                internalId = await createFoyer(visibleCode);
-            } else {
-                // Vraiment inconnu
-                errEl.textContent = '❌ Code foyer introuvable. Vérifie le code avec la personne qui t\'a invité.';
-                errEl.classList.remove('text-blue-400'); errEl.classList.add('text-red-500');
-                localStorage.removeItem('savedInstanceCode');
-                state.visibleCode = null;
-                return;
-            }
+            // Code vraiment inconnu — refuser la connexion
+            errEl.textContent = '❌ Code foyer introuvable. Vérifie le code avec la personne qui t\'a invité.';
+            errEl.classList.remove('text-blue-400'); errEl.classList.add('text-red-500');
+            localStorage.removeItem('savedInstanceCode');
+            state.visibleCode = null;
+            return;
         }
 
         state.appId = internalId;
@@ -816,10 +807,18 @@ async function startAppFlow() {
     // Si on arrive ici via onAuthStateChanged (reload), résoudre l'internalId
     if (!state.appId) {
         $('connection-status').textContent = 'Résolution du foyer…';
-        let internalId = await resolveInternalId(visibleCode);
+        const internalId = await resolveInternalId(visibleCode);
         if (!internalId) {
-            // Migration V2.2 : créer l'entrée automatiquement
-            internalId = await createFoyer(visibleCode);
+            // Code invalide — renvoyer vers l'écran de connexion
+            localStorage.removeItem('savedInstanceCode');
+            state.visibleCode = null;
+            $('main-app').classList.add('hidden');
+            $('main-app').classList.remove('flex');
+            $('instance-gate').classList.remove('hidden');
+            $('login-error').textContent = '❌ Code foyer invalide. Entre le nouveau code.';
+            $('login-error').classList.remove('hidden','text-blue-400');
+            $('login-error').classList.add('text-red-500');
+            return;
         }
         state.appId = internalId;
     }

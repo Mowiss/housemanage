@@ -362,8 +362,8 @@
                                             <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-all peer-checked:translate-x-4 shadow-sm"></div>
                                         </div>
                                         <div class="flex flex-col">
-                                            <span class="text-xs font-bold text-slate-300">Inclure les rentrées ponctuelles</span>
-                                            <span class="text-[9px] text-slate-500">Ajoute les "Rentrées 💶" au budget global</span>
+                                            <span class="text-xs font-bold text-slate-300">Inclure les rentrées ponctuelles dans le budget</span>
+                                            <span class="text-[9px] text-slate-500">Les rentrées manuelles (primes, libéral...) s'ajoutent au revenu fixe pour le calcul du budget disponible. Elles ne se reproduisent jamais automatiquement.</span>
                                         </div>
                                     </label>
                                 </div>
@@ -989,64 +989,99 @@ function startListening() {
 
 /**
  * Effectue la clôture mensuelle :
- * 1. Archive les dépenses → settlements
- * 2. Supprime les dépenses ponctuelles
- * 3. Crée une entrée SALAIRE pour chaque membre
- * 4. Met à jour lastClose
+ * 1. Calcule le solde restant par membre
+ * 2. Archive les dépenses → settlements
+ * 3. Supprime les dépenses ponctuelles et les rentrées non-récurrentes
+ * 4. Crée les entrées SALAIRE du nouveau mois (anti-doublon)
+ * 5. Crée les entrées de report (positif ou négatif) par membre
+ * 6. Marque la clôture
  */
 async function performMonthClose(isManual = false) {
     if (!state.currentUser || !state.appId) return;
     const metaRef = doc(db, 'artifacts', state.appId, 'public', 'data', 'metadata', 'settings');
     const now = new Date();
-    // On utilise getMonth()+1 pour avoir janvier=1 ... décembre=12 (évite la confusion JS)
     const currentM = `${now.getMonth()+1}-${now.getFullYear()}`;
+    const mNames = ["Jan","Fév","Mar","Avr","Mai","Jui","Jul","Aoû","Sep","Oct","Nov","Déc"];
 
-    const [expSnap, taskSnap] = await Promise.all([getDocs(colRef('expenses')), getDocs(colRef('tasks'))]);
+    const [expSnap, taskSnap, membersSnap] = await Promise.all([
+        getDocs(colRef('expenses')),
+        getDocs(colRef('tasks')),
+        getDocs(collection(db, 'artifacts', state.appId, 'public', 'data', 'members'))
+    ]);
     const exps = expSnap.docs.map(d => ({id:d.id,...d.data()}));
     const tsks = taskSnap.docs.map(d => ({id:d.id,...d.data()}));
+    const members = membersSnap.docs.map(d => d.data()).filter(m => !m.isVirtual);
 
-    // 1. Créer le snapshot archive
+    // Anti-doublon : vérifier qu'on n'a pas déjà clôturé ce mois
+    const metaSnap = await getDoc(metaRef);
+    if (metaSnap.exists() && metaSnap.data().lastClose === currentM) return;
+
+    // 1. Calculer le solde restant par membre
+    // solde = revenu fixe + rentrées ponctuelles (si inclus) - toutes les dépenses
+    const soldes = {};
+    members.forEach(m => {
+        const income = m.income || 0;
+        const extraIncome = exps.filter(e => e.isIncome && e.payer?.uid === m.uid && !e.isAutoSalary && !e.isReport)
+                                .reduce((a,e) => a + e.amount, 0);
+        const inclVar = m.includeVariableIncome !== false;
+        const totalIncome = income + (inclVar ? extraIncome : 0);
+        const totalDepenses = exps.filter(e => !e.isIncome && !e.isTransfer && e.payer?.uid === m.uid)
+                                  .reduce((a,e) => a + e.amount, 0);
+        soldes[m.uid] = { membre: m, solde: totalIncome - totalDepenses };
+    });
+
+    // 2. Snapshot archive
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const mNames = ["Jan","Fév","Mar","Avr","Mai","Jui","Jul","Aoû","Sep","Oct","Nov","Déc"];
     const label = `${mNames[lastMonth.getMonth()]} ${lastMonth.getFullYear()}`;
     const total = exps.filter(e => !e.isIncome && !e.isTransfer && e.payer?.uid !== COMMON_POT_ID).reduce((a,e) => a+e.amount, 0);
-
     if (exps.length > 0 || isManual) {
         await addDoc(colRef('settlements'), { label, total, settledAt: Date.now(), snapshot: exps });
     }
 
-    // 2. Supprimer dépenses ponctuelles + tâches archivées
+    // 3. Supprimer dépenses ponctuelles, rentrées non-récurrentes, tâches archivées
     await Promise.all([
         ...tsks.filter(t => t.archived).map(t => deleteDoc(docRef('tasks', t.id))),
-        ...exps.filter(e => !e.isRecurring && !e.isIncome).map(e => deleteDoc(docRef('expenses', e.id)))
+        ...exps.filter(e => !e.isRecurring).map(e => deleteDoc(docRef('expenses', e.id)))
     ]);
 
-    // 3. Créer les entrées SALAIRE pour chaque membre
-    const membersSnap = await getDocs(collection(db, 'artifacts', state.appId, 'public', 'data', 'members'));
-    const salaryPromises = [];
-    membersSnap.forEach(memberDoc => {
-        const m = memberDoc.data();
-        if (!m.isVirtual && m.income && m.income > 0) {
-            salaryPromises.push(addDoc(colRef('expenses'), {
+    // 4. Créer les entrées du nouveau mois pour chaque membre
+    const today = now.toISOString().split('T')[0];
+    const newEntries = [];
+    members.forEach(m => {
+        // SALAIRE
+        if (m.income && m.income > 0) {
+            newEntries.push(addDoc(colRef('expenses'), {
                 text: 'SALAIRE',
                 amount: m.income,
-                isIncome: true,
-                isTransfer: false,
-                isRecurring: false,
-                date: new Date().toISOString().split('T')[0],
-                category: 'income',
-                payer: { uid: m.uid, name: m.name, avatar: m.avatar || '👤', color: m.color || '#3b82f6' },
-                createdAt: Date.now(),
-                isAutoSalary: true
+                isIncome: true, isTransfer: false, isRecurring: false,
+                date: today, category: 'income',
+                payer: { uid:m.uid, name:m.name, avatar:m.avatar||'👤', color:m.color||'#3b82f6' },
+                createdAt: Date.now(), isAutoSalary: true
+            }));
+        }
+        // Report du solde
+        const solde = soldes[m.uid]?.solde || 0;
+        if (solde !== 0) {
+            const isPositif = solde > 0;
+            newEntries.push(addDoc(colRef('expenses'), {
+                text: `Report ${mNames[lastMonth.getMonth()]} ${isPositif ? '+' : ''}${solde.toFixed(2)}€`,
+                amount: Math.abs(solde),
+                isIncome: isPositif, isTransfer: false, isRecurring: false,
+                isReport: true,
+                // Si négatif : c'est une dépense supplémentaire
+                ...(isPositif ? {} : { isNegativeReport: true }),
+                date: today, category: isPositif ? 'income' : 'divers',
+                payer: { uid:m.uid, name:m.name, avatar:m.avatar||'👤', color:m.color||'#3b82f6' },
+                createdAt: Date.now() + 1
             }));
         }
     });
-    await Promise.all(salaryPromises);
+    await Promise.all(newEntries);
 
-    // 4. Marquer la clôture
+    // 5. Marquer la clôture
     await setDoc(metaRef, { lastClose: currentM }, { merge: true });
 
-    // Rafraîchir le bouton de clôture
+    // Rafraîchir le bouton
     renderCloseMonthButton();
 }
 
@@ -1658,7 +1693,20 @@ function computeExpenseStats() {
             ? `<span class="bg-slate-700 text-slate-300 text-[9px] md:text-[10px] px-2 py-1 rounded-md font-bold shadow-inner shrink-0"><i class="fa-regular fa-calendar"></i> ${new Date(exp.date).toLocaleDateString()}</span>`
             : '';
 
-        if (exp.isIncome) {
+        if (exp.isNegativeReport) {
+            // Report négatif = découvert du mois précédent → traité comme dépense ponctuelle
+            const catDat = expenseCategories['divers'];
+            const liHTML = buildExpenseRowHTML(exp, mProf, avH, dateBadge, catDat);
+            const week = getExpenseWeek(exp.date);
+            stats.groupedPonct[week].total += exp.amount;
+            stats.groupedPonct[week].items.push(liHTML);
+            if (!stats.groupedPonct[week].users[uId]) stats.groupedPonct[week].users[uId] = 0;
+            stats.groupedPonct[week].users[uId] += exp.amount;
+            stats.users[uId].spent += exp.amount;
+            stats.users[uId].spentNormal += exp.amount;
+            stats.ponct += exp.amount;
+
+        } else if (exp.isIncome) {
             stats.hasIncomes = true;
             if (!mProf.isVirtual) stats.extraIncome += exp.amount;
             stats.users[uId].extraIncome += exp.amount;

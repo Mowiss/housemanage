@@ -254,7 +254,7 @@
                     <div id="balance-card" class="bg-gradient-to-br from-indigo-700 to-slate-900 text-white rounded-2xl p-6 shadow-xl relative border border-white/5 overflow-hidden h-full flex flex-col justify-between min-w-0">
                         <div class="flex justify-between items-center mb-6 relative z-10 w-full">
                             <span class="text-xs md:text-sm font-bold uppercase tracking-widest opacity-70 truncate pr-2" id="current-month-label">Mois</span>
-                            <span class="text-[10px] text-slate-300 italic opacity-50 shrink-0">Clôture automatique</span>
+                            <div id="close-month-btn-container"></div>
                         </div>
                         <div id="balance-summary" class="text-center relative z-10 w-full min-w-0"></div>
                         <div id="visual-stats" class="space-y-4 relative z-10 mt-4 w-full min-w-0"></div>
@@ -664,13 +664,33 @@ function escapeHTML(s) {
     return s ? s.replace(/[&<>'"]/g, t => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[t])) : '';
 }
 
+/**
+ * Retourne la semaine calendaire (S1-S5) d'une date,
+ * basée sur les vrais lundis/dimanches du mois.
+ * S1 = du 1er jusqu'au 1er dimanche inclus (même si 1 seul jour)
+ * S2-S4 = semaines lundi-dimanche complètes
+ * S5 = si le mois déborde après le 4e dimanche
+ */
 function getExpenseWeek(dateStr) {
     if (!dateStr) return 'S1';
-    const day = new Date(dateStr).getDate();
-    if (day <= 7)  return 'S1';
-    if (day <= 14) return 'S2';
-    if (day <= 21) return 'S3';
-    return 'S4';
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+
+    // Trouver le jour de la semaine du 1er du mois (0=dim, 1=lun ... 6=sam)
+    const firstDow = new Date(year, month, 1).getDay();
+    // Décaler pour avoir lundi=0 ... dimanche=6
+    const firstDowMon = (firstDow === 0) ? 6 : firstDow - 1;
+
+    // Jour du 1er dimanche du mois
+    const firstSunday = (firstDowMon === 6) ? 1 : 7 - firstDowMon;
+
+    if (day <= firstSunday)  return 'S1';
+    if (day <= firstSunday + 7)  return 'S2';
+    if (day <= firstSunday + 14) return 'S3';
+    if (day <= firstSunday + 21) return 'S4';
+    return 'S5';
 }
 
 /** Rendu inline d'un avatar (emoji ou URL photo Google) */
@@ -964,29 +984,142 @@ function startListening() {
     onSnapshot(colRef('groceries'),   snap => { state.groceriesData   = snap.docs.map(d => ({id:d.id,...d.data()})); renderGroceries(); });
 }
 
+/**
+ * Effectue la clôture mensuelle :
+ * 1. Archive les dépenses → settlements
+ * 2. Supprime les dépenses ponctuelles
+ * 3. Crée une entrée SALAIRE pour chaque membre
+ * 4. Met à jour lastClose
+ */
+async function performMonthClose(isManual = false) {
+    if (!state.currentUser || !state.appId) return;
+    const metaRef = doc(db, 'artifacts', state.appId, 'public', 'data', 'metadata', 'settings');
+    const now = new Date();
+    const currentM = `${now.getMonth()}-${now.getFullYear()}`;
+
+    const [expSnap, taskSnap] = await Promise.all([getDocs(colRef('expenses')), getDocs(colRef('tasks'))]);
+    const exps = expSnap.docs.map(d => ({id:d.id,...d.data()}));
+    const tsks = taskSnap.docs.map(d => ({id:d.id,...d.data()}));
+
+    // 1. Créer le snapshot archive
+    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const mNames = ["Jan","Fév","Mar","Avr","Mai","Jui","Jul","Aoû","Sep","Oct","Nov","Déc"];
+    const label = `${mNames[lastMonth.getMonth()]} ${lastMonth.getFullYear()}`;
+    const total = exps.filter(e => !e.isIncome && !e.isTransfer && e.payer?.uid !== COMMON_POT_ID).reduce((a,e) => a+e.amount, 0);
+
+    if (exps.length > 0 || isManual) {
+        await addDoc(colRef('settlements'), { label, total, settledAt: Date.now(), snapshot: exps });
+    }
+
+    // 2. Supprimer dépenses ponctuelles + tâches archivées
+    await Promise.all([
+        ...tsks.filter(t => t.archived).map(t => deleteDoc(docRef('tasks', t.id))),
+        ...exps.filter(e => !e.isRecurring && !e.isIncome).map(e => deleteDoc(docRef('expenses', e.id)))
+    ]);
+
+    // 3. Créer les entrées SALAIRE pour chaque membre
+    const membersSnap = await getDocs(collection(db, 'artifacts', state.appId, 'public', 'data', 'members'));
+    const salaryPromises = [];
+    membersSnap.forEach(memberDoc => {
+        const m = memberDoc.data();
+        if (!m.isVirtual && m.income && m.income > 0) {
+            salaryPromises.push(addDoc(colRef('expenses'), {
+                text: 'SALAIRE',
+                amount: m.income,
+                isIncome: true,
+                isTransfer: false,
+                isRecurring: false,
+                date: new Date().toISOString().split('T')[0],
+                category: 'income',
+                payer: { uid: m.uid, name: m.name, avatar: m.avatar || '👤', color: m.color || '#3b82f6' },
+                createdAt: Date.now(),
+                isAutoSalary: true
+            }));
+        }
+    });
+    await Promise.all(salaryPromises);
+
+    // 4. Marquer la clôture
+    await setDoc(metaRef, { lastClose: currentM }, { merge: true });
+
+    // Rafraîchir le bouton de clôture
+    renderCloseMonthButton();
+}
+
 async function checkAutoClose() {
     if (!state.currentUser || !state.appId) return;
     const metaRef = doc(db, 'artifacts', state.appId, 'public', 'data', 'metadata', 'settings');
     const metaSnap = await getDoc(metaRef);
     const now = new Date();
     const currentM = `${now.getMonth()}-${now.getFullYear()}`;
-    if (!metaSnap.exists() || metaSnap.data().lastClose !== currentM) {
-        const [expSnap, taskSnap] = await Promise.all([getDocs(colRef('expenses')), getDocs(colRef('tasks'))]);
-        const exps  = expSnap.docs.map(d => ({id:d.id,...d.data()}));
-        const tsks  = taskSnap.docs.map(d => ({id:d.id,...d.data()}));
-        if (exps.length > 0) {
-            const lastMonth = new Date(); lastMonth.setMonth(now.getMonth() - 1);
-            const mNames = ["Jan","Fév","Mar","Avr","Mai","Jui","Jul","Aoû","Sep","Oct","Nov","Déc"];
-            const label = `${mNames[lastMonth.getMonth()]} ${lastMonth.getFullYear()}`;
-            const total = exps.filter(e => !e.isIncome && !e.isTransfer && e.payer?.uid !== COMMON_POT_ID).reduce((a,e) => a+e.amount, 0);
-            await addDoc(colRef('settlements'), { label, total, settledAt:Date.now(), snapshot:exps });
-            await Promise.all([
-                ...tsks.filter(t => t.archived).map(t => deleteDoc(docRef('tasks', t.id))),
-                ...exps.filter(e => !e.isRecurring).map(e => deleteDoc(docRef('expenses', e.id)))
-            ]);
-        }
-        await setDoc(metaRef, { lastClose: currentM }, { merge: true });
+
+    // Filet de sécurité : clôture auto si on est le 5 ou après et que ce n'est pas encore fait
+    const lastClose = metaSnap.exists() ? metaSnap.data().lastClose : null;
+    const prevM = `${now.getMonth() === 0 ? 11 : now.getMonth() - 1}-${now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear()}`;
+    if (now.getDate() >= 5 && lastClose !== currentM && lastClose !== prevM) {
+        await performMonthClose(false);
     }
+
+    // Afficher le bouton de clôture manuelle si on est >= 29
+    renderCloseMonthButton();
+}
+
+/** Affiche ou masque le bouton de clôture selon la date et l'état */
+async function renderCloseMonthButton() {
+    const container = $('close-month-btn-container');
+    if (!container) return;
+    const now = new Date();
+    const currentM = `${now.getMonth()}-${now.getFullYear()}`;
+    const metaRef = doc(db, 'artifacts', state.appId, 'public', 'data', 'metadata', 'settings');
+    const metaSnap = await getDoc(metaRef);
+    const lastClose = metaSnap.exists() ? metaSnap.data().lastClose : null;
+
+    if (lastClose === currentM) {
+        // Déjà clôturé ce mois
+        container.innerHTML = `<span class="text-[10px] text-emerald-400 italic opacity-70 shrink-0 flex items-center gap-1"><i class="fa-solid fa-check"></i> Clôturé</span>`;
+    } else if (now.getDate() >= 29) {
+        // Bouton disponible dès le 29
+        container.innerHTML = `<button onclick="App.openCloseMonthModal()" class="text-[10px] bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 border border-amber-500/40 px-3 py-1.5 rounded-lg font-bold transition-colors flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-calendar-check"></i> Clôturer</button>`;
+    } else {
+        // Pas encore disponible
+        const daysLeft = 29 - now.getDate();
+        container.innerHTML = `<span class="text-[10px] text-slate-500 italic opacity-50 shrink-0">Clôture dans ${daysLeft}j</span>`;
+    }
+}
+
+function openCloseMonthModal() {
+    const now = new Date();
+    const mNames = ["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
+    const modal = $('confirm-modal');
+    const text  = $('confirm-modal-text');
+    const btn   = $('confirm-modal-btn');
+    if (!modal || !text || !btn) return;
+
+    text.innerHTML = `Voulez-vous clôturer le mois de <b>${mNames[now.getMonth()]} ${now.getFullYear()}</b> ?<br><br>
+        <span class="text-[11px] text-slate-400 block mt-2">• Les dépenses ponctuelles seront archivées<br>• Les salaires seront versés automatiquement<br>• Les charges fixes restent pour le mois suivant</span>`;
+
+    // Changer temporairement le comportement du bouton confirm
+    btn.textContent = 'Clôturer';
+    btn.className = btn.className.replace('bg-red-600 hover:bg-red-500', 'bg-amber-600 hover:bg-amber-500');
+    btn.onclick = async () => {
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        btn.disabled = true;
+        await performMonthClose(true);
+        $('confirm-modal').classList.replace('flex','hidden');
+        // Remettre le bouton en état original
+        btn.textContent = 'Oui, exclure';
+        btn.className = btn.className.replace('bg-amber-600 hover:bg-amber-500', 'bg-red-600 hover:bg-red-500');
+        btn.disabled = false;
+        btn.onclick = null;
+    };
+
+    // Changer le titre
+    const titleEl = modal.querySelector('h3');
+    if (titleEl) titleEl.textContent = 'Clôturer le mois ?';
+    const iconEl = modal.querySelector('.fa-user-xmark');
+    if (iconEl) { iconEl.className = 'fa-solid fa-calendar-check'; iconEl.parentElement.className = 'w-16 h-16 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center text-3xl mx-auto mb-4'; }
+
+    modal.classList.replace('hidden','flex');
 }
 
 // ─── PROFIL ───────────────────────────────────────────────────────────────────
@@ -1492,6 +1625,7 @@ function computeExpenseStats() {
             'S2':{ total:0, items:[], users:{}, categories:{} },
             'S3':{ total:0, items:[], users:{}, categories:{} },
             'S4':{ total:0, items:[], users:{}, categories:{} },
+            'S5':{ total:0, items:[], users:{}, categories:{} },
         },
         incomesHTML: '', hasIncomes: false,
     };
@@ -2275,6 +2409,8 @@ window.App = {
     selectAvatar, selectUserColor,
     renderEditorAssignee,
     confirmDeleteMember, closeConfirmModal,
+    // Clôture mensuelle
+    openCloseMonthModal, renderCloseMonthButton,
     // Export & partage
     copyReportToClipboard, shareInstanceCode,
     // Auth & code foyer

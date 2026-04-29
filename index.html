@@ -2092,30 +2092,42 @@ function renderFinanceChart() {
                 const mKey=`${d.getFullYear()}-${d.getMonth()}`;
                 const exps=histMap.get(mKey)||[];
 
-                // Toutes les entrées réelles jusqu'à ce jour (SALAIRE, reports, rentrées)
-                let totalInc = 0;
+                // Revenu fixe du profil = base constante du mois
+                let totalInc = entityId===COMMON_POT_ID ? 0 : (baseIncomes[entityId]||0);
+
+                // Entrées réelles datées (SALAIRE, reports, rentrées ponctuelles) jusqu'à ce jour
                 exps.forEach(e => {
-                    if (!e.date) return;
-                    if (new Date(e.date+' 12:00') > new Date(dStr+' 12:00')) return; // pas encore arrivé
+                    if (!e.isIncome && !e.isTransfer) return;
+                    if (e.isNegativeReport) return;
                     const pUid = e.payer?.uid;
                     const applies = entityId==='foyer' || entityId===pUid;
                     if (!applies) return;
-                    if (e.isIncome && !e.isNegativeReport) totalInc += e.amount;
+                    const eDate = e.date ? e.date : dStr;
+                    if (eDate > dStr) return; // pas encore arrivé
+                    if (e.isIncome) totalInc += e.amount;
                     else if (e.isTransfer && entityId===COMMON_POT_ID) totalInc += e.amount;
                     else if (e.isTransfer && entityId===pUid) totalInc -= e.amount;
                 });
 
-                // Toutes les dépenses jusqu'à ce jour
+                // Dépenses jusqu'à ce jour
                 let totalExp = 0;
                 exps.forEach(e => {
                     if (e.isIncome || e.isTransfer) return;
                     const pUid = e.payer?.uid;
                     const applies = entityId==='foyer' || entityId===pUid;
                     if (!applies) return;
-                    // Toutes les dépenses comptées à leur date (fixes et variables)
-                    const eDate = e.date ? new Date(e.date+' 12:00') : new Date(dStr+' 12:00');
-                    if (eDate <= new Date(dStr+' 12:00')) totalExp += e.amount;
+                    if (e.isRecurring) {
+                        // Charges fixes : déduites dès le 1er du mois
+                        totalExp += e.amount;
+                    } else {
+                        // Ponctuelles et reports négatifs : à leur date
+                        const eDate = e.date || dStr;
+                        if (eDate <= dStr) totalExp += e.amount;
+                    }
                 });
+
+                dataPts.push({label:`${d.getDate()}/${d.getMonth()+1}`, remaining: totalInc - totalExp});
+            }
 
                 dataPts.push({label:`${d.getDate()}/${d.getMonth()+1}`, remaining: totalInc - totalExp});
             }

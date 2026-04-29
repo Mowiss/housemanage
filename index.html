@@ -998,7 +998,8 @@ async function performMonthClose(isManual = false) {
     if (!state.currentUser || !state.appId) return;
     const metaRef = doc(db, 'artifacts', state.appId, 'public', 'data', 'metadata', 'settings');
     const now = new Date();
-    const currentM = `${now.getMonth()}-${now.getFullYear()}`;
+    // On utilise getMonth()+1 pour avoir janvier=1 ... décembre=12 (évite la confusion JS)
+    const currentM = `${now.getMonth()+1}-${now.getFullYear()}`;
 
     const [expSnap, taskSnap] = await Promise.all([getDocs(colRef('expenses')), getDocs(colRef('tasks'))]);
     const exps = expSnap.docs.map(d => ({id:d.id,...d.data()}));
@@ -1054,12 +1055,9 @@ async function checkAutoClose() {
     const metaRef = doc(db, 'artifacts', state.appId, 'public', 'data', 'metadata', 'settings');
     const metaSnap = await getDoc(metaRef);
     const now = new Date();
-    const currentM = `${now.getMonth()}-${now.getFullYear()}`;
-
-    // Filet de sécurité : clôture auto UNIQUEMENT entre le 1er et le 5 du mois
-    // ET seulement si le mois PRÉCÉDENT n'a pas encore été clôturé
+    const currentM = `${now.getMonth()+1}-${now.getFullYear()}`;
     const lastClose = metaSnap.exists() ? metaSnap.data().lastClose : null;
-    const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+    const prevMonth = now.getMonth() === 0 ? 12 : now.getMonth(); // mois précédent en base 1
     const prevYear  = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
     const prevM = `${prevMonth}-${prevYear}`;
 
@@ -1081,7 +1079,7 @@ async function renderCloseMonthButton() {
     const lastClose = metaSnap.exists() ? metaSnap.data().lastClose : null;
 
     // prevM = le mois en cours qu'on va clôturer (stocké comme "mois-année" du mois courant)
-    const currentM = `${now.getMonth()}-${now.getFullYear()}`;
+    const currentM = `${now.getMonth()+1}-${now.getFullYear()}`;
 
     if (lastClose === currentM) {
         // La clôture de ce mois a déjà été faite

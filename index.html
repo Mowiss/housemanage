@@ -2128,9 +2128,6 @@ function renderFinanceChart() {
 
                 dataPts.push({label:`${d.getDate()}/${d.getMonth()+1}`, remaining: totalInc - totalExp});
             }
-
-                dataPts.push({label:`${d.getDate()}/${d.getMonth()+1}`, remaining: totalInc - totalExp});
-            }
         }else{
             let monthly=allMonths.map(mo=>{const exps=histMap.get(mo.key)||[];let totalInc=entityId===COMMON_POT_ID?0:(baseIncomes[entityId]||0),totalExp=0;exps.forEach(e=>{const pUid=e.payer?.uid;if(e.isIncome){const applies=entityId==='foyer'||entityId===pUid;const pObj=state.membersData[pUid];if(applies&&pObj&&!pObj.isVirtual&&pObj.includeVariableIncome!==false)totalInc+=e.amount;}else if(e.isTransfer){if(entityId===pUid)totalInc-=e.amount;if(entityId===COMMON_POT_ID)totalInc+=e.amount;}else if(entityId==='foyer'||entityId===pUid)totalExp+=e.amount;});return{year:mo.year,month:mo.month,remaining:totalInc-totalExp,label:mNames[mo.month]};});
             if(state.currentChartTimeframe==='month'){titleEl.textContent='Budget Restant (6 derniers mois)';dataPts=monthly.slice(-6);}

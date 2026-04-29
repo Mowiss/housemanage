@@ -2063,7 +2063,20 @@ function renderFinanceChart() {
     baseIncomes['foyer'] = Object.values(baseIncomes).reduce((a,b)=>a+b,0);
     const histMap=new Map();
     state.settlementsData.forEach(s=>{const parts=s.label.split(' ');let mi=mNames.findIndex(m=>m.startsWith(parts[0].substring(0,3)));let y=parseInt(parts[1]);if(mi===-1)mi=new Date(s.settledAt).getMonth();if(isNaN(y))y=new Date(s.settledAt).getFullYear();histMap.set(`${y}-${mi}`,s.snapshot||[]);});
-    histMap.set(`${now.getFullYear()}-${now.getMonth()}`,state.expensesData);
+
+    // Pour la vue Jour : on fusionne le dernier settlement avec les dépenses courantes
+    // pour couvrir les 14 derniers jours même après une clôture
+    const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
+    const lastSettlement = state.settlementsData.sort((a,b)=>b.settledAt-a.settledAt)[0];
+    const currentExps = [...state.expensesData];
+    if (lastSettlement?.snapshot) {
+        // Ajouter les dépenses du settlement récent qui tombent dans les 14 derniers jours
+        const cutoff = new Date(now.getFullYear(), now.getMonth(), now.getDate()-13);
+        lastSettlement.snapshot.forEach(e => {
+            if (e.date && new Date(e.date) >= cutoff) currentExps.push(e);
+        });
+    }
+    histMap.set(currentMonthKey, currentExps);
     const allMonths=Array.from(histMap.keys()).map(k=>{const[y,m]=k.split('-');return{year:parseInt(y),month:parseInt(m),key:k};}).sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
     let chartLines=[];
     entities.forEach(entityId=>{

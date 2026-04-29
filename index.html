@@ -1055,14 +1055,18 @@ async function checkAutoClose() {
     const now = new Date();
     const currentM = `${now.getMonth()}-${now.getFullYear()}`;
 
-    // Filet de sécurité : clôture auto si on est le 5 ou après et que ce n'est pas encore fait
+    // Filet de sécurité : clôture auto UNIQUEMENT entre le 1er et le 5 du mois
+    // ET seulement si le mois PRÉCÉDENT n'a pas encore été clôturé
     const lastClose = metaSnap.exists() ? metaSnap.data().lastClose : null;
-    const prevM = `${now.getMonth() === 0 ? 11 : now.getMonth() - 1}-${now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear()}`;
-    if (now.getDate() >= 5 && lastClose !== currentM && lastClose !== prevM) {
+    const prevMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+    const prevYear  = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    const prevM = `${prevMonth}-${prevYear}`;
+
+    if (now.getDate() >= 1 && now.getDate() <= 5 && lastClose !== prevM && lastClose !== currentM) {
         await performMonthClose(false);
     }
 
-    // Afficher le bouton de clôture manuelle si on est >= 29
+    // Afficher le bouton de clôture manuelle
     renderCloseMonthButton();
 }
 
@@ -1075,12 +1079,14 @@ async function renderCloseMonthButton() {
     const metaSnap = await getDoc(metaRef);
     const lastClose = metaSnap.exists() ? metaSnap.data().lastClose : null;
 
-    // La clôture du mois courant correspond à lastClose = "mois_courant-année"
+    // prevM = le mois en cours qu'on va clôturer (stocké comme "mois-année" du mois courant)
     const currentM = `${now.getMonth()}-${now.getFullYear()}`;
 
     if (lastClose === currentM) {
+        // La clôture de ce mois a déjà été faite
         container.innerHTML = `<span class="text-[10px] text-emerald-400 italic opacity-70 shrink-0 flex items-center gap-1"><i class="fa-solid fa-check"></i> Clôturé</span>`;
     } else if (now.getDate() >= 29) {
+        // Bouton disponible dès le 29
         container.innerHTML = `<button onclick="App.openCloseMonthModal()" class="text-[10px] bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 border border-amber-500/40 px-3 py-1.5 rounded-lg font-bold transition-colors flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-calendar-check"></i> Clôturer</button>`;
     } else {
         const daysLeft = 29 - now.getDate();

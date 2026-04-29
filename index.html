@@ -2112,12 +2112,9 @@ function renderFinanceChart() {
                     const pUid = e.payer?.uid;
                     const applies = entityId==='foyer' || entityId===pUid;
                     if (!applies) return;
-                    // Fixes : comptées dès le 1er du mois
-                    if (e.isRecurring) totalExp += e.amount;
-                    // Variables : comptées à leur date
-                    else if (e.date && new Date(e.date+' 12:00') <= new Date(dStr+' 12:00')) totalExp += e.amount;
-                    // Reports négatifs
-                    else if (e.isNegativeReport && e.date && new Date(e.date+' 12:00') <= new Date(dStr+' 12:00')) totalExp += e.amount;
+                    // Toutes les dépenses comptées à leur date (fixes et variables)
+                    const eDate = e.date ? new Date(e.date+' 12:00') : new Date(dStr+' 12:00');
+                    if (eDate <= new Date(dStr+' 12:00')) totalExp += e.amount;
                 });
 
                 dataPts.push({label:`${d.getDate()}/${d.getMonth()+1}`, remaining: totalInc - totalExp});

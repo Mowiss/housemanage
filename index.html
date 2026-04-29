@@ -667,29 +667,31 @@ function escapeHTML(s) {
 /**
  * Retourne la semaine calendaire (S1-S5) d'une date,
  * basée sur les vrais lundis/dimanches du mois.
- * S1 = du 1er jusqu'au 1er dimanche inclus (même si 1 seul jour)
+ * S1 = du 1er jusqu'au 1er dimanche inclus
  * S2-S4 = semaines lundi-dimanche complètes
  * S5 = si le mois déborde après le 4e dimanche
  */
 function getExpenseWeek(dateStr) {
     if (!dateStr) return 'S1';
-    const date = new Date(dateStr);
-    const year = date.getFullYear();
+    const date = new Date(dateStr + 'T12:00:00'); // midi pour éviter les bugs de timezone
+    const year  = date.getFullYear();
     const month = date.getMonth();
-    const day = date.getDate();
+    const day   = date.getDate();
 
-    // Trouver le jour de la semaine du 1er du mois (0=dim, 1=lun ... 6=sam)
-    const firstDow = new Date(year, month, 1).getDay();
-    // Décaler pour avoir lundi=0 ... dimanche=6
-    const firstDowMon = (firstDow === 0) ? 6 : firstDow - 1;
+    // Trouver le jour du 1er dimanche du mois
+    // getDay() : 0=dim, 1=lun ... 6=sam
+    let firstSunday = 0;
+    for (let d = 1; d <= 7; d++) {
+        if (new Date(year, month, d).getDay() === 0) {
+            firstSunday = d;
+            break;
+        }
+    }
 
-    // Jour du 1er dimanche du mois
-    const firstSunday = (firstDowMon === 6) ? 1 : 7 - firstDowMon;
-
-    if (day <= firstSunday)  return 'S1';
-    if (day <= firstSunday + 7)  return 'S2';
-    if (day <= firstSunday + 14) return 'S3';
-    if (day <= firstSunday + 21) return 'S4';
+    if (day <= firstSunday)          return 'S1';
+    if (day <= firstSunday + 7)      return 'S2';
+    if (day <= firstSunday + 14)     return 'S3';
+    if (day <= firstSunday + 21)     return 'S4';
     return 'S5';
 }
 
@@ -1069,19 +1071,18 @@ async function renderCloseMonthButton() {
     const container = $('close-month-btn-container');
     if (!container) return;
     const now = new Date();
-    const currentM = `${now.getMonth()}-${now.getFullYear()}`;
     const metaRef = doc(db, 'artifacts', state.appId, 'public', 'data', 'metadata', 'settings');
     const metaSnap = await getDoc(metaRef);
     const lastClose = metaSnap.exists() ? metaSnap.data().lastClose : null;
 
+    // La clôture du mois courant correspond à lastClose = "mois_courant-année"
+    const currentM = `${now.getMonth()}-${now.getFullYear()}`;
+
     if (lastClose === currentM) {
-        // Déjà clôturé ce mois
         container.innerHTML = `<span class="text-[10px] text-emerald-400 italic opacity-70 shrink-0 flex items-center gap-1"><i class="fa-solid fa-check"></i> Clôturé</span>`;
     } else if (now.getDate() >= 29) {
-        // Bouton disponible dès le 29
         container.innerHTML = `<button onclick="App.openCloseMonthModal()" class="text-[10px] bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 border border-amber-500/40 px-3 py-1.5 rounded-lg font-bold transition-colors flex items-center gap-1.5 shrink-0"><i class="fa-solid fa-calendar-check"></i> Clôturer</button>`;
     } else {
-        // Pas encore disponible
         const daysLeft = 29 - now.getDate();
         container.innerHTML = `<span class="text-[10px] text-slate-500 italic opacity-50 shrink-0">Clôture dans ${daysLeft}j</span>`;
     }

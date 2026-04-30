@@ -42,23 +42,56 @@
         <div class="w-20 h-20 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-6"><span class="text-4xl">🏡</span></div>
         <h2 class="text-2xl font-black text-white mb-2">Accès au Foyer</h2>
         <p class="text-slate-400 text-sm mb-8 italic">Entrez le code secret de votre foyer.</p>
-        <div class="space-y-4 w-full">
-            <input type="text" id="instance-code-input" placeholder="Ex: MAISON" class="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-center font-black tracking-widest text-blue-400 uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-            <p id="login-error" class="text-red-500 text-xs font-bold hidden mb-2"></p>
+        <div class="space-y-3 w-full" id="gate-choice">
+            <button onclick="App.showGatePanel('join')" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-4 rounded-2xl font-black shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">
+                <i class="fa-solid fa-door-open"></i> Rejoindre un foyer
+            </button>
+            <button onclick="App.showGatePanel('create')" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 py-4 rounded-2xl font-black shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">
+                <i class="fa-solid fa-house-circle-plus"></i> Créer un nouveau foyer
+            </button>
+            <div class="mt-4 p-4 bg-slate-800/40 rounded-2xl border border-slate-700/50 text-left">
+                <h3 class="text-xs font-black text-blue-400 mb-3 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-lightbulb"></i> Comment ça marche ?</h3>
+                <ol class="text-[10px] text-slate-400 space-y-2 leading-relaxed list-decimal pl-4 marker:font-bold marker:text-slate-500">
+                    <li><b>Crée</b> un foyer avec un code secret.</li>
+                    <li><b>Paramètre</b> ton profil personnel.</li>
+                    <li><b>Partage</b> le code avec ton/ta partenaire via "Inviter".</li>
+                    <li>Ton/ta partenaire choisit <b>"Rejoindre"</b> et entre le code.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- PANNEAU REJOINDRE -->
+        <div id="gate-join" class="hidden space-y-4 w-full">
+            <button onclick="App.showGatePanel('choice')" class="text-slate-500 hover:text-slate-300 text-xs flex items-center gap-2 transition-colors">
+                <i class="fa-solid fa-arrow-left"></i> Retour
+            </button>
+            <p class="text-slate-400 text-sm">Entre le code foyer partagé par ton partenaire.</p>
+            <input type="text" id="instance-code-input" placeholder="Ex: MON-FOYER-123" class="w-full bg-slate-800 border border-slate-700 rounded-2xl p-4 text-center font-black tracking-widest text-blue-400 uppercase outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+            <p id="login-error" class="text-red-500 text-xs font-bold hidden"></p>
             <button onclick="App.connectToInstance()" class="w-full bg-white hover:bg-slate-200 text-slate-900 py-4 rounded-2xl font-black shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">
-                <svg class="w-6 h-6" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-                Continuer avec Google
+                <svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                Rejoindre avec Google
             </button>
         </div>
-        <div class="mt-6 p-5 bg-slate-800/40 rounded-2xl border border-slate-700/50 text-left">
-            <h3 class="text-xs font-black text-blue-400 mb-3 uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-lightbulb"></i> Comment ça marche ?</h3>
-            <ol class="text-[10px] md:text-xs text-slate-400 space-y-2 leading-relaxed list-decimal pl-4 marker:font-bold marker:text-slate-500">
-                <li><b>Créez</b> un foyer en inventant un code secret (ex: <i>DUPONT-789</i>) et entrez-le.</li>
-                <li><b>Paramétrez</b> votre profil personnel.</li>
-                <li><b>Partagez</b> ce code avec votre conjoint(e) ou colocataire.</li>
-            </ol>
+
+        <!-- PANNEAU CRÉER -->
+        <div id="gate-create" class="hidden space-y-4 w-full">
+            <button onclick="App.showGatePanel('choice')" class="text-slate-500 hover:text-slate-300 text-xs flex items-center gap-2 transition-colors">
+                <i class="fa-solid fa-arrow-left"></i> Retour
+            </button>
+            <p class="text-slate-400 text-sm">Choisis un code secret pour ton foyer.</p>
+            <div class="flex gap-2">
+                <input type="text" id="create-code-input" placeholder="MON-FOYER-123" class="flex-1 bg-slate-800 border border-slate-700 rounded-2xl p-4 text-center font-black tracking-widest text-emerald-400 uppercase outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                <button onclick="App.generateCreateCode()" class="bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-300 px-4 rounded-2xl transition-colors" title="Générer un code"><i class="fa-solid fa-shuffle"></i></button>
+            </div>
+            <p id="create-error" class="text-red-500 text-xs font-bold hidden"></p>
+            <button onclick="App.createNewFoyer()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-2xl font-black shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3">
+                <svg class="w-5 h-5" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                Créer avec Google
+            </button>
         </div>
-        <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V2.5</p>
+
+        <p class="text-xs text-slate-500 mt-6 font-black tracking-widest bg-slate-800 py-1 px-3 rounded-full inline-block border border-slate-700">V2.6</p>
     </div>
 </div>
 
@@ -382,7 +415,7 @@
                         </div>
                     </div>
                     <button id="install-pwa-btn" class="hidden w-full mt-6 bg-indigo-600 hover:bg-indigo-500 py-4 md:py-5 rounded-xl font-black shadow-lg text-white transition-all text-sm flex items-center justify-center gap-3"><i class="fa-solid fa-download"></i> Installer l'Application</button>
-                    <p class="text-center text-[10px] text-slate-700 font-mono mt-6 tracking-widest">V2.5 — Family Home Manager</p>
+                    <p class="text-center text-[10px] text-slate-700 font-mono mt-6 tracking-widest">V2.6 — Family Home Manager</p>
                     <div class="mt-8 pt-8 border-t border-slate-700 w-full">
                         <button onclick="App.toggleDangerZone()" class="w-full bg-red-950/20 hover:bg-red-950/40 p-4 rounded-xl border border-red-900/30 flex justify-between items-center transition-colors mb-4">
                             <span class="font-bold text-sm text-red-500 flex items-center gap-3"><i class="fa-solid fa-triangle-exclamation"></i> Zone de Danger</span>
@@ -732,7 +765,70 @@ onAuthStateChanged(auth, async user => {
     }
 });
 
-// ─── GÉNÉRATION D'UN ID INTERNE ROBUSTE ──────────────────────────────────────
+// ─── NAVIGATION ÉCRAN DE CONNEXION ───────────────────────────────────────────
+function showGatePanel(panel) {
+    ['choice','join','create'].forEach(p => {
+        const el = $(`gate-${p}`);
+        if (el) el.classList.toggle('hidden', p !== panel);
+    });
+    // Pré-remplir un code à la création
+    if (panel === 'create') {
+        const input = $('create-code-input');
+        if (input && !input.value) input.value = generateFriendlyCode();
+    }
+}
+
+function generateCreateCode() {
+    const input = $('create-code-input');
+    if (input) input.value = generateFriendlyCode();
+}
+
+async function createNewFoyer() {
+    const input = $('create-code-input');
+    const errEl = $('create-error');
+    const code = input?.value.trim().toUpperCase();
+    if (!code || code.length < 4) {
+        errEl.textContent = 'Code trop court (min. 4 caractères).';
+        errEl.classList.remove('hidden'); return;
+    }
+    errEl.classList.add('hidden');
+    state.visibleCode = code;
+
+    // Auth Google d'abord
+    if (!auth.currentUser) {
+        try {
+            const result = await signInWithPopup(auth, provider);
+            state.currentUser = result.user;
+        } catch(err) {
+            console.error(err);
+            errEl.textContent = 'Échec de connexion Google.';
+            errEl.classList.remove('hidden'); return;
+        }
+    } else {
+        state.currentUser = auth.currentUser;
+    }
+
+    // Vérifier que le code n'est pas déjà pris
+    const codeRef = doc(db, 'foyer-codes', code);
+    const codeSnap = await getDoc(codeRef);
+    if (codeSnap.exists()) {
+        errEl.textContent = '❌ Ce code est déjà utilisé. Choisis-en un autre.';
+        errEl.classList.remove('hidden'); return;
+    }
+
+    // Créer le foyer avec un internalId unique
+    const internalId = generateInternalId();
+    await setDoc(codeRef, { internalId, createdAt: Date.now() });
+
+    state.appId = internalId;
+    localStorage.setItem('savedInstanceCode', code);
+
+    $('instance-gate').classList.add('hidden');
+    const mainApp = $('main-app');
+    mainApp.classList.remove('hidden');
+    mainApp.classList.add('flex');
+    await startAppFlow();
+}
 function generateInternalId() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
     return Array.from({length: 20}, () => chars[Math.floor(Math.random() * chars.length)]).join('');
@@ -2539,6 +2635,7 @@ window.App = {
     // Auth & code foyer
     connectToInstance, tryConnect, openChangeCode, closeChangeCode,
     generateNewCode, confirmChangeCode,
+    showGatePanel, generateCreateCode, createNewFoyer,
 };
 
 </script>

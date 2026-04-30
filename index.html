@@ -666,27 +666,36 @@ function escapeHTML(s) {
 }
 
 /**
- * Retourne la semaine calendaire (S1-S5) d'une date,
- * basée sur les vrais lundis/dimanches du mois.
- * S1 = du 1er jusqu'au 1er dimanche inclus
- * S2-S4 = semaines lundi-dimanche complètes
- * S5 = si le mois déborde après le 4e dimanche
+ * Retourne la semaine calendaire (S1-S5) d'une dépense.
+ * 
+ * Cas normal : S1 = du 1er jusqu'au 1er dimanche, S2-S5 = semaines lun-dim.
+ * Cas post-clôture : si la dépense a été créée après la clôture ET tombe
+ * dans la même semaine calendaire que la clôture, elle est rebasée sur S1
+ * du nouveau mois (le lundi de clôture devient le début de S1).
  */
-function getExpenseWeek(dateStr) {
+function getExpenseWeek(dateStr, createdAt = null) {
     if (!dateStr) return 'S1';
-    const date = new Date(dateStr + 'T12:00:00'); // midi pour éviter les bugs de timezone
+    const date  = new Date(dateStr + 'T12:00:00');
     const year  = date.getFullYear();
     const month = date.getMonth();
     const day   = date.getDate();
 
-    // Trouver le jour du 1er dimanche du mois
-    // getDay() : 0=dim, 1=lun ... 6=sam
+    // Post-clôture : dépense créée après la clôture ET dans la semaine de clôture
+    if (state.lastCloseMonday && state.lastCloseTimestamp && createdAt) {
+        const closeMonday = new Date(state.lastCloseMonday + 'T00:00:00');
+        const closeSunday = new Date(closeMonday);
+        closeSunday.setDate(closeMonday.getDate() + 6);
+
+        if (createdAt > state.lastCloseTimestamp && date >= closeMonday && date <= closeSunday) {
+            // Cette dépense appartient à la S1 du nouveau mois
+            return 'S1';
+        }
+    }
+
+    // Calcul normal : trouver le 1er dimanche du mois
     let firstSunday = 0;
     for (let d = 1; d <= 7; d++) {
-        if (new Date(year, month, d).getDay() === 0) {
-            firstSunday = d;
-            break;
-        }
+        if (new Date(year, month, d).getDay() === 0) { firstSunday = d; break; }
     }
 
     if (day <= firstSunday)          return 'S1';
@@ -953,6 +962,8 @@ function startListening() {
     onSnapshot(doc(db, 'artifacts', state.appId, 'public', 'data', 'metadata', 'settings'), snap => {
         state.appSettings = snap.exists() ? snap.data() : {};
         state.commonPotActive = state.appSettings.commonPotActive || false;
+        state.lastCloseMonday = state.appSettings.lastCloseMonday || null;
+        state.lastCloseTimestamp = state.appSettings.lastCloseTimestamp || null;
         const toggle = $('toggle-common-pot');
         if (toggle) toggle.checked = state.commonPotActive;
         // Rafraîchir la vue Compte commun si elle est ouverte dans le panneau financier
@@ -1078,8 +1089,20 @@ async function performMonthClose(isManual = false) {
     });
     await Promise.all(newEntries);
 
-    // 5. Marquer la clôture
-    await setDoc(metaRef, { lastClose: currentM }, { merge: true });
+    // 5. Marquer la clôture avec timestamp et lundi de la semaine de clôture
+    const closeDate = new Date();
+    // Trouver le lundi de la semaine de clôture
+    const dow = closeDate.getDay(); // 0=dim, 1=lun...
+    const diffToMonday = (dow === 0) ? -6 : 1 - dow;
+    const monday = new Date(closeDate);
+    monday.setDate(closeDate.getDate() + diffToMonday);
+    const lastCloseMonday = monday.toISOString().split('T')[0];
+
+    await setDoc(metaRef, {
+        lastClose: currentM,
+        lastCloseTimestamp: Date.now(),
+        lastCloseMonday
+    }, { merge: true });
 
     // Rafraîchir le bouton
     renderCloseMonthButton();
@@ -1738,7 +1761,7 @@ function computeExpenseStats() {
                 stats.groupedFixed[uId].total += exp.amount;
                 stats.groupedFixed[uId].items.push(liHTML);
             } else {
-                const week = getExpenseWeek(exp.date);
+                const week = getExpenseWeek(exp.date, exp.createdAt || null);
                 stats.groupedPonct[week].total += exp.amount;
                 stats.groupedPonct[week].items.push(liHTML);
                 if (!stats.groupedPonct[week].users[uId])      stats.groupedPonct[week].users[uId]      = 0;

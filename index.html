@@ -1559,7 +1559,8 @@ function openExpenseEditor(id = null) {
     $('expense-modal-title').textContent = id ? 'Modifier' : 'Nouvelle Transaction';
     $('expense-text').value    = exp ? exp.text   : '';
     $('expense-amount').value  = exp ? exp.amount : '';
-    $('expense-date').value    = exp?.date || '';
+    const today = new Date().toISOString().split('T')[0];
+    $('expense-date').value    = exp?.date || today;
     $('expense-recurring').checked = exp ? !!exp.isRecurring : false;
     $('expense-date').disabled = exp ? !!exp.isRecurring : false;
     $('expense-delete-btn').classList.toggle('hidden', !id);
